@@ -14,188 +14,96 @@
    DESIGN SYSTEM
    ════════════════════════════════════════ */
 :root {
-  --white:    #ffffff;
-  --bg:        #f5f3ef;
-  --bg2:       #edeae4;
-  --surface:   #ffffff;
-  --border:    #e2ddd6;
-  --border2:   #d0cac0;
-  --ink:       #1a1714;
-  --ink2:      #4a4540;
-  --ink3:      #9e9890;
-  --orange:    #e8561a;
-  --orange-l:  #fff0ea;
-  --orange-m:  #fbd5c0;
-  --green:     #2a7a4b;
-  --green-l:   #eaf4ee;
-  --green-m:   #b6dfc5;
-  --blue:      #1a5fbf;
-  --blue-l:    #e8f0fc;
-  --red:       #c0392b;
-  --red-l:     #fdecea;
-  --radius-sm: 6px;
-  --radius:    10px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
-  --shadow:    0 4px 16px rgba(0,0,0,.09), 0 1px 3px rgba(0,0,0,.06);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,.12);
+  --white: #ffffff; --bg: #f5f3ef; --bg2: #edeae4; --border: #e2ddd6; --border2: #d0cac0;
+  --ink: #1a1714; --ink2: #4a4540; --ink3: #9e9890;
+  --orange: #e8561a; --orange-l: #fff0ea; --orange-m: #fbd5c0;
+  --green: #2a7a4b; --green-l: #eaf4ee; --green-m: #b6dfc5;
+  --blue: #1a5fbf; --red: #c0392b;
+  --radius: 10px; --radius-lg: 16px;
+  --shadow: 0 4px 16px rgba(0,0,0,.09);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--ink);
-  height: 100%;
-  overflow: hidden;
-}
-
-body { display: flex; flex-direction: column; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
 /* ── HEADER ── */
 header {
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  height: 60px;
-  padding: 0 18px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-shrink: 0;
-  box-shadow: var(--shadow-sm);
-  z-index: 200;
+  background: var(--white); border-bottom: 1px solid var(--border); height: 60px;
+  padding: 0 18px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; z-index: 200;
 }
-
-.logo {
-  font-family: 'Fraunces', serif;
-  font-weight: 900;
-  font-size: 20px;
-  white-space: nowrap;
-}
+.logo { font-family: 'Fraunces', serif; font-weight: 900; font-size: 20px; }
 .logo em { color: var(--orange); font-style: normal; }
-
 .filters { display: flex; gap: 5px; }
-.f-btn {
-  font-size: 12.5px;
-  font-weight: 500;
-  padding: 5px 13px;
-  border-radius: 20px;
-  border: 1.5px solid var(--border2);
-  background: transparent;
-  cursor: pointer;
-  transition: all .15s;
-}
+.f-btn { font-size: 12.5px; font-weight: 500; padding: 5px 13px; border-radius: 20px; border: 1.5px solid var(--border2); background: transparent; cursor: pointer; }
 .f-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
 .f-btn.active.tc { background: var(--green); border-color: var(--green); }
-
 .search-wrap { position: relative; flex: 1; max-width: 240px; }
-.search-wrap input {
-  width: 100%;
-  border: 1.5px solid var(--border2);
-  border-radius: 20px;
-  padding: 6px 12px 6px 32px;
-  font-size: 13px;
-  outline: none;
-}
+.search-wrap input { width: 100%; border: 1.5px solid var(--border2); border-radius: 20px; padding: 6px 12px; font-size: 13px; outline: none; }
 
-.h-stats { margin-left: auto; display: flex; gap: 14px; font-size: 12px; color: var(--ink3); }
-.h-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-.h-dot.bp { background: var(--orange); }
-.h-dot.tc { background: var(--green); }
-
-/* ── BODY LAYOUT ── */
+/* ── LAYOUT ── */
 .app-body { display: flex; flex: 1; overflow: hidden; }
+.sidebar { width: 420px; min-width: 420px; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.list-wrap { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
 
-.sidebar {
-  width: 400px;
-  min-width: 400px;
-  background: var(--bg);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-}
-
-.sb-top {
-  padding: 12px 14px;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.list-wrap {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* ── CARD (OPRAVA SMRŠŤOVÁNÍ) ── */
+/* ── CARD (FULL DETAIL) ── */
 .card {
-  background: var(--white);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  flex-shrink: 0; /* DŮLEŽITÉ: zabrání zmenšování karet */
-  transition: transform 0.2s, border-color 0.2s;
+  background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius-lg);
+  overflow: hidden; cursor: pointer; flex-shrink: 0; transition: all 0.2s;
 }
-.card:hover { transform: translateY(-2px); border-color: var(--orange); }
-.card.active { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-l); }
-.card.active.tc-active { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-l); }
+.card:hover { border-color: var(--orange); }
+.card.active { border-color: var(--orange); box-shadow: var(--shadow); }
 
 .card-stripe { height: 4px; background: var(--orange); }
 .card-stripe.tc { background: var(--green); }
-.card-body { padding: 12px; }
-.card-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+.card-body { padding: 14px; }
 
-.card-meta {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin: 10px 0;
-}
-.meta-cell { background: var(--bg); padding: 6px; border-radius: 6px; }
-.meta-label { font-size: 10px; text-transform: uppercase; color: var(--ink3); }
-.meta-val { font-size: 12px; font-weight: 600; }
+.card-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.card-name { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 700; }
 
-.tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+.tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; margin-right: 4px; }
 .tag-bp { background: var(--orange-l); color: var(--orange); }
 .tag-tc { background: var(--green-l); color: var(--green); }
 
-.card-rating { display: flex; gap: 2px; color: #f59e0b; margin-top: 8px; }
+/* Meta Grid */
+.card-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 12px 0; }
+.meta-cell { background: var(--bg); padding: 6px; border-radius: 6px; text-align: center; }
+.meta-label { font-size: 9px; text-transform: uppercase; color: var(--ink3); margin-bottom: 2px; }
+.meta-val { font-size: 11px; font-weight: 600; }
+
+/* Difficulty Bar */
+.diff-bar { display: flex; gap: 3px; height: 5px; margin: 10px 0; }
+.diff-seg { flex: 1; border-radius: 2px; background: var(--border2); }
+.diff-seg.d1 { background: var(--green); }
+.diff-seg.d2 { background: var(--blue); }
+.diff-seg.d3 { background: var(--red); }
+.diff-seg.d4 { background: #000; }
+
+/* Trails & Detail (Hidden by default) */
+.card-detail { display: none; margin-top: 10px; border-top: 1px solid var(--bg2); padding-top: 10px; }
+.card.active .card-detail { display: block; }
+
+.trails-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.t-pill { font-size: 11px; background: var(--bg2); padding: 2px 6px; border-radius: 5px; display: flex; align-items: center; gap: 3px; }
+
+.note-section textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px; font-size: 12px; resize: vertical; margin-top: 8px; }
+
+.stars { color: #f59e0b; font-size: 16px; margin: 8px 0; }
 .star { cursor: pointer; }
 
+.btn-web { display: block; text-align: center; background: var(--orange); color: white; text-decoration: none; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 10px; }
+
 /* ── MAP ── */
-.map-wrap { flex: 1; position: relative; }
+.map-wrap { flex: 1; }
 #map { width: 100%; height: 100%; }
 
-/* ── LOADING ── */
-.loading-overlay {
-  position: fixed; inset: 0; z-index: 9999;
-  background: var(--white); display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 15px;
-}
+.loading-overlay { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .loading-overlay.done { display: none; }
-.spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin .7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-@media (max-width: 780px) {
-  .app-body { flex-direction: column; }
-  .sidebar { width: 100%; min-width: 0; height: 50%; }
-}
 </style>
 </head>
 <body>
 
 <div class="loading-overlay" id="loadingOverlay">
-  <div class="spinner"></div>
-  <p>🚵 Načítám bikeparky...</p>
+  <p>🚵 Načítám kompletní atlas...</p>
 </div>
 
 <header>
@@ -208,21 +116,10 @@ header {
   <div class="search-wrap">
     <input type="text" id="searchQ" placeholder="Hledat lokalitu...">
   </div>
-  <div class="h-stats">
-    <div><span class="h-dot bp"></span><span id="sBP">0</span></div>
-    <div><span class="h-dot tc"></span><span id="sTC">0</span></div>
-  </div>
 </header>
 
 <div class="app-body">
   <div class="sidebar">
-    <div class="sb-top">
-      <div style="font-size: 13px;">Zobrazeno: <strong id="cntShow">0</strong></div>
-      <select id="sortSel" style="font-size: 12px; padding: 2px;">
-        <option value="dist">Vzdálenost</option>
-        <option value="name">Název A-Z</option>
-      </select>
-    </div>
     <div class="list-wrap" id="listWrap"></div>
   </div>
   <div class="map-wrap">
@@ -235,7 +132,7 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYrMpmabpG58oW
 const ORIGIN = { lat: 49.1694, lng: 16.5928 };
 
 let ALL_PARKS = [];
-let filter = 'all', query = '', sort = 'dist', activeId = null;
+let filter = 'all', query = '', activeId = null;
 let markers = {}, mapObj;
 
 /* ── HELPERS ── */
@@ -246,11 +143,13 @@ function haverDist(lat, lng) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
-function parseCoord(val) {
-  if (!val) return NaN;
-  let s = val.toString().replace(',', '.').trim();
-  let n = parseFloat(s);
-  return (isNaN(n) || n === 0) ? NaN : n;
+function parseTrails(raw) {
+  if (!raw) return [];
+  return raw.split(',').map(s => {
+    s = s.trim();
+    const m = s.match(/(🟢|🔵|🔴|⚫)\s*(.+)/);
+    return m ? { d: m[1], n: m[2] } : { d: '🔵', n: s };
+  });
 }
 
 function ls() { return JSON.parse(localStorage.getItem('bp_user') || '{}'); }
@@ -259,57 +158,84 @@ function lsSave(d) { localStorage.setItem('bp_user', JSON.stringify(d)); }
 /* ── MAP ── */
 function initMap() {
   mapObj = L.map('map').setView([49.8, 15.5], 7);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OSM &copy; CARTO'
-  }).addTo(mapObj);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM' }).addTo(mapObj);
 }
 
 function mkMarker(p) {
   const clr = p.type === 'bikepark' ? '#e8561a' : '#2a7a4b';
-  const ico = L.divIcon({
-    className: '',
-    html: `<div style="width:30px;height:30px;border-radius:8px;background:${clr};color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,0.2);border:2px solid white;">${p.type === 'bikepark' ? '🚠' : '🥾'}</div>`,
-    iconSize: [30, 30], iconAnchor: [15, 15]
-  });
-  const m = L.marker([p.lat, p.lng], { icon: ico }).addTo(mapObj);
+  const m = L.marker([p.lat, p.lng], {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="width:24px;height:24px;border-radius:50%;background:${clr};border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`
+    })
+  }).addTo(mapObj);
   m.on('click', () => selectPark(p.id));
   markers[p.id] = m;
 }
 
 /* ── RENDER ── */
 function renderAll() {
-  let list = ALL_PARKS.filter(p => {
-    const matchF = filter === 'all' || p.type === filter;
-    const matchQ = !query || p.name.toLowerCase().includes(query.toLowerCase());
-    return matchF && matchQ;
-  });
+  const userData = ls();
+  let list = ALL_PARKS.filter(p => (filter === 'all' || p.type === filter) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
+  list.sort((a,b) => a._dist - b._dist);
 
-  if (sort === 'dist') list.sort((a,b) => a._dist - b._dist);
-  if (sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
-
-  document.getElementById('cntShow').textContent = list.length;
   const wrap = document.getElementById('listWrap');
   wrap.innerHTML = '';
 
-  // Toggle markers
-  ALL_PARKS.forEach(p => {
-    const isVis = list.some(x => x.id === p.id);
-    if (isVis) markers[p.id].addTo(mapObj); else mapObj.removeLayer(markers[p.id]);
-  });
-
   list.forEach(p => {
+    const s = userData[p.id] || {};
+    const trails = parseTrails(p.trails_raw);
+    const hasGreen = trails.some(t => t.d === '🟢'), hasBlue = trails.some(t => t.d === '🔵'), hasRed = trails.some(t => t.d === '🔴'), hasBlack = trails.some(t => t.d === '⚫');
+
     const card = document.createElement('div');
-    card.className = `card ${activeId === p.id ? (p.type === 'bikepark' ? 'active' : 'active tc-active') : ''}`;
+    card.className = `card ${activeId === p.id ? 'active' : ''}`;
     card.innerHTML = `
       <div class="card-stripe ${p.type === 'trail' ? 'tc' : ''}"></div>
       <div class="card-body">
-        <div class="card-name">${p.name}</div>
-        <span class="tag ${p.type === 'bikepark' ? 'tag-bp' : 'tag-tc'}">${p.type === 'bikepark' ? '🚠 Bikepark' : '🥾 Trail centrum'}</span>
+        <div class="card-title-row">
+          <div class="card-name">${p.name}</div>
+          <div>
+            ${s.status === 'visited' ? '✅' : s.status === 'planned' ? '📌' : ''}
+          </div>
+        </div>
+        <span class="tag ${p.type === 'bikepark' ? 'tag-bp' : 'tag-tc'}">${p.type === 'bikepark' ? 'Bikepark' : 'Trail centrum'}</span>
+        <span class="tag" style="background:#eee">${p.region}</span>
+
         <div class="card-meta">
           <div class="meta-cell"><div class="meta-label">Vzdálenost</div><div class="meta-val">${p._dist} km</div></div>
-          <div class="meta-cell"><div class="meta-label">Region</div><div class="meta-val">${p.region}</div></div>
+          <div class="meta-cell"><div class="meta-label">Lístek</div><div class="meta-val">${p.skipas || '?'}</div></div>
+          <div class="meta-cell"><div class="meta-label">Parkovné</div><div class="meta-val">${p.parking || '?'}</div></div>
+          <div class="meta-cell"><div class="meta-label">V provozu</div><div class="meta-val">${p.season || '?'}</div></div>
         </div>
-        <div style="font-size:11px; color:var(--ink2)">${p.skipas || 'Vstup neznámý'} • ${p.parking || 'Parkování neznámé'}</div>
+
+        <div class="diff-bar">
+          <div class="diff-seg ${hasGreen?'d1':''}"></div>
+          <div class="diff-seg ${hasBlue?'d2':''}"></div>
+          <div class="diff-seg ${hasRed?'d3':''}"></div>
+          <div class="diff-seg ${hasBlack?'d4':''}"></div>
+        </div>
+
+        <div class="card-detail">
+          <div class="trails-row">
+            ${trails.map(t => `<span class="t-pill"><span>${t.d}</span>${t.n}</span>`).join('')}
+          </div>
+          <p style="font-size:12px; color:var(--ink2); line-height:1.4">${p.description || ''}</p>
+          
+          <div class="stars">
+            ${[1,2,3,4,5].map(i => `<span class="star" onclick="setRating('${p.id}',${i},event)">${(s.rating||0)>=i?'★':'☆'}</span>`).join('')}
+          </div>
+
+          <div class="note-section">
+            <textarea placeholder="Tvoje poznámka..." onclick="event.stopPropagation()" oninput="saveNote('${p.id}', this.value)">${s.note || ''}</textarea>
+          </div>
+
+          <div style="display:flex; gap:5px; margin-top:10px;">
+             <button onclick="setStatus('${p.id}','planned',event)" style="flex:1; padding:6px; font-size:11px">Chci jet</button>
+             <button onclick="setStatus('${p.id}','visited',event)" style="flex:1; padding:6px; font-size:11px">Navštíveno</button>
+          </div>
+
+          <a href="${p.web}" target="_blank" class="btn-web" onclick="event.stopPropagation()">🌐 Přejít na web</a>
+        </div>
       </div>
     `;
     card.onclick = () => selectPark(p.id);
@@ -317,15 +243,34 @@ function renderAll() {
   });
 }
 
+/* ── INTERACTION ── */
 function selectPark(id) {
-  activeId = id;
+  activeId = (activeId === id) ? null : id; // Toggle expand
   renderAll();
   const p = ALL_PARKS.find(x => x.id === id);
-  if (p) {
+  if (p && activeId) {
     mapObj.setView([p.lat, p.lng], 12, { animate: true });
-    const card = document.querySelector(`.card.active`);
-    card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
+}
+
+function setStatus(id, status, e) {
+  e.stopPropagation();
+  const d = ls(); if(!d[id]) d[id]={};
+  d[id].status = (d[id].status === status) ? null : status;
+  lsSave(d); renderAll();
+}
+
+function setRating(id, r, e) {
+  e.stopPropagation();
+  const d = ls(); if(!d[id]) d[id]={};
+  d[id].rating = r;
+  lsSave(d); renderAll();
+}
+
+function saveNote(id, val) {
+  const d = ls(); if(!d[id]) d[id]={};
+  d[id].note = val;
+  lsSave(d);
 }
 
 /* ── DATA ── */
@@ -333,28 +278,21 @@ async function loadData() {
   try {
     const res = await fetch(APPS_SCRIPT_URL);
     const json = await res.json();
-    
-    ALL_PARKS = json.data.map(p => {
-      const lat = parseCoord(p.lat), lng = parseCoord(p.lng);
-      return { ...p, lat, lng, _dist: haverDist(lat, lng) };
-    }).filter(p => !isNaN(p.lat));
-
-    document.getElementById('sBP').textContent = ALL_PARKS.filter(x => x.type === 'bikepark').length;
-    document.getElementById('sTC').textContent = ALL_PARKS.filter(x => x.type === 'trail').length;
+    ALL_PARKS = json.data.map(p => ({
+      ...p,
+      lat: parseFloat(p.lat.toString().replace(',','.')),
+      lng: parseFloat(p.lng.toString().replace(',','.')),
+      _dist: haverDist(parseFloat(p.lat.toString().replace(',','.')), parseFloat(p.lng.toString().replace(',','.')))
+    })).filter(p => !isNaN(p.lat));
 
     initMap();
     ALL_PARKS.forEach(mkMarker);
     renderAll();
     document.getElementById('loadingOverlay').classList.add('done');
-  } catch (e) {
-    alert("Chyba při načítání dat.");
-    console.error(e);
-  }
+  } catch (e) { console.error(e); }
 }
 
-/* ── EVENTS ── */
 document.getElementById('searchQ').oninput = (e) => { query = e.target.value; renderAll(); };
-document.getElementById('sortSel').onchange = (e) => { sort = e.target.value; renderAll(); };
 document.querySelectorAll('.f-btn').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
