@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚵 Bikepark Atlas ČR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Fraunces:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+/* ════════════════════════════════════════
+   DESIGN SYSTEM
+   ════════════════════════════════════════ */
+:root {
+  --white: #ffffff; --bg: #f5f3ef; --bg2: #edeae4; --border: #e2ddd6; --border2: #d0cac0;
+  --ink: #1a1714; --ink2: #4a4540; --ink3: #9e9890;
+  --orange: #e8561a; --orange-l: #fff0ea; --orange-m: #fbd5c0;
+  --green: #2a7a4b; --green-l: #eaf4ee; --green-m: #b6dfc5;
+  --blue: #1a5fbf; --red: #c0392b;
+  --radius: 10px; --radius-lg: 16px;
+  --shadow: 0 4px 16px rgba(0,0,0,.09);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── HEADER ── */
+header {
+  background: var(--white); border-bottom: 1px solid var(--border); height: 60px;
+  padding: 0 18px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; z-index: 200;
+}
+.logo { font-family: 'Fraunces', serif; font-weight: 900; font-size: 20px; }
+.logo em { color: var(--orange); font-style: normal; }
+.filters { display: flex; gap: 5px; }
+.f-btn { font-size: 12.5px; font-weight: 500; padding: 5px 13px; border-radius: 20px; border: 1.5px solid var(--border2); background: transparent; cursor: pointer; }
+.f-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+.f-btn.active.tc { background: var(--green); border-color: var(--green); }
+.search-wrap { position: relative; flex: 1; max-width: 240px; }
+.search-wrap input { width: 100%; border: 1.5px solid var(--border2); border-radius: 20px; padding: 6px 12px; font-size: 13px; outline: none; }
+
+/* ── LAYOUT ── */
+.app-body { display: flex; flex: 1; overflow: hidden; }
+.sidebar { width: 420px; min-width: 420px; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.list-wrap { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ── CARD (FULL DETAIL) ── */
+.card {
+  background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius-lg);
+  overflow: hidden; cursor: pointer; flex-shrink: 0; transition: all 0.2s;
+}
+.card:hover { border-color: var(--orange); }
+.card.active { border-color: var(--orange); box-shadow: var(--shadow); }
+
+.card-stripe { height: 4px; background: var(--orange); }
+.card-stripe.tc { background: var(--green); }
+.card-body { padding: 14px; }
+
+.card-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.card-name { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 700; }
+
+.tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; margin-right: 4px; }
+.tag-bp { background: var(--orange-l); color: var(--orange); }
+.tag-tc { background: var(--green-l); color: var(--green); }
+
+/* Meta Grid */
+.card-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 12px 0; }
+.meta-cell { background: var(--bg); padding: 6px; border-radius: 6px; text-align: center; }
+.meta-label { font-size: 9px; text-transform: uppercase; color: var(--ink3); margin-bottom: 2px; }
+.meta-val { font-size: 11px; font-weight: 600; }
+
+/* Difficulty Bar */
+.diff-bar { display: flex; gap: 3px; height: 5px; margin: 10px 0; }
+.diff-seg { flex: 1; border-radius: 2px; background: var(--border2); }
+.diff-seg.d1 { background: var(--green); }
+.diff-seg.d2 { background: var(--blue); }
+.diff-seg.d3 { background: var(--red); }
+.diff-seg.d4 { background: #000; }
+
+/* Trails & Detail (Hidden by default) */
+.card-detail { display: none; margin-top: 10px; border-top: 1px solid var(--bg2); padding-top: 10px; }
+.card.active .card-detail { display: block; }
+
+.trails-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.t-pill { font-size: 11px; background: var(--bg2); padding: 2px 6px; border-radius: 5px; display: flex; align-items: center; gap: 3px; }
+
+.note-section textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px; font-size: 12px; resize: vertical; margin-top: 8px; }
+
+.stars { color: #f59e0b; font-size: 16px; margin: 8px 0; }
+.star { cursor: pointer; }
+
+.btn-web { display: block; text-align: center; background: var(--orange); color: white; text-decoration: none; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 10px; }
+
+/* ── MAP ── */
+.map-wrap { flex: 1; }
+#map { width: 100%; height: 100%; }
+
+.loading-overlay { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.loading-overlay.done { display: none; }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <p>🚵 Načítám kompletní atlas...</p>
+</div>
+
+<header>
+  <div class="logo">🚵 <em>Bikepark</em> Atlas ČR</div>
+  <div class="filters">
+    <button class="f-btn active" data-f="all">Vše</button>
+    <button class="f-btn" data-f="bikepark">🚠 Bikeparky</button>
+    <button class="f-btn tc" data-f="trail">🥾 Trail centra</button>
+  </div>
+  <div class="search-wrap">
+    <input type="text" id="searchQ" placeholder="Hledat lokalitu...">
+  </div>
+</header>
+
+<div class="app-body">
+  <div class="sidebar">
+    <div class="list-wrap" id="listWrap"></div>
+  </div>
+  <div class="map-wrap">
+    <div id="map"></div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec";
+const ORIGIN = { lat: 49.1694, lng: 16.5928 };
+
+let ALL_PARKS = [];
+let filter = 'all', query = '', activeId = null;
+let markers = {}, mapObj;
+
+/* ── HELPERS ── */
+function haverDist(lat, lng) {
+  const R = 6371, toR = x => x * Math.PI / 180;
+  const dLat = toR(lat - ORIGIN.lat), dLon = toR(lng - ORIGIN.lng);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toR(ORIGIN.lat))*Math.cos(toR(lat))*Math.sin(dLon/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+function parseTrails(raw) {
+  if (!raw) return [];
+  return raw.split(',').map(s => {
+    s = s.trim();
+    const m = s.match(/(🟢|🔵|🔴|⚫)\s*(.+)/);
+    return m ? { d: m[1], n: m[2] } : { d: '🔵', n: s };
+  });
+}
+
+function ls() { return JSON.parse(localStorage.getItem('bp_user') || '{}'); }
+function lsSave(d) { localStorage.setItem('bp_user', JSON.stringify(d)); }
+
+/* ── MAP ── */
+function initMap() {
+  mapObj = L.map('map').setView([49.8, 15.5], 7);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM' }).addTo(mapObj);
+}
+
+function mkMarker(p) {
+  const clr = p.type === 'bikepark' ? '#e8561a' : '#2a7a4b';
+  const m = L.marker([p.lat, p.lng], {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="width:24px;height:24px;border-radius:50%;background:${clr};border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`
+    })
+  }).addTo(mapObj);
+  m.on('click', () => selectPark(p.id));
+  markers[p.id] = m;
+}
+
+/* ── RENDER ── */
+function renderAll() {
+  const userData = ls();
+  let list = ALL_PARKS.filter(p => (filter === 'all' || p.type === filter) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
+  list.sort((a,b) => a._dist - b._dist);
+
+  const wrap = document.getElementById('listWrap');
+  wrap.innerHTML = '';
+
+  list.forEach(p => {
+    const s = userData[p.id] || {};
+    const trails = parseTrails(p.trails_raw);
+    const hasGreen = trails.some(t => t.d === '🟢'), hasBlue = trails.some(t => t.d === '🔵'), hasRed = trails.some(t => t.d === '🔴'), hasBlack = trails.some(t => t.d === '⚫');
+
+    const card = document.createElement('div');
+    card.className = `card ${activeId === p.id ? 'active' : ''}`;
+    card.innerHTML = `
+      <div class="card-stripe ${p.type === 'trail' ? 'tc' : ''}"></div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <div class="card-name">${p.name}</div>
+          <div>
+            ${s.status === 'visited' ? '✅' : s.status === 'planned' ? '📌' : ''}
+          </div>
+        </div>
+        <span class="tag ${p.type === 'bikepark' ? 'tag-bp' : 'tag-tc'}">${p.type === 'bikepark' ? 'Bikepark' : 'Trail centrum'}</span>
+        <span class="tag" style="background:#eee">${p.region}</span>
+
+        <div class="card-meta">
+          <div class="meta-cell"><div class="meta-label">Vzdálenost</div><div class="meta-val">${p._dist} km</div></div>
+          <div class="meta-cell"><div class="meta-label">Lístek</div><div class="meta-val">${p.skipas || '?'}</div></div>
+          <div class="meta-cell"><div class="meta-label">Parkovné</div><div class="meta-val">${p.parking || '?'}</div></div>
+          <div class="meta-cell"><div class="meta-label">V provozu</div><div class="meta-val">${p.season || '?'}</div></div>
+        </div>
+
+        <div class="diff-bar">
+          <div class="diff-seg ${hasGreen?'d1':''}"></div>
+          <div class="diff-seg ${hasBlue?'d2':''}"></div>
+          <div class="diff-seg ${hasRed?'d3':''}"></div>
+          <div class="diff-seg ${hasBlack?'d4':''}"></div>
+        </div>
+
+        <div class="card-detail">
+          <div class="trails-row">
+            ${trails.map(t => `<span class="t-pill"><span>${t.d}</span>${t.n}</span>`).join('')}
+          </div>
+          <p style="font-size:12px; color:var(--ink2); line-height:1.4">${p.description || ''}</p>
+          
+          <div class="stars">
+            ${[1,2,3,4,5].map(i => `<span class="star" onclick="setRating('${p.id}',${i},event)">${(s.rating||0)>=i?'★':'☆'}</span>`).join('')}
+          </div>
+
+          <div class="note-section">
+            <textarea placeholder="Tvoje poznámka..." onclick="event.stopPropagation()" oninput="saveNote('${p.id}', this.value)">${s.note || ''}</textarea>
+          </div>
+
+          <div style="display:flex; gap:5px; margin-top:10px;">
+             <button onclick="setStatus('${p.id}','planned',event)" style="flex:1; padding:6px; font-size:11px">Chci jet</button>
+             <button onclick="setStatus('${p.id}','visited',event)" style="flex:1; padding:6px; font-size:11px">Navštíveno</button>
+          </div>
+
+          <a href="${p.web}" target="_blank" class="btn-web" onclick="event.stopPropagation()">🌐 Přejít na web</a>
+        </div>
+      </div>
+    `;
+    card.onclick = () => selectPark(p.id);
+    wrap.appendChild(card);
+  });
+}
+
+/* ── INTERACTION ── */
+function selectPark(id) {
+  activeId = (activeId === id) ? null : id; // Toggle expand
+  renderAll();
+  const p = ALL_PARKS.find(x => x.id === id);
+  if (p && activeId) {
+    mapObj.setView([p.lat, p.lng], 12, { animate: true });
+  }
+}
+
+function setStatus(id, status, e) {
+  e.stopPropagation();
+  const d = ls(); if(!d[id]) d[id]={};
+  d[id].status = (d[id].status === status) ? null : status;
+  lsSave(d); renderAll();
+}
+
+function setRating(id, r, e) {
+  e.stopPropagation();
+  const d = ls(); if(!d[id]) d[id]={};
+  d[id].rating = r;
+  lsSave(d); renderAll();
+}
+
+function saveNote(id, val) {
+  const d = ls(); if(!d[id]) d[id]={};
+  d[id].note = val;
+  lsSave(d);
+}
+
+/* ── DATA ── */
+async function loadData() {
+  try {
+    const res = await fetch(APPS_SCRIPT_URL);
+    const json = await res.json();
+    ALL_PARKS = json.data.map(p => ({
+      ...p,
+      lat: parseFloat(p.lat.toString().replace(',','.')),
+      lng: parseFloat(p.lng.toString().replace(',','.')),
+      _dist: haverDist(parseFloat(p.lat.toString().replace(',','.')), parseFloat(p.lng.toString().replace(',','.')))
+    })).filter(p => !isNaN(p.lat));
+
+    initMap();
+    ALL_PARKS.forEach(mkMarker);
+    renderAll();
+    document.getElementById('loadingOverlay').classList.add('done');
+  } catch (e) { console.error(e); }
+}
+
+document.getElementById('searchQ').oninput = (e) => { query = e.target.value; renderAll(); };
+document.querySelectorAll('.f-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.f;
+    renderAll();
+  };
+});
+
+window.onload = loadData;
+</script>
+</body>
+</html>
