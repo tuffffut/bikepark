@@ -409,9 +409,9 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 <script>
 // ========================================================
 // VLOZ SEM SVOU APPS SCRIPT URL (nahrad text v apostrofech)
-// Napr: var SU = 'https://script.google.com/macros/s/AKfycb.../exec';
+// Napr: var SU = 'https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
 // ========================================================
-var SU = 'localStorage.getItem('https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec') || 'VLOZ_ZDE_SVOU_APPS_SCRIPT_URL';
+var SU = 'https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
 var OLA = 49.1694, OLN = 16.5928;
 var PARKS = [], flt = 'all', qry = '', srt = 'dist', selId = null;
 var MAP, MKS = {}, UD = {};
@@ -667,20 +667,24 @@ function pr(row) {
 
 async function loadData() {
   var msg = document.getElementById('ld-msg');
-  if (!SU) {
-    var u = prompt('Vloz Apps Script URL (z Google Sheets > Rozsireni > Apps Script > Nasadit):\n\nZrus pro ukazana data.');
-    if (u && u.indexOf('http')===0) { localStorage.setItem('bp_url',u); location.reload(); return []; }
-    msg.textContent = 'Ukazuji zabudovana data'; return FD();
+  // Pokud URL není nastavena nebo je placeholder, rovnou použij zabudovaná data
+  var isPlaceholder = !SU || SU === 'VLOZ_ZDE_SVOU_APPS_SCRIPT_URL' || SU.indexOf('http') !== 0;
+  if (isPlaceholder) {
+    msg.textContent = 'Zobrazuji zabudovaná data';
+    return FD();
   }
   try {
-    msg.textContent = 'Nacitam z Google Sheets...';
+    msg.textContent = 'Načítám z Google Sheets...';
     var r = await fetch(SU+'?action=getData');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     var j = await r.json();
     if (j.error) throw new Error(j.error);
     j.data.forEach(function(row){ if(row.id) UD[row.id]={my_status:row.my_status||'',my_note:row.my_note||'',my_rating:row.my_rating||'',my_visited_date:row.my_visited_date||''}; });
     return j.data.map(pr).filter(Boolean);
   } catch(e) {
-    console.error(e); toast('Chyba Sheets: '+e.message,'err'); return FD();
+    console.error('Sheets error:', e);
+    toast('Chyba Sheets: '+e.message+' — zobrazuji zabudovaná data','err');
+    return FD();
   }
 }
 
@@ -690,12 +694,24 @@ document.getElementById('ss').addEventListener('change', function(e){srt=e.targe
 
 (async function(){
   try {
-    initMap(); PARKS = await loadData(); PARKS.forEach(addMk);
-    document.getElementById('sBP').textContent = PARKS.filter(function(p){return p.type==='bikepark';}).length+' bikepark';
+    initMap();
+    PARKS = await loadData();
+    PARKS.forEach(addMk);
+    document.getElementById('sBP').textContent = PARKS.filter(function(p){return p.type==='bikepark';}).length+' bikeparků';
     document.getElementById('sTC').textContent = PARKS.filter(function(p){return p.type==='trail';}).length+' trail center';
     render();
-  } catch(e) { console.error(e); toast('Chyba spusteni: '+e.message,'err'); }
-  finally { document.getElementById('ld').classList.add('gone'); }
+  } catch(e) {
+    console.error('Boot error:', e);
+    // I chyba musí skrýt loader a zobrazit záložní data
+    try {
+      if (!PARKS || !PARKS.length) { PARKS = FD(); PARKS.forEach(addMk); render(); }
+    } catch(e2) { console.error(e2); }
+    toast('Chyba: '+e.message,'err');
+  } finally {
+    // Loader VŽDY zmizí
+    var ld = document.getElementById('ld');
+    if (ld) ld.classList.add('gone');
+  }
 })();
 
 function FD() {
