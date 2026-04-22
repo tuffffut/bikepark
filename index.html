@@ -464,7 +464,7 @@ function addMk(p) {
 function mkpop(p) {
   var bp = p.type==='bikepark', u = gu(p.id);
   var st = u.my_status === 'planned' ? '<br><b style="color:#d4500e">V planu</b>' :
-           u.my_status === 'visited' ? '<br><b style="color:#24603f">Navštívěno</b>' : '';
+           u.my_status === 'visited' ? '<br><b style="color:#24603f">Navštíveno</b>' : '';
   return '<div><div class="pop-str '+(bp?'bp':'tc')+'"></div>' +
     '<div class="pop-bdy">' +
       '<div class="pop-nm">'+esc(p.name)+'</div>' +
@@ -530,7 +530,7 @@ function mkcardhtml(p) {
     ph += '<span class="tp">'+ic+' '+esc(t.n)+(t.km?'<span class="tp-km"> '+t.km+'km</span>':'')+'</span>';
   });
   if(tr.length>6) ph+='<span class="tp" style="color:var(--ink3)">+'+(tr.length-6)+'</span>';
-  var stag = isPl?'<span class="badge b-plan">V planu</span>':isVi?'<span class="badge b-vis">Navštívěno</span>':'';
+  var stag = isPl?'<span class="badge b-plan">V planu</span>':isVi?'<span class="badge b-vis">Navštíveno</span>':'';
   var cls = 'card' + (isSel?(bp?' sel':' sel tc'):'');
   var mcu = 'https://mapy.cz/zakladni?x='+p.lng+'&y='+p.lat+'&z=15';
   return '<article class="'+cls+'" data-id="'+p.id+'">' +
@@ -543,7 +543,7 @@ function mkcardhtml(p) {
       '</div>' +
       '<div class="c-btns">' +
         '<button class="ab'+(isPl?' on-p':'')+'" data-a="pl" title="V planu">&#128204;</button>' +
-        '<button class="ab'+(isVi?' on-v':'')+'" data-a="vi" title="Navštívěno">&#10003;</button>' +
+        '<button class="ab'+(isVi?' on-v':'')+'" data-a="vi" title="Navštíveno">&#10003;</button>' +
         '<button class="ab" data-a="x" title="Detail">&#9660;'+(hasN?'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--orange);vertical-align:middle;margin-left:1px"></span>':'')+'</button>' +
       '</div>' +
     '</div>' +
