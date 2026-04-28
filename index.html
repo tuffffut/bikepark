@@ -2,374 +2,246 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Bikepark Atlas CR</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root {
-  --bg: #f2efe9;
-  --white: #ffffff;
-  --card: #ffffff;
-  --border: #e3dfd8;
-  --border2: #ccc8c0;
-  --ink: #18160f;
-  --ink2: #5a564f;
-  --ink3: #a09b93;
-  --orange: #d4500e;
-  --orange-l: #fff3ee;
-  --orange-m: #fedbc8;
-  --green: #24603f;
-  --green-l: #ebf5ef;
-  --green-m: #b8deca;
-  --blue: #1a4faa;
-  --yellow: #e09b00;
-  --sh1: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-  --sh2: 0 4px 16px rgba(0,0,0,.09), 0 1px 4px rgba(0,0,0,.05);
-  --sh3: 0 8px 28px rgba(0,0,0,.12);
-  --r: 12px;
-  --r2: 16px;
+  --bg:#f0ede7; --white:#fff; --border:#e3dfd8; --border2:#ccc8c0;
+  --ink:#18160f; --ink2:#5a564f; --ink3:#a09b93;
+  --orange:#d4500e; --orange-l:#fff3ee; --orange-m:#fbd5c0;
+  --green:#24603f; --green-l:#ebf5ef; --green-m:#b8deca;
+  --blue:#1a4faa; --yellow:#e09b00;
+  --sh1:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 4px 16px rgba(0,0,0,.09),0 1px 4px rgba(0,0,0,.05);
+  --sh3:0 8px 28px rgba(0,0,0,.13);
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;overflow-x:hidden}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
-body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; }
+/* ── HEADER ── */
+.hdr{position:sticky;top:0;z-index:900;background:var(--white);border-bottom:1px solid var(--border);box-shadow:var(--sh1);height:56px;padding:0 14px;display:flex;align-items:center;gap:10px}
+.logo{font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;letter-spacing:-.3px}
+.logo i{color:var(--orange);font-style:normal}
+.vline{width:1px;height:22px;background:var(--border2);flex-shrink:0}
+.pills{display:flex;gap:4px}
+.pill{font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1.5px solid var(--border2);background:transparent;color:var(--ink2);cursor:pointer;white-space:nowrap;transition:all .14s;-webkit-tap-highlight-color:transparent}
+.pill:hover,.pill:active{border-color:var(--orange);color:var(--orange)}
+.pill.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.pill.on.tc{background:var(--green);border-color:var(--green)}
+.srch{position:relative;flex:1;min-width:0;max-width:180px}
+.srch input{width:100%;border:1.5px solid var(--border2);border-radius:20px;background:var(--bg);padding:6px 10px 6px 28px;font:inherit;font-size:13px;color:var(--ink);outline:none;transition:border-color .14s}
+.srch input:focus{border-color:var(--orange)}
+.srch::before{content:'\1F50D';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink3);pointer-events:none}
+.hd-r{margin-left:auto;display:flex;gap:10px;flex-shrink:0}
+.hstat{font-size:11.5px;color:var(--ink3);display:flex;align-items:center;gap:4px}
+.hdot{width:7px;height:7px;border-radius:50%}
 
-/* === HEADER === */
-.hdr {
-  position: sticky; top: 0; z-index: 900;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  box-shadow: var(--sh1);
-  height: 56px;
-  padding: 0 18px;
-  display: flex; align-items: center; gap: 12px;
-}
-.logo { font-size: 17px; font-weight: 800; color: var(--ink); white-space: nowrap; letter-spacing: -.2px; }
-.logo i { color: var(--orange); font-style: normal; }
-.vline { width: 1px; height: 22px; background: var(--border2); flex-shrink: 0; }
-.pills { display: flex; gap: 4px; }
-.pill {
-  font-size: 12px; font-weight: 600;
-  padding: 4px 11px; border-radius: 20px;
-  border: 1.5px solid var(--border2);
-  background: transparent; color: var(--ink2);
-  cursor: pointer; white-space: nowrap;
-  transition: all .14s;
-}
-.pill:hover { border-color: var(--orange); color: var(--orange); }
-.pill.on { background: var(--orange); border-color: var(--orange); color: #fff; }
-.pill.on.tc { background: var(--green); border-color: var(--green); }
-.srch { position: relative; flex-shrink: 0; }
-.srch input {
-  border: 1.5px solid var(--border2); border-radius: 20px;
-  background: var(--bg); padding: 5px 12px 5px 30px;
-  font: inherit; font-size: 13px; color: var(--ink);
-  width: 190px; outline: none;
-  transition: border-color .14s;
-}
-.srch input:focus { border-color: var(--orange); }
-.srch::before {
-  content: '\1F50D';
-  position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
-  font-size: 13px; color: var(--ink3); pointer-events: none;
-}
-.hstats { margin-left: auto; display: flex; gap: 12px; flex-shrink: 0; }
-.hstat { font-size: 12px; color: var(--ink3); display: flex; align-items: center; gap: 5px; }
-.hstat-dot { width: 7px; height: 7px; border-radius: 50%; }
+/* ── LAYOUT ── */
+.app-wrap{display:grid;grid-template-columns:400px 1fr;height:calc(100vh - 56px)}
+.sidebar{display:flex;flex-direction:column;background:var(--bg);border-right:1px solid var(--border);overflow:hidden;height:calc(100vh - 56px)}
+.sb-top{padding:9px 12px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sb-cnt{font-size:12px;font-weight:500;color:var(--ink3)}
+.sb-cnt b{color:var(--orange);font-weight:700}
+.sort-sel{font:inherit;font-size:12px;border:1px solid var(--border2);border-radius:6px;background:var(--white);padding:4px 8px;color:var(--ink2);outline:none;cursor:pointer}
+/* THE FIX: display:block, not flex */
+.cl{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px}
+.cl::-webkit-scrollbar{width:4px}
+.cl::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.card+.card{margin-top:9px}
 
-/* === LAYOUT: sidebar left, map right, sticky === */
-.app-wrap {
-  display: grid;
-  grid-template-columns: 420px 1fr;
-  height: calc(100vh - 56px);
-}
-.sidebar {
-  display: flex; flex-direction: column;
-  background: var(--bg);
-  border-right: 1px solid var(--border);
-  overflow: hidden;
-  height: calc(100vh - 56px);
-}
-.sb-top {
-  padding: 10px 14px;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
-}
-.sb-count { font-size: 12.5px; font-weight: 500; color: var(--ink3); }
-.sb-count b { color: var(--orange); font-weight: 700; }
-.sort-sel {
-  font: inherit; font-size: 12px;
-  border: 1px solid var(--border2); border-radius: 6px;
-  background: var(--white); padding: 4px 8px;
-  color: var(--ink2); outline: none; cursor: pointer;
-}
+/* ── MAP ── */
+.map-side{position:relative;height:calc(100vh - 56px)}
+#map{width:100%;height:100%}
+.map-lbl{position:absolute;bottom:28px;left:10px;z-index:500;background:var(--white);border:1px solid var(--border);border-radius:9px;padding:6px 10px;font-size:11px;color:var(--ink2);box-shadow:var(--sh2);pointer-events:none;line-height:1.45}
+.map-lbl strong{color:var(--orange);display:block;font-size:11.5px}
+/* fullscreen map button */
+.btn-fs{position:absolute;top:10px;right:10px;z-index:600;background:var(--white);border:1px solid var(--border);border-radius:9px;padding:8px 11px;font-size:13px;cursor:pointer;box-shadow:var(--sh2);display:none;align-items:center;gap:5px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--ink2);transition:all .14s}
+.btn-fs:active{background:var(--bg)}
+/* fullscreen map state */
+.map-side.fullscreen{position:fixed;inset:0;height:100dvh;z-index:9000}
+.map-side.fullscreen #map{height:100%}
+.map-side.fullscreen .btn-fs{top:14px;right:14px;display:flex;background:var(--white)}
+.map-side.fullscreen .map-lbl{bottom:14px}
+.btn-fs-close{position:absolute;top:14px;left:14px;z-index:9001;background:var(--orange);color:#fff;border:none;border-radius:9px;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:var(--sh2);display:none;align-items:center;gap:5px}
+.map-side.fullscreen .btn-fs-close{display:flex}
 
-/* THE FIX: normal block layout, not flex, so cards don't collapse */
-.card-list {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 12px;
-}
-.card-list::-webkit-scrollbar { width: 5px; }
-.card-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-/* gap between cards */
-.card + .card { margin-top: 10px; }
-
-/* === MAP === */
-.map-side { position: relative; height: calc(100vh - 56px); }
-#map { width: 100%; height: 100%; }
-.map-lbl {
-  position: absolute; bottom: 28px; left: 10px; z-index: 500;
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: 9px; padding: 6px 10px;
-  font-size: 11.5px; color: var(--ink2);
-  box-shadow: var(--sh2); pointer-events: none; line-height: 1.45;
-}
-.map-lbl strong { color: var(--orange); display: block; font-size: 12px; }
-
-/* === CARD === */
-.card {
-  background: var(--card);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r2);
-  overflow: hidden;
-  cursor: pointer;
-  box-shadow: var(--sh1);
-  transition: border-color .18s, box-shadow .18s, transform .15s;
-  /* CRITICAL: no flex-shrink, normal block */
-  display: block;
-}
-.card:hover { border-color: var(--orange); box-shadow: var(--sh2); transform: translateY(-1px); }
-.card.sel { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(212,80,14,.1), var(--sh2); }
-.card.sel.tc { border-color: var(--green); box-shadow: 0 0 0 3px rgba(36,96,63,.1), var(--sh2); }
-
-/* top accent */
-.c-stripe { height: 3px; }
-.c-stripe.bp { background: linear-gradient(90deg, var(--orange) 0%, #f07a4a 100%); }
-.c-stripe.tc { background: linear-gradient(90deg, var(--green) 0%, #42a86b 100%); }
+/* ── CARD ── */
+.card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--sh1);transition:border-color .18s,box-shadow .18s,transform .15s;display:block}
+.card:hover{border-color:var(--orange);box-shadow:var(--sh2);transform:translateY(-1px)}
+.card.sel{border-color:var(--orange);box-shadow:0 0 0 3px rgba(212,80,14,.1),var(--sh2)}
+.card.sel.tc{border-color:var(--green);box-shadow:0 0 0 3px rgba(36,96,63,.1),var(--sh2)}
+.c-stripe{height:3px}
+.c-stripe.bp{background:linear-gradient(90deg,var(--orange),#f07a4a)}
+.c-stripe.tc{background:linear-gradient(90deg,var(--green),#42a86b)}
 
 /* card head */
-.c-head { padding: 11px 13px 7px; display: flex; align-items: flex-start; gap: 10px; }
-.c-icon {
-  width: 40px; height: 40px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 19px; flex-shrink: 0;
-}
-.c-icon.bp { background: var(--orange-l); }
-.c-icon.tc { background: var(--green-l); }
-.c-body { flex: 1; min-width: 0; }
-.c-name {
-  font-size: 14.5px; font-weight: 700; color: var(--ink);
-  margin-bottom: 4px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.c-tags { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
-.badge {
-  font-size: 9.5px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
-  padding: 2px 7px; border-radius: 4px; white-space: nowrap;
-}
-.b-bp { background: var(--orange-l); color: var(--orange); }
-.b-tc { background: var(--green-l); color: var(--green); }
-.b-reg { background: #edeae4; color: var(--ink3); font-size: 9px; }
-.b-plan { background: var(--orange-l); color: var(--orange); }
-.b-vis  { background: var(--green-l); color: var(--green); }
-.c-btns { display: flex; gap: 4px; flex-shrink: 0; }
-.ab {
-  width: 30px; height: 30px; border-radius: 7px;
-  border: 1.5px solid var(--border); background: var(--bg);
-  font-size: 14px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .13s;
-}
-.ab:hover { border-color: var(--orange); background: var(--orange-l); }
-.ab.on-p { background: var(--orange-l); border-color: var(--orange); }
-.ab.on-v { background: var(--green-l); border-color: var(--green); }
+.c-head{padding:10px 12px 6px;display:flex;align-items:flex-start;gap:9px}
+.c-ico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.c-ico.bp{background:var(--orange-l)}.c-ico.tc{background:var(--green-l)}
+.c-body{flex:1;min-width:0}
+.c-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-tags{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.badge{font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:4px;white-space:nowrap}
+.b-bp{background:var(--orange-l);color:var(--orange)}
+.b-tc{background:var(--green-l);color:var(--green)}
+.b-reg{background:#edeae4;color:var(--ink3);font-size:9px}
+.b-pl{background:var(--orange-l);color:var(--orange)}
+.b-vi{background:var(--green-l);color:var(--green)}
+.c-btns{display:flex;gap:4px;flex-shrink:0}
+.ab{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s;-webkit-tap-highlight-color:transparent}
+.ab:hover,.ab:active{border-color:var(--orange);background:var(--orange-l)}
+.ab.on-p{background:var(--orange-l);border-color:var(--orange)}
+.ab.on-v{background:var(--green-l);border-color:var(--green)}
 
 /* 5 key stats */
-.c-stats {
-  padding: 2px 13px 10px;
-  display: flex; flex-wrap: wrap; gap: 4px 12px;
-}
-.cst { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink2); }
-.cst b { color: var(--ink); font-weight: 600; }
-.cst.fr b { color: var(--green); }
+.c-stats{padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.cst{display:flex;align-items:center;gap:3px;font-size:12px;color:var(--ink2)}
+.cst b{color:var(--ink);font-weight:600}
+.cst.fr b{color:var(--green)}
 
-/* expand toggle */
-.x-btn {
-  width: 100%; background: transparent;
-  border: none; border-top: 1px solid #f0ede7;
-  padding: 7px 13px;
-  display: flex; align-items: center; gap: 5px;
-  font: inherit; font-size: 12px; font-weight: 500; color: var(--ink3);
-  cursor: pointer; transition: color .13s; text-align: left;
-}
-.x-btn:hover, .x-btn.xo { color: var(--orange); }
-.x-arr { display: inline-block; transition: transform .2s; font-style: normal; font-size: 10px; }
-.x-btn.xo .x-arr { transform: rotate(180deg); }
+/* ── WEATHER STRIP (always visible) ── */
+.wx-strip{padding:8px 12px 10px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:6px;background:linear-gradient(180deg,#f7fbff 0%,var(--white) 100%)}
+.wx-col{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.7);border:1px solid #d8eaf8;border-radius:9px;padding:7px 10px}
+.wx-col.rain{background:rgba(240,245,255,.8);border-color:#c5d5f0}
+.wx-col.storm{background:rgba(248,244,255,.8);border-color:#c8b8f0}
+.wx-col.snow{background:rgba(240,250,255,.8);border-color:#b8def5}
+.wx-col.sun{background:rgba(255,252,238,.8);border-color:#f0dfaa}
+.wx-ico{font-size:26px;line-height:1;flex-shrink:0}
+.wx-info{flex:1;min-width:0}
+.wx-day-name{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink3);margin-bottom:1px}
+.wx-cond{font-size:11.5px;font-weight:600;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wx-temp{font-size:13px;font-weight:800;color:var(--ink)}
+.wx-temp small{font-size:10.5px;font-weight:500;color:var(--ink3)}
+.wx-wind{font-size:10.5px;color:var(--ink3)}
+.wx-wind b{color:var(--ink2)}
+.wx-loading{padding:8px 12px 10px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink3);border-top:1px solid var(--border)}
+.wxspin{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp .6s linear infinite;flex-shrink:0}
 
-/* === DETAIL === */
-.c-det { display: none; padding: 2px 13px 13px; border-top: 1px solid #f0ede7; }
-.c-det.open { display: block; }
-.ds { margin-top: 12px; }
-.ds-t {
-  font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
-  color: var(--ink3); margin-bottom: 6px;
-}
-.ds-desc { font-size: 12.5px; color: var(--ink2); line-height: 1.65; }
+/* ── EXPAND TOGGLE ── */
+.x-btn{width:100%;background:transparent;border:none;border-top:1px solid #f0ede7;padding:7px 12px;display:flex;align-items:center;gap:5px;font:inherit;font-size:12px;font-weight:500;color:var(--ink3);cursor:pointer;transition:color .13s;-webkit-tap-highlight-color:transparent}
+.x-btn:hover,.x-btn:active,.x-btn.xo{color:var(--orange)}
+.x-arr{display:inline-block;transition:transform .2s;font-size:10px}
+.x-btn.xo .x-arr{transform:rotate(180deg)}
 
-/* meta grid */
-.mg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-.mc { background: var(--bg); border-radius: 7px; padding: 7px 9px; }
-.mc-l { font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--ink3); margin-bottom: 2px; }
-.mc-v { font-size: 12.5px; font-weight: 700; color: var(--ink); }
-.mc-v.fr { color: var(--green); }
+/* ── DETAIL ── */
+.c-det{display:none;padding:2px 12px 12px;border-top:1px solid #f0ede7}
+.c-det.open{display:block}
+.ds{margin-top:11px}
+.ds-t{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+.ds-desc{font-size:12.5px;color:var(--ink2);line-height:1.65}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.mc{background:var(--bg);border-radius:7px;padding:7px 9px}
+.mc-l{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink3);margin-bottom:2px}
+.mc-v{font-size:12.5px;font-weight:700;color:var(--ink)}
+.mc-v.fr{color:var(--green)}
+.dbar{display:flex;align-items:center;gap:7px;margin-top:4px}
+.dsegs{display:flex;gap:3px;flex:1}
+.dseg{height:5px;flex:1;border-radius:3px;background:var(--border)}
+.dseg.g{background:#22c55e}.dseg.b{background:#3b82f6}.dseg.r{background:#ef4444}.dseg.k{background:#1c1917}
+.dtxt{font-size:11px;color:var(--ink3);white-space:nowrap}
+.tpills{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.tp{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:var(--ink2);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:3px 8px}
+.tp-km{font-size:10px;color:var(--ink3)}
+.stars{display:flex;gap:2px;margin-top:4px}
+.star{font-size:22px;color:var(--border2);cursor:pointer;line-height:1;transition:color .1s,transform .1s;-webkit-tap-highlight-color:transparent}
+.star.on{color:var(--yellow)}
+.star:hover,.star:active{transform:scale(1.15)}
+.rrow{display:flex;align-items:center;gap:9px}
+.rlbl{font-size:12px;color:var(--ink3)}
+.ntxt{margin-top:5px}
+.ntxt textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:var(--bg);resize:vertical;min-height:70px;outline:none;line-height:1.55;transition:border-color .14s}
+.ntxt textarea:focus{border-color:var(--orange)}
+.ntxt textarea::placeholder{color:#c8c3bb}
+.nrow{margin-top:6px;display:flex;align-items:center;gap:9px}
+.bsave{font:inherit;font-size:12px;font-weight:600;padding:6px 14px;background:var(--orange);color:#fff;border:none;border-radius:7px;cursor:pointer;transition:background .13s}
+.bsave:hover{background:#b8400b}
+.bsave:disabled{background:var(--border2);cursor:not-allowed}
+.nst{font-size:11.5px;color:var(--ink3)}
+.nst.ok{color:var(--green)}.nst.err{color:var(--orange)}
+.lrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.lbtn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1.5px solid var(--border2);border-radius:7px;font:inherit;font-size:12px;font-weight:500;color:var(--ink2);text-decoration:none;background:transparent;cursor:pointer;transition:all .13s;-webkit-tap-highlight-color:transparent}
+.lbtn:hover,.lbtn:active{border-color:var(--orange);color:var(--orange);background:var(--orange-l)}
 
-/* difficulty bar */
-.dbar { display: flex; align-items: center; gap: 7px; margin-top: 5px; }
-.dsegs { display: flex; gap: 3px; flex: 1; }
-.ds_ { height: 5px; flex: 1; border-radius: 3px; background: var(--border); }
-.ds_.g { background: #22c55e; }
-.ds_.b { background: #3b82f6; }
-.ds_.r { background: #ef4444; }
-.ds_.k { background: #1c1917; }
-.dtxt { font-size: 11px; color: var(--ink3); white-space: nowrap; }
+/* ── LEAFLET ── */
+.leaflet-popup-content-wrapper{border-radius:13px!important;box-shadow:var(--sh3)!important;border:1px solid var(--border)!important;padding:0!important;overflow:hidden}
+.leaflet-popup-content{margin:0!important;min-width:210px}
+.leaflet-popup-close-button{top:8px!important;right:10px!important;color:var(--ink3)!important;font-size:17px!important}
+.leaflet-control-zoom{border:none!important;box-shadow:var(--sh2)!important}
+.leaflet-control-zoom a{background:var(--white)!important;color:var(--ink)!important;border-color:var(--border)!important}
+.leaflet-control-zoom a:hover{color:var(--orange)!important}
+.leaflet-control-attribution{background:rgba(255,255,255,.8)!important;font-size:10px!important}
+.pst{height:4px}.pst.bp{background:linear-gradient(90deg,var(--orange),#f07a4a)}.pst.tc{background:linear-gradient(90deg,var(--green),#42a86b)}
+.pbdy{padding:11px 13px 13px}
+.pnm{font-size:14px;font-weight:700;margin-bottom:2px}
+.ptp{font-size:11.5px;font-weight:600;margin-bottom:6px}
+.ptp.bp{color:var(--orange)}.ptp.tc{color:var(--green)}
+.pmt{font-size:12px;color:var(--ink2);line-height:1.75}
+.pbtn{display:block;width:100%;margin-top:9px;padding:7px;border:none;border-radius:7px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;text-align:center;transition:filter .13s}
+.pbtn.bp{background:var(--orange);color:#fff}.pbtn.tc{background:var(--green);color:#fff}
+.pbtn:hover{filter:brightness(.9)}
 
-/* trail pills */
-.tpills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-.tp {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11.5px; font-weight: 500; color: var(--ink2);
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 5px; padding: 3px 8px;
-}
-.tp-km { font-size: 10px; color: var(--ink3); }
+/* ── LOADING ── */
+#ld{position:fixed;inset:0;z-index:9999;background:var(--white);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#ld.gone{display:none}
+.spin{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#ld-t{font-size:18px;font-weight:700;color:var(--ink2)}
+#ld-m{font-size:13px;color:var(--ink3);max-width:280px;text-align:center}
+.ld-prog{width:200px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:4px}
+.ld-bar{height:100%;background:var(--orange);border-radius:2px;transition:width .3s;width:0%}
 
-/* stars */
-.stars { display: flex; gap: 2px; margin-top: 4px; }
-.star { font-size: 22px; color: var(--border2); cursor: pointer; line-height: 1; transition: color .1s, transform .1s; }
-.star.on { color: var(--yellow); }
-.star:hover { transform: scale(1.15); }
-.rrow { display: flex; align-items: center; gap: 9px; }
-.rlbl { font-size: 12px; color: var(--ink3); }
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--white);border:1.5px solid var(--border);border-radius:22px;padding:8px 16px;font-size:12.5px;color:var(--ink2);box-shadow:var(--sh2);opacity:0;transform:translateY(8px);transition:all .24s;pointer-events:none;max-width:280px}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.ok{color:var(--green);border-color:var(--green-m)}
+#toast.err{color:var(--orange);border-color:var(--orange-m)}
 
-/* note */
-.ntxt { margin-top: 5px; }
-.ntxt textarea {
-  width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
-  padding: 8px 10px; font: inherit; font-size: 12.5px; color: var(--ink);
-  background: var(--bg); resize: vertical; min-height: 72px;
-  outline: none; line-height: 1.55; transition: border-color .14s;
-}
-.ntxt textarea:focus { border-color: var(--orange); }
-.ntxt textarea::placeholder { color: #c8c3bb; }
-.nrow { margin-top: 6px; display: flex; align-items: center; gap: 9px; }
-.bsave {
-  font: inherit; font-size: 12px; font-weight: 600;
-  padding: 6px 14px; background: var(--orange); color: #fff;
-  border: none; border-radius: 7px; cursor: pointer;
-  transition: background .13s;
-}
-.bsave:hover { background: #b8400b; }
-.bsave:disabled { background: var(--border2); cursor: not-allowed; }
-.nst { font-size: 11.5px; color: var(--ink3); }
-.nst.ok { color: var(--green); }
-.nst.err { color: var(--orange); }
-
-/* link buttons */
-.lrow { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 11px; }
-.lbtn {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 6px 12px; border: 1.5px solid var(--border2);
-  border-radius: 7px; font: inherit; font-size: 12px; font-weight: 500;
-  color: var(--ink2); text-decoration: none; background: transparent;
-  cursor: pointer; transition: all .13s;
-}
-.lbtn:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-l); }
-
-/* === POPUP === */
-.leaflet-popup-content-wrapper {
-  border-radius: 13px !important;
-  box-shadow: var(--sh3) !important;
-  border: 1px solid var(--border) !important;
-  padding: 0 !important; overflow: hidden;
-}
-.leaflet-popup-content { margin: 0 !important; min-width: 215px; }
-.leaflet-popup-close-button { top: 8px !important; right: 10px !important; color: var(--ink3) !important; font-size: 17px !important; }
-.leaflet-control-zoom { border: none !important; box-shadow: var(--sh2) !important; }
-.leaflet-control-zoom a { background: var(--white) !important; color: var(--ink) !important; border-color: var(--border) !important; }
-.leaflet-control-zoom a:hover { color: var(--orange) !important; }
-.leaflet-control-attribution { background: rgba(255,255,255,.8) !important; font-size: 10px !important; }
-.pop-str { height: 4px; }
-.pop-str.bp { background: linear-gradient(90deg, var(--orange), #f07a4a); }
-.pop-str.tc { background: linear-gradient(90deg, var(--green), #42a86b); }
-.pop-bdy { padding: 12px 14px 14px; }
-.pop-nm { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-.pop-tp { font-size: 11.5px; font-weight: 600; margin-bottom: 7px; }
-.pop-tp.bp { color: var(--orange); }
-.pop-tp.tc { color: var(--green); }
-.pop-mt { font-size: 12px; color: var(--ink2); line-height: 1.75; }
-.pop-btn {
-  display: block; width: 100%; margin-top: 9px; padding: 7px;
-  border: none; border-radius: 7px;
-  font: inherit; font-size: 12.5px; font-weight: 700;
-  cursor: pointer; text-align: center; transition: filter .13s;
-}
-.pop-btn.bp { background: var(--orange); color: #fff; }
-.pop-btn.tc { background: var(--green); color: #fff; }
-.pop-btn:hover { filter: brightness(.9); }
-
-/* === LOADING === */
-#ld {
-  position: fixed; inset: 0; z-index: 9999;
-  background: var(--white);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 14px;
-}
-#ld.gone { display: none; }
-.spin {
-  width: 38px; height: 38px;
-  border: 3px solid var(--border); border-top-color: var(--orange);
-  border-radius: 50%;
-  animation: sp .7s linear infinite;
-}
-@keyframes sp { to { transform: rotate(360deg); } }
-#ld-title { font-size: 18px; font-weight: 700; color: var(--ink2); letter-spacing: -.2px; }
-#ld-msg { font-size: 13px; color: var(--ink3); }
-
-/* === TOAST === */
-#toast {
-  position: fixed; bottom: 20px; right: 20px; z-index: 9999;
-  background: var(--white); border: 1.5px solid var(--border);
-  border-radius: 22px; padding: 8px 16px;
-  font-size: 12.5px; color: var(--ink2);
-  box-shadow: var(--sh2);
-  opacity: 0; transform: translateY(8px);
-  transition: all .24s; pointer-events: none;
-}
-#toast.show { opacity: 1; transform: translateY(0); }
-#toast.ok { color: var(--green); border-color: var(--green-m); }
-#toast.err { color: var(--orange); border-color: var(--orange-m); }
-
-/* === MOBILE === */
-@media (max-width: 800px) {
-  .app-wrap { grid-template-columns: 1fr; grid-template-rows: 48vw 1fr; height: auto; }
-  .sidebar { height: auto; order: 2; overflow: visible; }
-  .map-side { height: 48vw; min-height: 240px; order: 1; }
-  .card-list { max-height: none; }
-  .hstats { display: none; }
-  .srch input { width: 140px; }
-  .mg { grid-template-columns: repeat(2, 1fr); }
+/* ── MOBILE ── */
+@media(max-width:800px){
+  body{font-size:15px}
+  .app-wrap{display:block;height:auto}
+  .sidebar{height:auto;overflow:visible}
+  .cl{padding:10px;max-height:none}
+  .map-side{height:52vw;min-height:220px}
+  .btn-fs{display:flex!important}
+  .hd-r{display:none}
+  .srch input{font-size:15px}
+  .pill{font-size:13px;padding:6px 12px}
+  /* bigger cards on mobile */
+  .c-name{font-size:15.5px}
+  .c-ico{width:42px;height:42px;font-size:20px}
+  .badge{font-size:10.5px;padding:3px 8px}
+  .cst{font-size:13px}
+  .cst b{font-size:13px}
+  .wx-col{padding:8px 10px}
+  .wx-ico{font-size:28px}
+  .wx-cond{font-size:12.5px}
+  .wx-temp{font-size:14px}
+  .ab{width:36px;height:36px;font-size:16px}
+  .x-btn{font-size:13px;padding:9px 12px}
+  .tp{font-size:12.5px;padding:4px 9px}
+  .mg{grid-template-columns:repeat(2,1fr)}
+  .mc-v{font-size:13.5px}
+  .star{font-size:26px}
+  .ntxt textarea{font-size:15px;min-height:80px}
+  .bsave{font-size:14px;padding:9px 18px}
+  .lbtn{font-size:13px;padding:9px 14px}
 }
 </style>
 </head>
 <body>
 
-<div id="ld"><div class="spin"></div><div id="ld-title">Bikepark Atlas CR</div><div id="ld-msg">Nacitam data...</div></div>
+<div id="ld">
+  <div class="spin"></div>
+  <div id="ld-t">Bikepark Atlas CR</div>
+  <div id="ld-m">Nacitam data...</div>
+  <div class="ld-prog"><div class="ld-bar" id="ldbar"></div></div>
+</div>
 <div id="toast"></div>
 
 <header class="hdr">
@@ -380,339 +252,395 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
     <button class="pill" data-f="bikepark">Bikeparky</button>
     <button class="pill tc" data-f="trail">Trail centra</button>
   </div>
-  <div class="srch"><input type="text" id="sq" placeholder="Hledat lokalitu..."></div>
-  <div class="hstats">
-    <div class="hstat"><div class="hstat-dot" style="background:var(--orange)"></div><span id="sBP">-</span></div>
-    <div class="hstat"><div class="hstat-dot" style="background:var(--green)"></div><span id="sTC">-</span></div>
+  <div class="srch"><input type="text" id="sq" placeholder="Hledat..."></div>
+  <div class="hd-r">
+    <div class="hstat"><div class="hdot" style="background:var(--orange)"></div><span id="sBP">-</span></div>
+    <div class="hstat"><div class="hdot" style="background:var(--green)"></div><span id="sTC">-</span></div>
   </div>
 </header>
 
 <div class="app-wrap">
   <aside class="sidebar">
     <div class="sb-top">
-      <div class="sb-count">Zobrazeno: <b id="cnt">-</b> lokalit</div>
+      <div class="sb-cnt">Zobrazeno: <b id="cnt">-</b> lokalit</div>
       <select class="sort-sel" id="ss">
-        <option value="dist">Vzdalmost</option>
+        <option value="dist">Vzdalnost</option>
         <option value="name">Nazev A-Z</option>
         <option value="rating">Hodnoceni</option>
         <option value="type">Typ</option>
       </select>
     </div>
-    <div class="card-list" id="cl"></div>
+    <div class="cl" id="cl"></div>
   </aside>
-  <div class="map-side">
+  <div class="map-side" id="mapside">
     <div id="map"></div>
-    <div class="map-lbl"><strong>Vychozi bod</strong>Brno - Novy Liskovec</div>
+    <div class="map-lbl"><strong>Vychozi bod</strong>Brno – Novy Liskovec</div>
+    <button class="btn-fs" id="btnFS" onclick="toggleFS()">&#x26F6; Cela obrazovka</button>
+    <button class="btn-fs-close" id="btnFSClose" onclick="toggleFS()">&#x2715; Zavrit mapu</button>
   </div>
 </div>
 
 <script>
-// ========================================================
-// VLOZ SEM SVOU APPS SCRIPT URL (nahrad text v apostrofech)
-// Napr: var SU = 'https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
-// ========================================================
-var SU = 'https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
-var OLA = 49.1694, OLN = 16.5928;
-var PARKS = [], flt = 'all', qry = '', srt = 'dist', selId = null;
-var MAP, MKS = {}, UD = {};
+'use strict';
 
-function dist(la, ln) {
-  var R = 6371, d2r = function(x) { return x * Math.PI / 180; };
-  var a = Math.sin(d2r(la-OLA)/2)*Math.sin(d2r(la-OLA)/2) +
-          Math.cos(d2r(OLA))*Math.cos(d2r(la))*Math.sin(d2r(ln-OLN)/2)*Math.sin(d2r(ln-OLN)/2);
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-}
-function ftime(km) {
-  var m = Math.round(km / 80 * 60);
-  return m < 60 ? m + ' min' : Math.floor(m/60) + 'h' + (m%60 ? ' ' + m%60 + 'm' : '');
-}
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function gu(id) { return UD[id] || {}; }
-function su(id, f, v) {
-  if (!UD[id]) UD[id] = {};
-  UD[id][f] = v;
-  if (SU) fetch(SU, { method:'POST', body: JSON.stringify({ action:'saveUserData', id:id, field:f, value:v }) }).catch(function(){});
-}
+// ── CONFIG ──────────────────────────────────────────────
+// Vloz svou Apps Script URL sem:
+var SU = localStorage.getItem('bp_url') || 'VLOZ_ZDE_SVOU_APPS_SCRIPT_URL';
+// ────────────────────────────────────────────────────────
 
-function initMap() {
-  MAP = L.map('map').setView([49.8, 16.5], 7);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    { attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19 }
-  ).addTo(MAP);
-  L.marker([OLA, OLN], { icon: L.divIcon({
-    className:'',
-    html:'<div style="width:13px;height:13px;background:#d4500e;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 7px rgba(212,80,14,.5)"></div>',
-    iconSize:[13,13], iconAnchor:[6,6]
-  })}).addTo(MAP).bindTooltip('Brno - Novy Liskovec');
-}
+var OLA=49.1694, OLN=16.5928;
+var PARKS=[], flt='all', qry='', srt='dist', selId=null;
+var MAP, MKS={}, UD={};
+var WX={}; // weather cache by park id
 
-function addMk(p) {
-  var bp = p.type === 'bikepark', c = bp ? '#d4500e' : '#24603f';
-  var ico = L.divIcon({
-    className:'',
-    html: '<div style="width:34px;height:34px;border-radius:9px;background:'+c+';border:2px solid rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 9px rgba(0,0,0,.22);cursor:pointer">' + (bp ? '\u{1F6A0}' : '\u{1F97E}') + '</div>',
-    iconSize:[34,34], iconAnchor:[17,17], popupAnchor:[0,-20]
+// ── Distance ──
+function dist(la,ln){
+  var R=6371,r=function(x){return x*Math.PI/180};
+  var a=Math.sin(r(la-OLA)/2)*Math.sin(r(la-OLA)/2)+Math.cos(r(OLA))*Math.cos(r(la))*Math.sin(r(ln-OLN)/2)*Math.sin(r(ln-OLN)/2);
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+function ftime(km){var m=Math.round(km/80*60);return m<60?m+'min':Math.floor(m/60)+'h'+(m%60?' '+m%60+'m':'')}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function gu(id){return UD[id]||{}}
+function su(id,f,v){if(!UD[id])UD[id]={};UD[id][f]=v;if(SU&&SU.indexOf('http')===0)fetch(SU,{method:'POST',body:JSON.stringify({action:'saveUserData',id:id,field:f,value:v})}).catch(function(){})}
+
+// ── Weather codes ──
+var WXC={
+  0:{i:'\u2600\uFE0F',l:'Jasno',c:'sun'},
+  1:{i:'\uD83C\uDF24\uFE0F',l:'Prevazne jasno',c:'sun'},
+  2:{i:'\u26C5',l:'Polojasno',c:''},
+  3:{i:'\u2601\uFE0F',l:'Zatazeno',c:''},
+  45:{i:'\uD83C\uDF2B\uFE0F',l:'Mlha',c:''},
+  48:{i:'\uD83C\uDF2B\uFE0F',l:'Namraza',c:''},
+  51:{i:'\uD83C\uDF26\uFE0F',l:'Slabe mrholeni',c:'rain'},
+  53:{i:'\uD83C\uDF26\uFE0F',l:'Mrholeni',c:'rain'},
+  55:{i:'\uD83C\uDF27\uFE0F',l:'Huste mrholeni',c:'rain'},
+  61:{i:'\uD83C\uDF27\uFE0F',l:'Slaby dest',c:'rain'},
+  63:{i:'\uD83C\uDF27\uFE0F',l:'Dest',c:'rain'},
+  65:{i:'\uD83C\uDF27\uFE0F',l:'Vydatny dest',c:'rain'},
+  71:{i:'\uD83C\uDF28\uFE0F',l:'Slabe snezeni',c:'snow'},
+  73:{i:'\uD83C\uDF28\uFE0F',l:'Snezeni',c:'snow'},
+  75:{i:'\u2744\uFE0F',l:'Vydatne snezeni',c:'snow'},
+  80:{i:'\uD83C\uDF26\uFE0F',l:'Prehanky',c:'rain'},
+  81:{i:'\uD83C\uDF27\uFE0F',l:'Silne prehanky',c:'rain'},
+  82:{i:'\u26C8\uFE0F',l:'Bourkove prehanky',c:'storm'},
+  95:{i:'\u26C8\uFE0F',l:'Bourka',c:'storm'},
+  96:{i:'\u26C8\uFE0F',l:'Bourka s krupobitim',c:'storm'}
+};
+function wxInfo(code){
+  var c=WXC[code];if(c)return c;
+  var keys=Object.keys(WXC).map(Number).sort(function(a,b){return a-b});
+  for(var i=keys.length-1;i>=0;i--){if(keys[i]<=code)return WXC[keys[i]]}
+  return {i:'\uD83C\uDF21\uFE0F',l:'Neuvedeno',c:''};
+}
+function windLbl(kmh){
+  if(kmh<10)return 'Klid';if(kmh<20)return 'Slaby';if(kmh<30)return 'Mirny';
+  if(kmh<40)return 'Cerstvý';if(kmh<55)return 'Silny';return 'Bourlivy';
+}
+function nextWeekend(){
+  var t=new Date(),d=t.getDay(),ds=(6-d+7)%7;
+  if(ds===0)ds=7;
+  var sa=new Date(t);sa.setDate(t.getDate()+ds);
+  var su2=new Date(sa);su2.setDate(sa.getDate()+1);
+  return [sa,su2];
+}
+function fmtWkDay(d){var n=['Ne','Po','Ut','St','Ct','Pa','So'];return n[d.getDay()]+' '+d.getDate()+'.'+(d.getMonth()+1)+'.'}
+
+// Load weather for ALL parks at once using Promise.all
+async function loadAllWeather(parks){
+  var weekend=nextWeekend();
+  var satStr=weekend[0].toISOString().slice(0,10);
+  var sunStr=weekend[1].toISOString().slice(0,10);
+
+  var total=parks.length, done=0;
+  function updProg(){
+    done++;
+    var pct=Math.round(done/total*100);
+    var bar=document.getElementById('ldbar');
+    if(bar)bar.style.width=pct+'%';
+  }
+
+  // Batch: fetch all parks weather simultaneously
+  var promises=parks.map(function(p){
+    var url='https://api.open-meteo.com/v1/forecast?latitude='+p.lat.toFixed(4)+'&longitude='+p.lng.toFixed(4)+'&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=14';
+    return fetch(url).then(function(r){return r.json()}).then(function(data){
+      var dates=data.daily.time;
+      var si=dates.indexOf(satStr), ui=dates.indexOf(sunStr);
+      if(si<0||ui<0){WX[p.id]=null;updProg();return}
+      WX[p.id]=[
+        {date:weekend[0],maxT:Math.round(data.daily.temperature_2m_max[si]),minT:Math.round(data.daily.temperature_2m_min[si]),code:data.daily.weathercode[si],wind:Math.round(data.daily.windspeed_10m_max[si]),precip:data.daily.precipitation_probability_max[si]},
+        {date:weekend[1],maxT:Math.round(data.daily.temperature_2m_max[ui]),minT:Math.round(data.daily.temperature_2m_min[ui]),code:data.daily.weathercode[ui],wind:Math.round(data.daily.windspeed_10m_max[ui]),precip:data.daily.precipitation_probability_max[ui]}
+      ];
+      updProg();
+    }).catch(function(){WX[p.id]=null;updProg()});
   });
-  var mk = L.marker([p.lat, p.lng], {icon:ico}).addTo(MAP);
-  mk.bindPopup(mkpop(p), {maxWidth:275});
-  mk.on('click', function() { pick(p.id); });
-  MKS[p.id] = mk;
+
+  await Promise.all(promises);
 }
 
-function mkpop(p) {
-  var bp = p.type==='bikepark', u = gu(p.id);
-  var st = u.my_status === 'planned' ? '<br><b style="color:#d4500e">V planu</b>' :
-           u.my_status === 'visited' ? '<br><b style="color:#24603f">Navštíveno</b>' : '';
-  return '<div><div class="pop-str '+(bp?'bp':'tc')+'"></div>' +
-    '<div class="pop-bdy">' +
-      '<div class="pop-nm">'+esc(p.name)+'</div>' +
-      '<div class="pop-tp '+(bp?'bp':'tc')+'">'+(bp?'Bikepark':'Trail centrum')+' &middot; '+esc(p.region)+'</div>' +
-      '<div class="pop-mt">'+p._d+' km &middot; '+p._t+'<br>Skipas: '+esc(p.skipas)+'<br>Parkovani: '+esc(p.parking)+st+'</div>' +
-      '<button class="pop-btn '+(bp?'bp':'tc')+'" onclick="pick(\''+p.id+'\');var c=document.querySelector(\'.leaflet-popup-close-button\');if(c)c.click()">Zobrazit detail &rarr;</button>' +
+function wxHTML(parkId){
+  var days=WX[parkId];
+  if(!days)return '<div class="wx-loading"><span style="font-size:11px;color:var(--ink3)">Predpoved nedostupna</span></div>';
+  var h='<div class="wx-strip">';
+  days.forEach(function(d){
+    var w=wxInfo(d.code);
+    h+='<div class="wx-col '+w.c+'">'+
+      '<div class="wx-ico">'+w.i+'</div>'+
+      '<div class="wx-info">'+
+        '<div class="wx-day-name">'+fmtWkDay(d.date)+'</div>'+
+        '<div class="wx-cond">'+w.l+'</div>'+
+        '<div class="wx-temp">'+d.maxT+'&deg;C <small>/ '+d.minT+'&deg;C</small></div>'+
+        '<div class="wx-wind">&#128168; <b>'+d.wind+'km/h</b> '+windLbl(d.wind)+'</div>'+
+        (d.precip>0?'<div class="wx-wind">&#127746; <b>'+d.precip+'%</b></div>':'')+
+      '</div>'+
+    '</div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+// ── Map ──
+function initMap(){
+  MAP=L.map('map').setView([49.8,16.5],7);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',subdomains:'abcd',maxZoom:19}).addTo(MAP);
+  L.marker([OLA,OLN],{icon:L.divIcon({className:'',html:'<div style="width:13px;height:13px;background:#d4500e;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 7px rgba(212,80,14,.5)"></div>',iconSize:[13,13],iconAnchor:[6,6]})}).addTo(MAP).bindTooltip('Brno - Novy Liskovec');
+}
+
+function addMk(p){
+  var bp=p.type==='bikepark',c=bp?'#d4500e':'#24603f';
+  var mk=L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div style="width:34px;height:34px;border-radius:9px;background:'+c+';border:2px solid rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 9px rgba(0,0,0,.22);cursor:pointer">'+(bp?'\uD83D\uDEA0':'\uD83E\uDDFE')+'</div>',iconSize:[34,34],iconAnchor:[17,17],popupAnchor:[0,-20]})}).addTo(MAP);
+  mk.bindPopup(mkpop(p),{maxWidth:275});
+  mk.on('click',function(){pick(p.id)});
+  MKS[p.id]=mk;
+}
+
+function mkpop(p){
+  var bp=p.type==='bikepark',u=gu(p.id);
+  var st=u.my_status==='planned'?'<br><b style="color:#d4500e">V planu</b>':u.my_status==='visited'?'<br><b style="color:#24603f">Navstiveno</b>':'';
+  var wx=WX[p.id];
+  var wxline='';
+  if(wx&&wx[0]){var w=wxInfo(wx[0].code);wxline='<br>Vikendu: '+w.i+' '+wx[0].maxT+'\u00B0C'+' / '+windLbl(wx[0].wind)+' vitru';}
+  return '<div><div class="pst '+(bp?'bp':'tc')+'"></div><div class="pbdy">'+
+    '<div class="pnm">'+esc(p.name)+'</div>'+
+    '<div class="ptp '+(bp?'bp':'tc')+'">'+(bp?'Bikepark':'Trail centrum')+' &middot; '+esc(p.region)+'</div>'+
+    '<div class="pmt">'+p._d+' km &middot; '+p._t+'<br>Skipas: '+esc(p.skipas)+'<br>Parkovani: '+esc(p.parking)+wxline+st+'</div>'+
+    '<button class="pbtn '+(bp?'bp':'tc')+'" onclick="pick(''+p.id+'');var c=document.querySelector('.leaflet-popup-close-button');if(c)c.click()">Zobrazit detail &rarr;</button>'+
     '</div></div>';
 }
 
-function isvis(p) {
-  if (flt !== 'all' && p.type !== flt) return false;
-  if (qry) { var q = qry.toLowerCase(); return p.name.toLowerCase().indexOf(q) >= 0 || p.region.toLowerCase().indexOf(q) >= 0; }
-  return true;
+// ── Fullscreen map ──
+function toggleFS(){
+  var ms=document.getElementById('mapside');
+  ms.classList.toggle('fullscreen');
+  setTimeout(function(){MAP.invalidateSize()},200);
 }
 
-function getsorted() {
-  var l = PARKS.filter(isvis);
-  l.sort(function(a,b) {
-    if (srt === 'dist') return a._d - b._d;
-    if (srt === 'name') return a.name.localeCompare(b.name,'cs');
-    if (srt === 'type') return a.type.localeCompare(b.type);
-    if (srt === 'rating') return parseFloat((gu(b.id).my_rating||0)) - parseFloat((gu(a.id).my_rating||0));
+// ── Visibility + Sort ──
+function isvis(p){
+  if(flt!=='all'&&p.type!==flt)return false;
+  if(qry){var q=qry.toLowerCase();return p.name.toLowerCase().indexOf(q)>=0||p.region.toLowerCase().indexOf(q)>=0}
+  return true;
+}
+function getsorted(){
+  var l=PARKS.filter(isvis);
+  l.sort(function(a,b){
+    if(srt==='dist')return a._d-b._d;
+    if(srt==='name')return a.name.localeCompare(b.name,'cs');
+    if(srt==='type')return a.type.localeCompare(b.type);
+    if(srt==='rating')return parseFloat((gu(b.id).my_rating||0))-parseFloat((gu(a.id).my_rating||0));
     return 0;
   });
   return l;
 }
 
-function render() {
-  var list = getsorted();
-  document.getElementById('cnt').textContent = list.length;
-  PARKS.forEach(function(p) {
-    var mk = MKS[p.id]; if (!mk) return;
-    isvis(p) ? (!MAP.hasLayer(mk) && mk.addTo(MAP)) : (MAP.hasLayer(mk) && MAP.removeLayer(mk));
-  });
-  var cl = document.getElementById('cl');
-  cl.innerHTML = '';
-  if (!list.length) { cl.innerHTML = '<div style="padding:40px 16px;text-align:center;color:var(--ink3);font-size:13px">Zadna lokalita neodpovida.</div>'; return; }
-  list.forEach(function(p) {
-    var d = document.createElement('div');
-    d.innerHTML = mkcardhtml(p);
-    var card = d.firstElementChild;
-    cl.appendChild(card);
-    wirecard(card, p);
+// ── Render ──
+function render(){
+  var list=getsorted();
+  document.getElementById('cnt').textContent=list.length;
+  PARKS.forEach(function(p){var mk=MKS[p.id];if(!mk)return;isvis(p)?(!MAP.hasLayer(mk)&&mk.addTo(MAP)):(MAP.hasLayer(mk)&&MAP.removeLayer(mk))});
+  var cl=document.getElementById('cl');
+  cl.innerHTML='';
+  if(!list.length){cl.innerHTML='<div style="padding:40px 16px;text-align:center;color:var(--ink3);font-size:13px">Zadna lokalita neodpovida.</div>';return}
+  list.forEach(function(p){
+    var d=document.createElement('div');
+    d.innerHTML=mkcard(p);
+    var c=d.firstElementChild;
+    cl.appendChild(c);
+    wire(c,p);
   });
 }
 
-function mkcardhtml(p) {
-  var bp = p.type==='bikepark', u = gu(p.id);
-  var r = parseFloat(u.my_rating||0);
-  var isSel = selId===p.id, isPl = u.my_status==='planned', isVi = u.my_status==='visited';
-  var hasN = !!(u.my_note||'').trim();
-  var tr = p.trails;
-  var cg=0,cb=0,cr=0,ck=0;
-  for (var i=0;i<tr.length;i++) { var d=tr[i].d; if(d==='g')cg++;else if(d==='b')cb++;else if(d==='r')cr++;else ck++; }
-  var tot = tr.length||1;
-  var dif = ck/tot>.25?'Velmi tezke':cr/tot>.4?'Tezke':cb/tot>.5?'Stredni':'Snadne';
-  var sh = '';
-  for (var s=1;s<=5;s++) sh += '<span class="star'+(r>=s?' on':'')+'" data-s="'+s+'">\u2605</span>';
+function mkcard(p){
+  var bp=p.type==='bikepark',u=gu(p.id);
+  var r=parseFloat(u.my_rating||0);
+  var isSel=selId===p.id,isPl=u.my_status==='planned',isVi=u.my_status==='visited';
+  var hasN=!!(u.my_note||'').trim();
+  var tr=p.trails,cg=0,cb=0,cr=0,ck=0;
+  for(var i=0;i<tr.length;i++){var d=tr[i].d;if(d==='g')cg++;else if(d==='b')cb++;else if(d==='r')cr++;else ck++}
+  var tot=tr.length||1;
+  var dif=ck/tot>.25?'Velmi tezke':cr/tot>.4?'Tezke':cb/tot>.5?'Stredni':'Snadne';
+  var sh='';for(var s=1;s<=5;s++)sh+='<span class="star'+(r>=s?' on':'')+'" data-s="'+s+'">\u2605</span>';
   var ph='';
-  tr.slice(0,6).forEach(function(t) {
-    var ic = t.d==='g'?'\uD83D\uDFE2':t.d==='b'?'\uD83D\uDFE5'==='\uD83D\uDFE5'?'\uD83D\uDFE5':'\uD83D\uDD35':t.d==='r'?'\uD83D\uDD34':'\u26AB';
-    if(t.d==='b') ic='\uD83D\uDD35';
-    ph += '<span class="tp">'+ic+' '+esc(t.n)+(t.km?'<span class="tp-km"> '+t.km+'km</span>':'')+'</span>';
+  tr.slice(0,6).forEach(function(t){
+    var ic=t.d==='g'?'\uD83D\uDFE2':t.d==='b'?'\uD83D\uDD35':t.d==='r'?'\uD83D\uDD34':'\u26AB';
+    ph+='<span class="tp">'+ic+' '+esc(t.n)+(t.km?'<span class="tp-km"> '+t.km+'km</span>':'')+'</span>';
   });
-  if(tr.length>6) ph+='<span class="tp" style="color:var(--ink3)">+'+(tr.length-6)+'</span>';
-  var stag = isPl?'<span class="badge b-plan">V planu</span>':isVi?'<span class="badge b-vis">Navštíveno</span>':'';
-  var cls = 'card' + (isSel?(bp?' sel':' sel tc'):'');
-  var mcu = 'https://mapy.cz/zakladni?x='+p.lng+'&y='+p.lat+'&z=15';
-  return '<article class="'+cls+'" data-id="'+p.id+'">' +
-    '<div class="c-stripe '+(bp?'bp':'tc')+'"></div>' +
-    '<div class="c-head">' +
-      '<div class="c-icon '+(bp?'bp':'tc')+'">'+(bp?'\uD83D\uDEA0':'\uD83E\uDDFE')+'</div>' +
-      '<div class="c-body">' +
-        '<div class="c-name">'+esc(p.name)+'</div>' +
-        '<div class="c-tags"><span class="badge '+(bp?'b-bp':'b-tc')+'">'+(bp?'Bikepark':'Trail centrum')+'</span><span class="badge b-reg">'+esc(p.region)+'</span>'+stag+'</div>' +
-      '</div>' +
-      '<div class="c-btns">' +
-        '<button class="ab'+(isPl?' on-p':'')+'" data-a="pl" title="V planu">&#128204;</button>' +
-        '<button class="ab'+(isVi?' on-v':'')+'" data-a="vi" title="Navštíveno">&#10003;</button>' +
-        '<button class="ab" data-a="x" title="Detail">&#9660;'+(hasN?'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--orange);vertical-align:middle;margin-left:1px"></span>':'')+'</button>' +
-      '</div>' +
-    '</div>' +
-    '<div class="c-stats">' +
-      '<div class="cst"><b>'+p._d+' km</b>&nbsp;<span style="color:var(--ink3)">'+p._t+'</span></div>' +
-      '<div class="cst'+(p.skipas==='Zdarma'?' fr':'')+'">Skipas: <b>'+esc(p.skipas)+'</b></div>' +
-      '<div class="cst'+(p.parking==='Zdarma'?' fr':'')+'">Park.: <b>'+esc(p.parking)+'</b></div>' +
-      '<div class="cst">Tras: <b>'+tr.length+'</b></div>' +
-      (p.season?'<div class="cst"><span style="color:var(--ink3)">'+esc(p.season)+'</span></div>':'') +
-    '</div>' +
-    '<button class="x-btn" data-a="x"><i class="x-arr">&#9660;</i>&nbsp; Rozbalit detail</button>' +
-    '<div class="c-det">' +
-      (p.desc?'<div class="ds"><div class="ds-t">O lokalite</div><div class="ds-desc">'+esc(p.desc)+'</div></div>':'') +
-      '<div class="ds"><div class="ds-t">Trasy</div>' +
-        '<div class="dbar"><div class="dsegs"><div class="ds_'+(cg?' g':'')+'"></div><div class="ds_'+(cb?' b':'')+'"></div><div class="ds_'+(cr?' r':'')+'"></div><div class="ds_'+(ck?' k':'')+'"></div></div><span class="dtxt">'+dif+' &middot; '+tr.length+' tras</span></div>' +
-        '<div class="tpills">'+ph+'</div>' +
-      '</div>' +
-      '<div class="ds"><div class="ds-t">Logistika</div>' +
-        '<div class="mg">' +
-          '<div class="mc"><div class="mc-l">Skipas</div><div class="mc-v'+(p.skipas==='Zdarma'?' fr':'')+'">'+esc(p.skipas)+'</div></div>' +
-          '<div class="mc"><div class="mc-l">Parkovani</div><div class="mc-v'+(p.parking==='Zdarma'?' fr':'')+'">'+esc(p.parking)+'</div></div>' +
-          (p.lifts?'<div class="mc"><div class="mc-l">Lanovky</div><div class="mc-v">'+esc(p.lifts)+'</div></div>':'') +
-        '</div>' +
-      '</div>' +
-      '<div class="ds"><div class="ds-t">Moje hodnoceni</div>' +
-        '<div class="rrow"><div class="stars">'+sh+'</div><span class="rlbl">'+(r?r+'/5':'Neohodnoceno')+'</span></div>' +
-      '</div>' +
-      '<div class="ds"><div class="ds-t">Moje poznamka <span style="font-size:9.5px;font-weight:400;text-transform:none;letter-spacing:0;color:#c0bab2">&#8212; ulozi se do Google Sheets (vsechna zarizeni)</span></div>' +
-        '<div class="ntxt"><textarea placeholder="Napis poznamku...">'+esc(u.my_note||'')+'</textarea>' +
-          '<div class="nrow"><button class="bsave" data-a="sn">Ulozit poznamku</button><span class="nst" data-ns></span></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="lrow">' +
-        (p.web?'<a href="'+p.web+'" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">&#127760; Oficialni web</a>':'') +
-        '<a href="'+mcu+'" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">&#128506; Navigovat</a>' +
-      '</div>' +
-    '</div>' +
+  if(tr.length>6)ph+='<span class="tp" style="color:var(--ink3)">+'+(tr.length-6)+'</span>';
+  var stag=isPl?'<span class="badge b-pl">V planu</span>':isVi?'<span class="badge b-vi">Navstiveno</span>':'';
+  var cls='card'+(isSel?(bp?' sel':' sel tc'):'');
+  var mcu='https://mapy.cz/zakladni?x='+p.lng+'&y='+p.lat+'&z=15';
+
+  return '<article class="'+cls+'" data-id="'+p.id+'">'+
+    '<div class="c-stripe '+(bp?'bp':'tc')+'"></div>'+
+    '<div class="c-head">'+
+      '<div class="c-ico '+(bp?'bp':'tc')+'">'+(bp?'\uD83D\uDEA0':'\uD83E\uDDFE')+'</div>'+
+      '<div class="c-body">'+
+        '<div class="c-name">'+esc(p.name)+'</div>'+
+        '<div class="c-tags"><span class="badge '+(bp?'b-bp':'b-tc')+'">'+(bp?'Bikepark':'Trail centrum')+'</span><span class="badge b-reg">'+esc(p.region)+'</span>'+stag+'</div>'+
+      '</div>'+
+      '<div class="c-btns">'+
+        '<button class="ab'+(isPl?' on-p':'')+'" data-a="pl" title="V planu">\uD83D\uDCCC</button>'+
+        '<button class="ab'+(isVi?' on-v':'')+'" data-a="vi" title="Navstiveno">&#10003;</button>'+
+        '<button class="ab" data-a="x" title="Detail">&#9660;'+(hasN?'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--orange);vertical-align:top;margin-top:2px;margin-left:1px"></span>':'')+'</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="c-stats">'+
+      '<div class="cst"><b>'+p._d+' km</b>&nbsp;<span style="color:var(--ink3)">'+p._t+'</span></div>'+
+      '<div class="cst'+(p.skipas==='Zdarma'?' fr':'')+'">Skipas:&nbsp;<b>'+esc(p.skipas)+'</b></div>'+
+      '<div class="cst'+(p.parking==='Zdarma'?' fr':'')+'">Park.:&nbsp;<b>'+esc(p.parking)+'</b></div>'+
+      '<div class="cst">Tras:&nbsp;<b>'+tr.length+'</b></div>'+
+      (p.season?'<div class="cst"><span style="color:var(--ink3)">'+esc(p.season)+'</span></div>':'')+
+    '</div>'+
+    /* WEATHER ALWAYS VISIBLE */
+    (WX[p.id]!==undefined ? wxHTML(p.id) : '<div class="wx-loading"><div class="wxspin"></div> Nacitam pocasi...</div>')+
+    '<button class="x-btn" data-a="x"><i class="x-arr">&#9660;</i>&nbsp; Rozbalit detail</button>'+
+    '<div class="c-det">'+
+      (p.desc?'<div class="ds"><div class="ds-t">O lokalite</div><div class="ds-desc">'+esc(p.desc)+'</div></div>':'')+
+      '<div class="ds"><div class="ds-t">Trasy</div>'+
+        '<div class="dbar"><div class="dsegs"><div class="dseg'+(cg?' g':'')+'"></div><div class="dseg'+(cb?' b':'')+'"></div><div class="dseg'+(cr?' r':'')+'"></div><div class="dseg'+(ck?' k':'')+'"></div></div><span class="dtxt">'+dif+' &middot; '+tr.length+' tras</span></div>'+
+        '<div class="tpills">'+ph+'</div>'+
+      '</div>'+
+      '<div class="ds"><div class="ds-t">Logistika</div><div class="mg">'+
+        '<div class="mc"><div class="mc-l">Skipas</div><div class="mc-v'+(p.skipas==='Zdarma'?' fr':'')+'">'+esc(p.skipas)+'</div></div>'+
+        '<div class="mc"><div class="mc-l">Parkovani</div><div class="mc-v'+(p.parking==='Zdarma'?' fr':'')+'">'+esc(p.parking)+'</div></div>'+
+        (p.lifts?'<div class="mc"><div class="mc-l">Lanovky</div><div class="mc-v">'+esc(p.lifts)+'</div></div>':'')+
+      '</div></div>'+
+      '<div class="ds"><div class="ds-t">Moje hodnoceni</div><div class="rrow"><div class="stars">'+sh+'</div><span class="rlbl">'+(r?r+'/5':'Neohodnoceno')+'</span></div></div>'+
+      '<div class="ds"><div class="ds-t">Moje poznamka <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;color:#c0bab2">(ulozi se do Google Sheets – vsechna zarizeni)</span></div>'+
+        '<div class="ntxt"><textarea placeholder="Napis poznamku...">'+esc(u.my_note||'')+'</textarea>'+
+          '<div class="nrow"><button class="bsave" data-a="sn">Ulozit poznamku</button><span class="nst" data-ns></span></div>'+
+        '</div></div>'+
+      '<div class="lrow">'+
+        (p.web?'<a href="'+p.web+'" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">&#127760; Oficialni web</a>':'')+
+        '<a href="'+mcu+'" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">&#128506; Navigovat</a>'+
+      '</div>'+
+    '</div>'+
   '</article>';
 }
 
-function wirecard(card, p) {
-  var id = p.id;
-  card.addEventListener('click', function(e) {
-    if (e.target.closest('.ab')||e.target.closest('.c-det')||e.target.closest('.lbtn')||e.target.closest('.x-btn')) return;
-    pick(id);
-  });
-  var bpl = card.querySelector('[data-a="pl"]');
-  if (bpl) bpl.addEventListener('click', function(e) { e.stopPropagation(); su(id,'my_status',gu(id).my_status==='planned'?'':'planned'); toast('Stav ulozen','ok'); render(); });
-  var bvi = card.querySelector('[data-a="vi"]');
-  if (bvi) bvi.addEventListener('click', function(e) { e.stopPropagation(); su(id,'my_status',gu(id).my_status==='visited'?'':'visited'); toast('Stav ulozen','ok'); render(); });
-  card.querySelectorAll('[data-a="x"]').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
+function wire(card,p){
+  var id=p.id;
+  card.addEventListener('click',function(e){if(e.target.closest('.ab')||e.target.closest('.c-det')||e.target.closest('.lbtn')||e.target.closest('.x-btn'))return;pick(id)});
+  var bpl=card.querySelector('[data-a="pl"]');
+  if(bpl)bpl.addEventListener('click',function(e){e.stopPropagation();su(id,'my_status',gu(id).my_status==='planned'?'':'planned');toast('Stav ulozen','ok');render()});
+  var bvi=card.querySelector('[data-a="vi"]');
+  if(bvi)bvi.addEventListener('click',function(e){e.stopPropagation();su(id,'my_status',gu(id).my_status==='visited'?'':'visited');toast('Stav ulozen','ok');render()});
+  card.querySelectorAll('[data-a="x"]').forEach(function(btn){
+    btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var det = card.querySelector('.c-det'), xb = card.querySelector('.x-btn');
-      var o = det.classList.contains('open');
+      var det=card.querySelector('.c-det'),xb=card.querySelector('.x-btn');
+      var o=det.classList.contains('open');
       det.classList.toggle('open');
-      if (xb) { xb.classList.toggle('xo', !o); xb.childNodes[0].innerHTML = (o?'&#9660;':'&#9650;'); xb.lastChild.textContent = ' ' + (o ? 'Rozbalit detail' : 'Sbalit detail'); }
-    });
+      if(xb){xb.classList.toggle('xo',!o);var arr=xb.querySelector('.x-arr');if(arr)arr.innerHTML=o?'&#9660;':'&#9650;';xb.lastChild.textContent=' '+(o?'Rozbalit detail':'Sbalit detail')}
+    })
   });
-  card.querySelectorAll('.star').forEach(function(st) {
-    st.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var rv = parseInt(st.dataset.s), cur = parseFloat(gu(id).my_rating||0);
-      su(id,'my_rating',String(cur===rv?0:rv));
-      toast('Hodnoceni ulozeno','ok'); render();
-    });
+  card.querySelectorAll('.star').forEach(function(st){
+    st.addEventListener('click',function(e){e.stopPropagation();var rv=parseInt(st.dataset.s),cur=parseFloat(gu(id).my_rating||0);su(id,'my_rating',String(cur===rv?0:rv));toast('Hodnoceni ulozeno','ok');render()})
   });
-  var bsn = card.querySelector('[data-a="sn"]');
-  if (bsn) bsn.addEventListener('click', function(e) {
+  var bsn=card.querySelector('[data-a="sn"]');
+  if(bsn)bsn.addEventListener('click',function(e){
     e.stopPropagation();
-    var ta = card.querySelector('textarea'), ns = card.querySelector('[data-ns]');
-    bsn.disabled = true; bsn.textContent = 'Ukladam...'; ns.textContent = ''; ns.className = 'nst';
+    var ta=card.querySelector('textarea'),ns=card.querySelector('[data-ns]');
+    bsn.disabled=true;bsn.textContent='Ukladam...';ns.textContent='';ns.className='nst';
     su(id,'my_note',ta.value);
-    setTimeout(function() {
-      ns.textContent = 'Ulozeno do Sheets'; ns.className='nst ok';
-      bsn.disabled = false; bsn.textContent = 'Ulozit poznamku';
-      toast('Poznamka ulozena','ok');
-      setTimeout(function(){ns.textContent='';ns.className='nst'},4000);
-    }, 700);
+    setTimeout(function(){ns.textContent='Ulozeno do Sheets';ns.className='nst ok';bsn.disabled=false;bsn.textContent='Ulozit poznamku';toast('Poznamka ulozena','ok');setTimeout(function(){ns.textContent='';ns.className='nst'},4000)},700)
   });
 }
 
-function pick(id) {
-  selId = id; render();
-  setTimeout(function() {
-    var c = document.querySelector('.card[data-id="'+id+'"]');
-    if (!c) return;
-    c.scrollIntoView({ behavior:'smooth', block:'nearest' });
-    var det = c.querySelector('.c-det'), xb = c.querySelector('.x-btn');
-    if (det && !det.classList.contains('open')) {
-      det.classList.add('open');
-      if (xb) { xb.classList.add('xo'); xb.childNodes[0].innerHTML = '&#9650;'; xb.lastChild.textContent = ' Sbalit detail'; }
-    }
-  }, 50);
-  var p = PARKS.find(function(x){return x.id===id});
-  if (p) { MAP.setView([p.lat,p.lng],Math.max(MAP.getZoom(),12),{animate:true}); setTimeout(function(){var mk=MKS[id];if(mk)mk.openPopup();},420); }
+function pick(id){
+  selId=id;render();
+  setTimeout(function(){
+    var c=document.querySelector('.card[data-id="'+id+'"]');
+    if(!c)return;
+    c.scrollIntoView({behavior:'smooth',block:'nearest'});
+    var det=c.querySelector('.c-det'),xb=c.querySelector('.x-btn');
+    if(det&&!det.classList.contains('open')){det.classList.add('open');if(xb){xb.classList.add('xo');var arr=xb.querySelector('.x-arr');if(arr)arr.innerHTML='&#9650;';xb.lastChild.textContent=' Sbalit detail'}}
+  },50);
+  var p=PARKS.find(function(x){return x.id===id});
+  if(p){MAP.setView([p.lat,p.lng],Math.max(MAP.getZoom(),12),{animate:true});setTimeout(function(){var mk=MKS[id];if(mk)mk.openPopup()},420)}
 }
 
 var ttt;
-function toast(msg, type) {
-  var el = document.getElementById('toast'); el.textContent = msg; el.className = 'toast show '+(type||'');
-  clearTimeout(ttt); ttt = setTimeout(function(){el.className='toast';},3000);
+function toast(msg,type){var el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+(type||'');clearTimeout(ttt);ttt=setTimeout(function(){el.className='toast'},3000)}
+
+function pr(row){
+  var la=parseFloat(String(row.lat||'').replace(/[^0-9.\-]/g,'')),ln=parseFloat(String(row.lng||'').replace(/[^0-9.\-]/g,''));
+  if(isNaN(la)||isNaN(ln)||Math.abs(la)>90||Math.abs(ln)>180){console.warn('bad coords',row.name);return null}
+  var d=dist(la,ln),rawt=row.trails_json||row.trails||'',trails=[];
+  var s=String(rawt).trim();
+  if(s.charAt(0)==='['){try{trails=JSON.parse(s).map(function(t){return{d:String(t.d||'').trim(),n:String(t.n||''),km:parseFloat(t.km)||0}})}catch(e){}}
+  return{id:row.id||String(row.name||'').toLowerCase().replace(/[^a-z0-9]/g,'-'),name:String(row.name||''),type:String(row.type||'').toLowerCase().indexOf('bikepark')>=0?'bikepark':'trail',lat:la,lng:ln,region:String(row.region||''),skipas:String(row.skipas||'viz web'),parking:String(row.parking||'viz web'),web:String(row.web||''),season:String(row.season||''),lifts:String(row.lifts||''),desc:String(row.description||''),trails:trails,_d:d,_t:ftime(d)};
 }
 
-function pr(row) {
-  var la = parseFloat(String(row.lat||'').replace(/[^0-9.\-]/g,''));
-  var ln = parseFloat(String(row.lng||'').replace(/[^0-9.\-]/g,''));
-  if (isNaN(la)||isNaN(ln)||Math.abs(la)>90||Math.abs(ln)>180) { console.warn('bad coords',row.name); return null; }
-  var d = dist(la,ln);
-  var rawt = row.trails_json || row.trails || '';
-  var trails = [];
-  var s = String(rawt).trim();
-  if (s.charAt(0)==='[') { try { var arr=JSON.parse(s); trails=arr.map(function(t){ return {d:String(t.d||'').trim(),n:String(t.n||''),km:parseFloat(t.km)||0}; }); } catch(e){} }
-  return { id:row.id||String(row.name||'').toLowerCase().replace(/[^a-z0-9]/g,'-'),
-    name:String(row.name||''), type:String(row.type||'').toLowerCase().indexOf('bikepark')>=0?'bikepark':'trail',
-    lat:la, lng:ln, region:String(row.region||''),
-    skipas:String(row.skipas||'viz web'), parking:String(row.parking||'viz web'),
-    web:String(row.web||''), season:String(row.season||''), lifts:String(row.lifts||''),
-    desc:String(row.description||''), trails:trails, _d:d, _t:ftime(d) };
+async function boot(){
+  var ldm=document.getElementById('ld-m'),ldb=document.getElementById('ldbar');
+
+  initMap();
+
+  // 1. Load park data
+  var isPlaceholder=!SU||SU.indexOf('VLOZ')===0||SU.indexOf('http')!==0;
+  var parks=[];
+  if(isPlaceholder){
+    ldm.textContent='Zobrazuji zabudovana data';
+    parks=FD();
+  } else {
+    try{
+      ldm.textContent='Nacitam z Google Sheets...';
+      var r=await fetch(SU+'?action=getData');
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      var j=await r.json();
+      if(j.error)throw new Error(j.error);
+      j.data.forEach(function(row){if(row.id)UD[row.id]={my_status:row.my_status||'',my_note:row.my_note||'',my_rating:row.my_rating||'',my_visited_date:row.my_visited_date||''}});
+      parks=j.data.map(pr).filter(Boolean);
+    }catch(e){
+      console.error(e);toast('Chyba Sheets: '+e.message,'err');parks=FD();
+    }
+  }
+
+  PARKS=parks;
+  PARKS.forEach(addMk);
+  document.getElementById('sBP').textContent=PARKS.filter(function(p){return p.type==='bikepark'}).length+' bikepark';
+  document.getElementById('sTC').textContent=PARKS.filter(function(p){return p.type==='trail'}).length+' trail center';
+
+  // 2. Load weather for all parks in parallel
+  ldm.textContent='Nacitam predpoved pocasi pro '+PARKS.length+' lokalit...';
+  if(ldb)ldb.style.width='5%';
+  await loadAllWeather(PARKS);
+
+  // 3. Render everything
+  render();
+  document.getElementById('ld').classList.add('gone');
 }
 
-async function loadData() {
-  var msg = document.getElementById('ld-msg');
-  // Pokud URL není nastavena nebo je placeholder, rovnou použij zabudovaná data
-  var isPlaceholder = !SU || SU === 'VLOZ_ZDE_SVOU_APPS_SCRIPT_URL' || SU.indexOf('http') !== 0;
-  if (isPlaceholder) {
-    msg.textContent = 'Zobrazuji zabudovaná data';
-    return FD();
-  }
-  try {
-    msg.textContent = 'Načítám z Google Sheets...';
-    var r = await fetch(SU+'?action=getData');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    var j = await r.json();
-    if (j.error) throw new Error(j.error);
-    j.data.forEach(function(row){ if(row.id) UD[row.id]={my_status:row.my_status||'',my_note:row.my_note||'',my_rating:row.my_rating||'',my_visited_date:row.my_visited_date||''}; });
-    return j.data.map(pr).filter(Boolean);
-  } catch(e) {
-    console.error('Sheets error:', e);
-    toast('Chyba Sheets: '+e.message+' — zobrazuji zabudovaná data','err');
-    return FD();
-  }
-}
+// ── Events ──
+document.querySelectorAll('.pill').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.pill').forEach(function(x){x.classList.remove('on')});b.classList.add('on');flt=b.dataset.f;render()})});
+document.getElementById('sq').addEventListener('input',function(e){qry=e.target.value;render()});
+document.getElementById('ss').addEventListener('change',function(e){srt=e.target.value;render()});
 
-document.querySelectorAll('.pill').forEach(function(b) { b.addEventListener('click', function() { document.querySelectorAll('.pill').forEach(function(x){x.classList.remove('on')}); b.classList.add('on'); flt=b.dataset.f; render(); }); });
-document.getElementById('sq').addEventListener('input', function(e){qry=e.target.value;render();});
-document.getElementById('ss').addEventListener('change', function(e){srt=e.target.value;render();});
+// Close fullscreen on Escape
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('mapside').classList.contains('fullscreen'))toggleFS()});
 
-(async function(){
-  try {
-    initMap();
-    PARKS = await loadData();
-    PARKS.forEach(addMk);
-    document.getElementById('sBP').textContent = PARKS.filter(function(p){return p.type==='bikepark';}).length+' bikeparků';
-    document.getElementById('sTC').textContent = PARKS.filter(function(p){return p.type==='trail';}).length+' trail center';
-    render();
-  } catch(e) {
-    console.error('Boot error:', e);
-    // I chyba musí skrýt loader a zobrazit záložní data
-    try {
-      if (!PARKS || !PARKS.length) { PARKS = FD(); PARKS.forEach(addMk); render(); }
-    } catch(e2) { console.error(e2); }
-    toast('Chyba: '+e.message,'err');
-  } finally {
-    // Loader VŽDY zmizí
-    var ld = document.getElementById('ld');
-    if (ld) ld.classList.add('gone');
-  }
-})();
+boot().catch(function(e){console.error(e);document.getElementById('ld').classList.add('gone');toast('Chyba startu: '+e.message,'err')});
 
 function FD() {
   return [
@@ -755,6 +683,7 @@ function FD() {
       desc:row.description,trails:row.trails_json,_d:d,_t:ftime(d)};
   });
 }
+
 </script>
 </body>
 </html>
