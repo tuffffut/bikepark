@@ -285,11 +285,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 
 // ── CONFIG ──────────────────────────────────────────────
 // Vloz svou Apps Script URL sem:
-//var SU = localStorage.getItem('bp_url') || 'VLOZ_ZDE_SVOU_APPS_SCRIPT_URL';
+// var SU = localStorage.getItem('bp_url') || 'VLOZ_ZDE_SVOU_APPS_SCRIPT_URL';
 // ────────────────────────────────────────────────────────
-
 var SU = 'https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
-
 var OLA=49.1694, OLN=16.5928;
 var PARKS=[], flt='all', qry='', srt='dist', selId=null;
 var MAP, MKS={}, UD={};
@@ -603,47 +601,68 @@ function pr(row){
 
 async function boot(){
   var ldm=document.getElementById('ld-m'),ldb=document.getElementById('ldbar');
-
-  initMap();
-
-  // 1. Load park data
-  var isPlaceholder=!SU||SU.indexOf('VLOZ')===0||SU.indexOf('http')!==0;
-  var parks=[];
-  if(isPlaceholder){
-    ldm.textContent='Zobrazuji zabudovana data';
-    parks=FD();
-  } else {
-    try{
-      ldm.textContent='Nacitam z Google Sheets...';
-      var r=await fetch(SU+'?action=getData');
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      var j=await r.json();
-      if(j.error)throw new Error(j.error);
-      j.data.forEach(function(row){if(row.id)UD[row.id]={my_status:row.my_status||'',my_note:row.my_note||'',my_rating:row.my_rating||'',my_visited_date:row.my_visited_date||''}});
-      parks=j.data.map(pr).filter(Boolean);
-    }catch(e){
-      console.error(e);toast('Chyba Sheets: '+e.message,'err');parks=FD();
-    }
+  try {
+    initMap();
+  } catch(e) {
+    console.error('initMap failed:', e);
   }
 
-  PARKS=parks;
-  PARKS.forEach(addMk);
-  document.getElementById('sBP').textContent=PARKS.filter(function(p){return p.type==='bikepark'}).length+' bikepark';
-  document.getElementById('sTC').textContent=PARKS.filter(function(p){return p.type==='trail'}).length+' trail center';
+  try {
+    // 1. Load park data
+    var isPlaceholder=!SU||SU.indexOf('VLOZ')===0||SU.indexOf('http')!==0;
+    var parks=[];
+    if(isPlaceholder){
+      if(ldm)ldm.textContent='Zobrazuji zabudovana data';
+      parks=FD();
+    } else {
+      try{
+        if(ldm)ldm.textContent='Nacitam z Google Sheets...';
+        var controller2=typeof AbortController!=='undefined'?new AbortController():null;
+        var t2=controller2?setTimeout(function(){controller2.abort()},10000):null;
+        var r=await fetch(SU+'?action=getData',controller2?{signal:controller2.signal}:{});
+        if(t2)clearTimeout(t2);
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        var j=await r.json();
+        if(j.error)throw new Error(j.error);
+        j.data.forEach(function(row){if(row.id)UD[row.id]={my_status:row.my_status||'',my_note:row.my_note||'',my_rating:row.my_rating||'',my_visited_date:row.my_visited_date||''}});
+        parks=j.data.map(pr).filter(Boolean);
+      }catch(e){
+        console.error('Sheets error:',e);
+        if(ldm)ldm.textContent='Chyba Sheets, pouzivam zabudovana data';
+        toast('Chyba Sheets: '+e.message,'err');
+        parks=FD();
+      }
+    }
 
-  // 2. Render immediately — show data right away
-  render();
-  document.getElementById('ld').classList.add('gone');
+    PARKS=parks;
+    try{PARKS.forEach(addMk);}catch(e){console.error('addMk error:',e);}
+    try{
+      document.getElementById('sBP').textContent=PARKS.filter(function(p){return p.type==='bikepark'}).length+' bikepark';
+      document.getElementById('sTC').textContent=PARKS.filter(function(p){return p.type==='trail'}).length+' trail center';
+    }catch(e){}
 
-  // 3. Load weather in background AFTER app is visible
+    // 2. Render immediately
+    try{render();}catch(e){console.error('render error:',e);}
+
+  } catch(e) {
+    console.error('Boot inner error:', e);
+    try{PARKS=FD();PARKS.forEach(addMk);render();}catch(e2){}
+  } finally {
+    // ALWAYS hide loader
+    var ld=document.getElementById('ld');
+    if(ld)ld.classList.add('gone');
+  }
+
+  // 3. Weather in background
   setTimeout(function(){
-    loadAllWeather(PARKS).then(function(){
-      render(); // re-render with weather data
-    }).catch(function(e){
-      console.warn('Weather failed:', e);
-      render();
-    });
-  }, 100);
+    try{
+      loadAllWeather(PARKS).then(function(){
+        try{render();}catch(e){}
+      }).catch(function(e){
+        console.warn('Weather failed:',e);
+      });
+    }catch(e){console.warn('loadAllWeather call failed:',e);}
+  }, 200);
 }
 
 // ── Events ──
@@ -654,7 +673,23 @@ document.getElementById('ss').addEventListener('change',function(e){srt=e.target
 // Close fullscreen on Escape
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('mapside').classList.contains('fullscreen'))toggleFS()});
 
-boot().catch(function(e){console.error(e);document.getElementById('ld').classList.add('gone');toast('Chyba startu: '+e.message,'err')});
+// Safety: loader ALWAYS disappears after 5 seconds no matter what
+setTimeout(function(){
+  var ld=document.getElementById('ld');
+  if(ld&&!ld.classList.contains('gone')){
+    ld.classList.add('gone');
+    toast('Timeout - zobrazuji zabudovana data','err');
+    if(!PARKS||!PARKS.length){PARKS=FD();PARKS.forEach(addMk);render();}
+  }
+}, 5000);
+
+boot().catch(function(e){
+  console.error('Boot error:',e);
+  document.getElementById('ld').classList.add('gone');
+  document.getElementById('ld-m').textContent='Chyba: '+e.message;
+  toast('Chyba startu: '+e.message,'err');
+  if(!PARKS||!PARKS.length){PARKS=FD();PARKS.forEach(addMk);render();}
+});
 
 function FD() {
   return [
