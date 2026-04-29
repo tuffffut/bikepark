@@ -248,7 +248,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
   <div class="logo">Bike<i>park</i> Atlas</div>
   <div class="vline"></div>
   <div class="pills">
-    <button class="pill on" data-f="all">Vše</button>
+    <button class="pill on" data-f="all">Vse</button>
     <button class="pill" data-f="bikepark">Bikeparky</button>
     <button class="pill tc" data-f="trail">Trail centra</button>
   </div>
@@ -287,7 +287,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 // Vloz svou Apps Script URL sem:
 //var SU = localStorage.getItem('bp_url') || 'VLOZ_ZDE_SVOU_APPS_SCRIPT_URL';
 // ────────────────────────────────────────────────────────
+
 var SU = 'https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
+
 var OLA=49.1694, OLN=16.5928;
 var PARKS=[], flt='all', qry='', srt='dist', selId=null;
 var MAP, MKS={}, UD={};
@@ -363,7 +365,10 @@ async function loadAllWeather(parks){
   // Batch: fetch all parks weather simultaneously
   var promises=parks.map(function(p){
     var url='https://api.open-meteo.com/v1/forecast?latitude='+p.lat.toFixed(4)+'&longitude='+p.lng.toFixed(4)+'&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=14';
-    return fetch(url).then(function(r){return r.json()}).then(function(data){
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = controller ? setTimeout(function(){controller.abort()}, 8000) : null;
+    var fetchOpts = controller ? {signal: controller.signal} : {};
+    return fetch(url, fetchOpts).then(function(r){if(timer)clearTimeout(timer);return r.json()}).then(function(data){
       var dates=data.daily.time;
       var si=dates.indexOf(satStr), ui=dates.indexOf(sunStr);
       if(si<0||ui<0){WX[p.id]=null;updProg();return}
@@ -372,7 +377,11 @@ async function loadAllWeather(parks){
         {date:weekend[1],maxT:Math.round(data.daily.temperature_2m_max[ui]),minT:Math.round(data.daily.temperature_2m_min[ui]),code:data.daily.weathercode[ui],wind:Math.round(data.daily.windspeed_10m_max[ui]),precip:data.daily.precipitation_probability_max[ui]}
       ];
       updProg();
-    }).catch(function(){WX[p.id]=null;updProg()});
+    }).catch(function(e){
+      console.warn('Weather fetch failed for', p.id, e.message);
+      WX[p.id]=null;
+      updProg();
+    });
   });
 
   await Promise.all(promises);
@@ -511,8 +520,8 @@ function mkcard(p){
       '<div class="cst">Tras:&nbsp;<b>'+tr.length+'</b></div>'+
       (p.season?'<div class="cst"><span style="color:var(--ink3)">'+esc(p.season)+'</span></div>':'')+
     '</div>'+
-    /* WEATHER ALWAYS VISIBLE */
-    (WX[p.id]!==undefined ? wxHTML(p.id) : '<div class="wx-loading"><div class="wxspin"></div> Nacitam pocasi...</div>')+
+    /* WEATHER - shown if loaded, loading indicator if not yet */
+    (WX[p.id]!==undefined ? wxHTML(p.id) : WX[p.id]===null ? '' : '<div class="wx-loading"><div class="wxspin"></div> <span style="font-size:11.5px">Nacitam pocasi...</span></div>')+
     '<button class="x-btn" data-a="x"><i class="x-arr">&#9660;</i>&nbsp; Rozbalit detail</button>'+
     '<div class="c-det">'+
       (p.desc?'<div class="ds"><div class="ds-t">O lokalite</div><div class="ds-desc">'+esc(p.desc)+'</div></div>':'')+
@@ -622,14 +631,19 @@ async function boot(){
   document.getElementById('sBP').textContent=PARKS.filter(function(p){return p.type==='bikepark'}).length+' bikepark';
   document.getElementById('sTC').textContent=PARKS.filter(function(p){return p.type==='trail'}).length+' trail center';
 
-  // 2. Load weather for all parks in parallel
-  ldm.textContent='Nacitam predpoved pocasi pro '+PARKS.length+' lokalit...';
-  if(ldb)ldb.style.width='5%';
-  await loadAllWeather(PARKS);
-
-  // 3. Render everything
+  // 2. Render immediately — show data right away
   render();
   document.getElementById('ld').classList.add('gone');
+
+  // 3. Load weather in background AFTER app is visible
+  setTimeout(function(){
+    loadAllWeather(PARKS).then(function(){
+      render(); // re-render with weather data
+    }).catch(function(e){
+      console.warn('Weather failed:', e);
+      render();
+    });
+  }, 100);
 }
 
 // ── Events ──
