@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bikepark Atlas CR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg:#f0ede7; --white:#fff; --border:#e3dfd8; --border2:#ccc8c0;
+  --ink:#18160f; --ink2:#5a564f; --ink3:#a09b93;
+  --orange:#d4500e; --orange-l:#fff3ee; --orange-m:#fbd5c0;
+  --green:#24603f; --green-l:#ebf5ef; --green-m:#b8deca;
+  --blue:#1a4faa; --yellow:#e09b00;
+  --sh1:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 4px 16px rgba(0,0,0,.09),0 1px 4px rgba(0,0,0,.05);
+  --sh3:0 8px 28px rgba(0,0,0,.13);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;overflow-x:hidden}
+
+/* ── HEADER ── */
+.hdr{position:sticky;top:0;z-index:900;background:var(--white);border-bottom:1px solid var(--border);box-shadow:var(--sh1);height:56px;padding:0 14px;display:flex;align-items:center;gap:10px}
+.logo{font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;letter-spacing:-.3px}
+.logo i{color:var(--orange);font-style:normal}
+.vline{width:1px;height:22px;background:var(--border2);flex-shrink:0}
+.pills{display:flex;gap:4px}
+.pill{font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1.5px solid var(--border2);background:transparent;color:var(--ink2);cursor:pointer;white-space:nowrap;transition:all .14s;-webkit-tap-highlight-color:transparent}
+.pill:hover,.pill:active{border-color:var(--orange);color:var(--orange)}
+.pill.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.pill.on.tc{background:var(--green);border-color:var(--green)}
+.srch{position:relative;flex:1;min-width:0;max-width:180px}
+.srch input{width:100%;border:1.5px solid var(--border2);border-radius:20px;background:var(--bg);padding:6px 10px 6px 28px;font:inherit;font-size:13px;color:var(--ink);outline:none;transition:border-color .14s}
+.srch input:focus{border-color:var(--orange)}
+.srch::before{content:'\1F50D';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink3);pointer-events:none}
+.hd-r{margin-left:auto;display:flex;gap:10px;flex-shrink:0}
+.hstat{font-size:11.5px;color:var(--ink3);display:flex;align-items:center;gap:4px}
+.hdot{width:7px;height:7px;border-radius:50%}
+
+/* ── LAYOUT ── */
+.app-wrap{display:grid;grid-template-columns:400px 1fr;height:calc(100vh - 56px)}
+.sidebar{display:flex;flex-direction:column;background:var(--bg);border-right:1px solid var(--border);overflow:hidden;height:calc(100vh - 56px)}
+.sb-top{padding:9px 12px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sb-cnt{font-size:12px;font-weight:500;color:var(--ink3)}
+.sb-cnt b{color:var(--orange);font-weight:700}
+.sort-sel{font:inherit;font-size:12px;border:1px solid var(--border2);border-radius:6px;background:var(--white);padding:4px 8px;color:var(--ink2);outline:none;cursor:pointer}
+/* THE FIX: display:block, not flex */
+.cl{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px}
+.cl::-webkit-scrollbar{width:4px}
+.cl::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.card+.card{margin-top:9px}
+
+/* ── MAP ── */
+.map-side{position:relative;height:calc(100vh - 56px)}
+#map{width:100%;height:100%}
+.map-lbl{position:absolute;bottom:28px;left:10px;z-index:500;background:var(--white);border:1px solid var(--border);border-radius:9px;padding:6px 10px;font-size:11px;color:var(--ink2);box-shadow:var(--sh2);pointer-events:none;line-height:1.45}
+.map-lbl strong{color:var(--orange);display:block;font-size:11.5px}
+/* fullscreen map button */
+.btn-fs{position:absolute;top:10px;right:10px;z-index:600;background:var(--white);border:1px solid var(--border);border-radius:9px;padding:8px 11px;font-size:13px;cursor:pointer;box-shadow:var(--sh2);display:none;align-items:center;gap:5px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--ink2);transition:all .14s}
+.btn-fs:active{background:var(--bg)}
+/* fullscreen map state */
+.map-side.fullscreen{position:fixed;inset:0;height:100dvh;z-index:9000}
+.map-side.fullscreen #map{height:100%}
+.map-side.fullscreen .btn-fs{top:14px;right:14px;display:flex;background:var(--white)}
+.map-side.fullscreen .map-lbl{bottom:14px}
+.btn-fs-close{position:absolute;top:14px;left:14px;z-index:9001;background:var(--orange);color:#fff;border:none;border-radius:9px;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:var(--sh2);display:none;align-items:center;gap:5px}
+.map-side.fullscreen .btn-fs-close{display:flex}
+
+/* ── CARD ── */
+.card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--sh1);transition:border-color .18s,box-shadow .18s,transform .15s;display:block}
+.card:hover{border-color:var(--orange);box-shadow:var(--sh2);transform:translateY(-1px)}
+.card.sel{border-color:var(--orange);box-shadow:0 0 0 3px rgba(212,80,14,.1),var(--sh2)}
+.card.sel.tc{border-color:var(--green);box-shadow:0 0 0 3px rgba(36,96,63,.1),var(--sh2)}
+.c-stripe{height:3px}
+.c-stripe.bp{background:linear-gradient(90deg,var(--orange),#f07a4a)}
+.c-stripe.tc{background:linear-gradient(90deg,var(--green),#42a86b)}
+
+/* card head */
+.c-head{padding:10px 12px 6px;display:flex;align-items:flex-start;gap:9px}
+.c-ico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.c-ico.bp{background:var(--orange-l)}.c-ico.tc{background:var(--green-l)}
+.c-body{flex:1;min-width:0}
+.c-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-tags{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.badge{font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:4px;white-space:nowrap}
+.b-bp{background:var(--orange-l);color:var(--orange)}
+.b-tc{background:var(--green-l);color:var(--green)}
+.b-reg{background:#edeae4;color:var(--ink3);font-size:9px}
+.b-pl{background:var(--orange-l);color:var(--orange)}
+.b-vi{background:var(--green-l);color:var(--green)}
+.c-btns{display:flex;gap:4px;flex-shrink:0}
+.ab{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s;-webkit-tap-highlight-color:transparent}
+.ab:hover,.ab:active{border-color:var(--orange);background:var(--orange-l)}
+.ab.on-p{background:var(--orange-l);border-color:var(--orange)}
+.ab.on-v{background:var(--green-l);border-color:var(--green)}
+
+/* 5 key stats */
+.c-stats{padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.cst{display:flex;align-items:center;gap:3px;font-size:12px;color:var(--ink2)}
+.cst b{color:var(--ink);font-weight:600}
+.cst.fr b{color:var(--green)}
+
+/* ── WEATHER STRIP (always visible) ── */
+.wx-strip{padding:8px 12px 10px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:6px;background:linear-gradient(180deg,#f7fbff 0%,var(--white) 100%)}
+.wx-col{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.7);border:1px solid #d8eaf8;border-radius:9px;padding:7px 10px}
+.wx-col.rain{background:rgba(240,245,255,.8);border-color:#c5d5f0}
+.wx-col.storm{background:rgba(248,244,255,.8);border-color:#c8b8f0}
+.wx-col.snow{background:rgba(240,250,255,.8);border-color:#b8def5}
+.wx-col.sun{background:rgba(255,252,238,.8);border-color:#f0dfaa}
+.wx-ico{font-size:26px;line-height:1;flex-shrink:0}
+.wx-info{flex:1;min-width:0}
+.wx-day-name{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink3);margin-bottom:1px}
+.wx-cond{font-size:11.5px;font-weight:600;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wx-temp{font-size:13px;font-weight:800;color:var(--ink)}
+.wx-temp small{font-size:10.5px;font-weight:500;color:var(--ink3)}
+.wx-wind{font-size:10.5px;color:var(--ink3)}
+.wx-wind b{color:var(--ink2)}
+.wx-loading{padding:8px 12px 10px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink3);border-top:1px solid var(--border)}
+.wxspin{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp .6s linear infinite;flex-shrink:0}
+
+/* ── EXPAND TOGGLE ── */
+.x-btn{width:100%;background:transparent;border:none;border-top:1px solid #f0ede7;padding:7px 12px;display:flex;align-items:center;gap:5px;font:inherit;font-size:12px;font-weight:500;color:var(--ink3);cursor:pointer;transition:color .13s;-webkit-tap-highlight-color:transparent}
+.x-btn:hover,.x-btn:active,.x-btn.xo{color:var(--orange)}
+.x-arr{display:inline-block;transition:transform .2s;font-size:10px}
+.x-btn.xo .x-arr{transform:rotate(180deg)}
+
+/* ── DETAIL ── */
+.c-det{display:none;padding:2px 12px 12px;border-top:1px solid #f0ede7}
+.c-det.open{display:block}
+.ds{margin-top:11px}
+.ds-t{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+.ds-desc{font-size:12.5px;color:var(--ink2);line-height:1.65}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.mc{background:var(--bg);border-radius:7px;padding:7px 9px}
+.mc-l{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink3);margin-bottom:2px}
+.mc-v{font-size:12.5px;font-weight:700;color:var(--ink)}
+.mc-v.fr{color:var(--green)}
+.dbar{display:flex;align-items:center;gap:7px;margin-top:4px}
+.dsegs{display:flex;gap:3px;flex:1}
+.dseg{height:5px;flex:1;border-radius:3px;background:var(--border)}
+.dseg.g{background:#22c55e}.dseg.b{background:#3b82f6}.dseg.r{background:#ef4444}.dseg.k{background:#1c1917}
+.dtxt{font-size:11px;color:var(--ink3);white-space:nowrap}
+.tpills{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.tp{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:var(--ink2);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:3px 8px}
+.tp-km{font-size:10px;color:var(--ink3)}
+.stars{display:flex;gap:2px;margin-top:4px}
+.star{font-size:22px;color:var(--border2);cursor:pointer;line-height:1;transition:color .1s,transform .1s;-webkit-tap-highlight-color:transparent}
+.star.on{color:var(--yellow)}
+.star:hover,.star:active{transform:scale(1.15)}
+.rrow{display:flex;align-items:center;gap:9px}
+.rlbl{font-size:12px;color:var(--ink3)}
+.ntxt{margin-top:5px}
+.ntxt textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:var(--bg);resize:vertical;min-height:70px;outline:none;line-height:1.55;transition:border-color .14s}
+.ntxt textarea:focus{border-color:var(--orange)}
+.ntxt textarea::placeholder{color:#c8c3bb}
+.nrow{margin-top:6px;display:flex;align-items:center;gap:9px}
+.bsave{font:inherit;font-size:12px;font-weight:600;padding:6px 14px;background:var(--orange);color:#fff;border:none;border-radius:7px;cursor:pointer;transition:background .13s}
+.bsave:hover{background:#b8400b}
+.bsave:disabled{background:var(--border2);cursor:not-allowed}
+.nst{font-size:11.5px;color:var(--ink3)}
+.nst.ok{color:var(--green)}.nst.err{color:var(--orange)}
+.lrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.lbtn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1.5px solid var(--border2);border-radius:7px;font:inherit;font-size:12px;font-weight:500;color:var(--ink2);text-decoration:none;background:transparent;cursor:pointer;transition:all .13s;-webkit-tap-highlight-color:transparent}
+.lbtn:hover,.lbtn:active{border-color:var(--orange);color:var(--orange);background:var(--orange-l)}
+
+/* ── LEAFLET ── */
+.leaflet-popup-content-wrapper{border-radius:13px!important;box-shadow:var(--sh3)!important;border:1px solid var(--border)!important;padding:0!important;overflow:hidden}
+.leaflet-popup-content{margin:0!important;min-width:210px}
+.leaflet-popup-close-button{top:8px!important;right:10px!important;color:var(--ink3)!important;font-size:17px!important}
+.leaflet-control-zoom{border:none!important;box-shadow:var(--sh2)!important}
+.leaflet-control-zoom a{background:var(--white)!important;color:var(--ink)!important;border-color:var(--border)!important}
+.leaflet-control-zoom a:hover{color:var(--orange)!important}
+.leaflet-control-attribution{background:rgba(255,255,255,.8)!important;font-size:10px!important}
+.pst{height:4px}.pst.bp{background:linear-gradient(90deg,var(--orange),#f07a4a)}.pst.tc{background:linear-gradient(90deg,var(--green),#42a86b)}
+.pbdy{padding:11px 13px 13px}
+.pnm{font-size:14px;font-weight:700;margin-bottom:2px}
+.ptp{font-size:11.5px;font-weight:600;margin-bottom:6px}
+.ptp.bp{color:var(--orange)}.ptp.tc{color:var(--green)}
+.pmt{font-size:12px;color:var(--ink2);line-height:1.75}
+.pbtn{display:block;width:100%;margin-top:9px;padding:7px;border:none;border-radius:7px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;text-align:center;transition:filter .13s}
+.pbtn.bp{background:var(--orange);color:#fff}.pbtn.tc{background:var(--green);color:#fff}
+.pbtn:hover{filter:brightness(.9)}
+
+/* ── LOADING ── */
+#ld{position:fixed;inset:0;z-index:9999;background:var(--white);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#ld.gone{display:none}
+.spin{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#ld-t{font-size:18px;font-weight:700;color:var(--ink2)}
+#ld-m{font-size:13px;color:var(--ink3);max-width:280px;text-align:center}
+.ld-prog{width:200px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:4px}
+.ld-bar{height:100%;background:var(--orange);border-radius:2px;transition:width .3s;width:0%}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--white);border:1.5px solid var(--border);border-radius:22px;padding:8px 16px;font-size:12.5px;color:var(--ink2);box-shadow:var(--sh2);opacity:0;transform:translateY(8px);transition:all .24s;pointer-events:none;max-width:280px}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.ok{color:var(--green);border-color:var(--green-m)}
+#toast.err{color:var(--orange);border-color:var(--orange-m)}
+
+/* ── MOBILE ── */
+@media(max-width:800px){
+  body{font-size:15px}
+  .app-wrap{display:block;height:auto}
+  .sidebar{height:auto;overflow:visible}
+  .cl{padding:10px;max-height:none}
+  .map-side{height:52vw;min-height:220px}
+  .btn-fs{display:flex!important}
+  .hd-r{display:none}
+  .srch input{font-size:15px}
+  .pill{font-size:13px;padding:6px 12px}
+  /* bigger cards on mobile */
+  .c-name{font-size:15.5px}
+  .c-ico{width:42px;height:42px;font-size:20px}
+  .badge{font-size:10.5px;padding:3px 8px}
+  .cst{font-size:13px}
+  .cst b{font-size:13px}
+  .wx-col{padding:8px 10px}
+  .wx-ico{font-size:28px}
+  .wx-cond{font-size:12.5px}
+  .wx-temp{font-size:14px}
+  .ab{width:36px;height:36px;font-size:16px}
+  .x-btn{font-size:13px;padding:9px 12px}
+  .tp{font-size:12.5px;padding:4px 9px}
+  .mg{grid-template-columns:repeat(2,1fr)}
+  .mc-v{font-size:13.5px}
+  .star{font-size:26px}
+  .ntxt textarea{font-size:15px;min-height:80px}
+  .bsave{font-size:14px;padding:9px 18px}
+  .lbtn{font-size:13px;padding:9px 14px}
+}
+</style>
+</head>
+<body>
+
+<div id="ld">
+  <div class="spin"></div>
+  <div id="ld-t">Bikepark Atlas CR</div>
+  <div id="ld-m">Nacitam data...</div>
+  <div class="ld-prog"><div class="ld-bar" id="ldbar"></div></div>
+</div>
+<div id="toast"></div>
+
+<header class="hdr">
+  <div class="logo">Bike<i>park</i> Atlas</div>
+  <div class="vline"></div>
+  <div class="pills">
+    <button class="pill on" data-f="all">Vse</button>
+    <button class="pill" data-f="bikepark">Bikeparky</button>
+    <button class="pill tc" data-f="trail">Trail centra</button>
+  </div>
+  <div class="srch"><input type="text" id="sq" placeholder="Hledat..."></div>
+  <div class="hd-r">
+    <div class="hstat"><div class="hdot" style="background:var(--orange)"></div><span id="sBP">-</span></div>
+    <div class="hstat"><div class="hdot" style="background:var(--green)"></div><span id="sTC">-</span></div>
+  </div>
+</header>
+
+<div class="app-wrap">
+  <aside class="sidebar">
+    <div class="sb-top">
+      <div class="sb-cnt">Zobrazeno: <b id="cnt">-</b> lokalit</div>
+      <select class="sort-sel" id="ss">
+        <option value="dist">Vzdalnost</option>
+        <option value="name">Nazev A-Z</option>
+        <option value="rating">Hodnoceni</option>
+        <option value="type">Typ</option>
+      </select>
+    </div>
+    <div class="cl" id="cl"></div>
+  </aside>
+  <div class="map-side" id="mapside">
+    <div id="map"></div>
+    <div class="map-lbl"><strong>Vychozi bod</strong>Brno – Novy Liskovec</div>
+    <button class="btn-fs" id="btnFS" onclick="toggleFS()">&#x26F6; Cela obrazovka</button>
+    <button class="btn-fs-close" id="btnFSClose" onclick="toggleFS()">&#x2715; Zavrit mapu</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── CONFIG ──────────────────────────────────────────────
+// Vloz svou Apps Script URL sem:
+// var SU = localStorage.getItem('bp_url') || 'VLOZ_ZDE_SVOU_APPS_SCRIPT_URL';
+// ────────────────────────────────────────────────────────
+var SU = 'https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
+var OLA=49.1694, OLN=16.5928;
+var PARKS=[], flt='all', qry='', srt='dist', selId=null;
+var MAP, MKS={}, UD={};
+var WX={}; // weather cache by park id
+
+// ── Distance ──
+function dist(la,ln){
+  var R=6371,r=function(x){return x*Math.PI/180};
+  var a=Math.sin(r(la-OLA)/2)*Math.sin(r(la-OLA)/2)+Math.cos(r(OLA))*Math.cos(r(la))*Math.sin(r(ln-OLN)/2)*Math.sin(r(ln-OLN)/2);
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+function ftime(km){var m=Math.round(km/80*60);return m<60?m+'min':Math.floor(m/60)+'h'+(m%60?' '+m%60+'m':'')}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function gu(id){return UD[id]||{}}
+function su(id,f,v){if(!UD[id])UD[id]={};UD[id][f]=v;if(SU&&SU.indexOf('http')===0)fetch(SU,{method:'POST',body:JSON.stringify({action:'saveUserData',id:id,field:f,value:v})}).catch(function(){})}
+
+// ── Weather codes ──
+var WXC={
+  0:{i:'\u2600\uFE0F',l:'Jasno',c:'sun'},
+  1:{i:'\uD83C\uDF24\uFE0F',l:'Prevazne jasno',c:'sun'},
+  2:{i:'\u26C5',l:'Polojasno',c:''},
+  3:{i:'\u2601\uFE0F',l:'Zatazeno',c:''},
+  45:{i:'\uD83C\uDF2B\uFE0F',l:'Mlha',c:''},
+  48:{i:'\uD83C\uDF2B\uFE0F',l:'Namraza',c:''},
+  51:{i:'\uD83C\uDF26\uFE0F',l:'Slabe mrholeni',c:'rain'},
+  53:{i:'\uD83C\uDF26\uFE0F',l:'Mrholeni',c:'rain'},
+  55:{i:'\uD83C\uDF27\uFE0F',l:'Huste mrholeni',c:'rain'},
+  61:{i:'\uD83C\uDF27\uFE0F',l:'Slaby dest',c:'rain'},
+  63:{i:'\uD83C\uDF27\uFE0F',l:'Dest',c:'rain'},
+  65:{i:'\uD83C\uDF27\uFE0F',l:'Vydatny dest',c:'rain'},
+  71:{i:'\uD83C\uDF28\uFE0F',l:'Slabe snezeni',c:'snow'},
+  73:{i:'\uD83C\uDF28\uFE0F',l:'Snezeni',c:'snow'},
+  75:{i:'\u2744\uFE0F',l:'Vydatne snezeni',c:'snow'},
+  80:{i:'\uD83C\uDF26\uFE0F',l:'Prehanky',c:'rain'},
+  81:{i:'\uD83C\uDF27\uFE0F',l:'Silne prehanky',c:'rain'},
+  82:{i:'\u26C8\uFE0F',l:'Bourkove prehanky',c:'storm'},
+  95:{i:'\u26C8\uFE0F',l:'Bourka',c:'storm'},
+  96:{i:'\u26C8\uFE0F',l:'Bourka s krupobitim',c:'storm'}
+};
+function wxInfo(code){
+  var c=WXC[code];if(c)return c;
+  var keys=Object.keys(WXC).map(Number).sort(function(a,b){return a-b});
+  for(var i=keys.length-1;i>=0;i--){if(keys[i]<=code)return WXC[keys[i]]}
+  return {i:'\uD83C\uDF21\uFE0F',l:'Neuvedeno',c:''};
+}
+function windLbl(kmh){
+  if(kmh<10)return 'Klid';if(kmh<20)return 'Slaby';if(kmh<30)return 'Mirny';
+  if(kmh<40)return 'Cerstvý';if(kmh<55)return 'Silny';return 'Bourlivy';
+}
+function nextWeekend(){
+  var t=new Date(),d=t.getDay(),ds=(6-d+7)%7;
+  if(ds===0)ds=7;
+  var sa=new Date(t);sa.setDate(t.getDate()+ds);
+  var su2=new Date(sa);su2.setDate(sa.getDate()+1);
+  return [sa,su2];
+}
+function fmtWkDay(d){var n=['Ne','Po','Ut','St','Ct','Pa','So'];return n[d.getDay()]+' '+d.getDate()+'.'+(d.getMonth()+1)+'.'}
+
+// Load weather for ALL parks at once using Promise.all
+async function loadAllWeather(parks){
+  var weekend=nextWeekend();
+  var satStr=weekend[0].toISOString().slice(0,10);
+  var sunStr=weekend[1].toISOString().slice(0,10);
+
+  var total=parks.length, done=0;
+  function updProg(){
+    done++;
+    var pct=Math.round(done/total*100);
+    var bar=document.getElementById('ldbar');
+    if(bar)bar.style.width=pct+'%';
+  }
+
+  // Batch: fetch all parks weather simultaneously
+  var promises=parks.map(function(p){
+    var url='https://api.open-meteo.com/v1/forecast?latitude='+p.lat.toFixed(4)+'&longitude='+p.lng.toFixed(4)+'&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=14';
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = controller ? setTimeout(function(){controller.abort()}, 8000) : null;
+    var fetchOpts = controller ? {signal: controller.signal} : {};
+    return fetch(url, fetchOpts).then(function(r){if(timer)clearTimeout(timer);return r.json()}).then(function(data){
+      var dates=data.daily.time;
+      var si=dates.indexOf(satStr), ui=dates.indexOf(sunStr);
+      if(si<0||ui<0){WX[p.id]=null;updProg();return}
+      WX[p.id]=[
+        {date:weekend[0],maxT:Math.round(data.daily.temperature_2m_max[si]),minT:Math.round(data.daily.temperature_2m_min[si]),code:data.daily.weathercode[si],wind:Math.round(data.daily.windspeed_10m_max[si]),precip:data.daily.precipitation_probability_max[si]},
+        {date:weekend[1],maxT:Math.round(data.daily.temperature_2m_max[ui]),minT:Math.round(data.daily.temperature_2m_min[ui]),code:data.daily.weathercode[ui],wind:Math.round(data.daily.windspeed_10m_max[ui]),precip:data.daily.precipitation_probability_max[ui]}
+      ];
+      updProg();
+    }).catch(function(e){
+      console.warn('Weather fetch failed for', p.id, e.message);
+      WX[p.id]=null;
+      updProg();
+    });
+  });
+
+  await Promise.all(promises);
+}
+
+function wxHTML(parkId){
+  var days=WX[parkId];
+  if(!days)return '<div class="wx-loading"><span style="font-size:11px;color:var(--ink3)">Predpoved nedostupna</span></div>';
+  var h='<div class="wx-strip">';
+  days.forEach(function(d){
+    var w=wxInfo(d.code);
+    h+='<div class="wx-col '+w.c+'">'+
+      '<div class="wx-ico">'+w.i+'</div>'+
+      '<div class="wx-info">'+
+        '<div class="wx-day-name">'+fmtWkDay(d.date)+'</div>'+
+        '<div class="wx-cond">'+w.l+'</div>'+
+        '<div class="wx-temp">'+d.maxT+'&deg;C <small>/ '+d.minT+'&deg;C</small></div>'+
+        '<div class="wx-wind">&#128168; <b>'+d.wind+'km/h</b> '+windLbl(d.wind)+'</div>'+
+        (d.precip>0?'<div class="wx-wind">&#127746; <b>'+d.precip+'%</b></div>':'')+
+      '</div>'+
+    '</div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+// ── Map ──
+function initMap(){
+  MAP=L.map('map').setView([49.8,16.5],7);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',subdomains:'abcd',maxZoom:19}).addTo(MAP);
+  L.marker([OLA,OLN],{icon:L.divIcon({className:'',html:'<div style="width:13px;height:13px;background:#d4500e;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 7px rgba(212,80,14,.5)"></div>',iconSize:[13,13],iconAnchor:[6,6]})}).addTo(MAP).bindTooltip('Brno - Novy Liskovec');
+}
+
+function addMk(p){
+  var bp=p.type==='bikepark',c=bp?'#d4500e':'#24603f';
+  var mk=L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div style="width:34px;height:34px;border-radius:9px;background:'+c+';border:2px solid rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 9px rgba(0,0,0,.22);cursor:pointer">'+(bp?'\uD83D\uDEA0':'\uD83E\uDDFE')+'</div>',iconSize:[34,34],iconAnchor:[17,17],popupAnchor:[0,-20]})}).addTo(MAP);
+  mk.bindPopup(mkpop(p),{maxWidth:275});
+  mk.on('click',function(){pick(p.id)});
+  MKS[p.id]=mk;
+}
+
+function mkpop(p){
+  var bp=p.type==='bikepark',u=gu(p.id);
+  var st=u.my_status==='planned'?'<br><b style="color:#d4500e">V planu</b>':u.my_status==='visited'?'<br><b style="color:#24603f">Navstiveno</b>':'';
+  var wx=WX[p.id];
+  var wxline='';
+  if(wx&&wx[0]){var w=wxInfo(wx[0].code);wxline='<br>Vikendu: '+w.i+' '+wx[0].maxT+'\u00B0C'+' / '+windLbl(wx[0].wind)+' vitru';}
+  return '<div><div class="pst '+(bp?'bp':'tc')+'"></div><div class="pbdy">'+
+    '<div class="pnm">'+esc(p.name)+'</div>'+
+    '<div class="ptp '+(bp?'bp':'tc')+'">'+(bp?'Bikepark':'Trail centrum')+' &middot; '+esc(p.region)+'</div>'+
+    '<div class="pmt">'+p._d+' km &middot; '+p._t+'<br>Skipas: '+esc(p.skipas)+'<br>Parkovani: '+esc(p.parking)+wxline+st+'</div>'+
+    '<button class="pbtn '+(bp?'bp':'tc')+'" onclick="pick(''+p.id+'');var c=document.querySelector('.leaflet-popup-close-button');if(c)c.click()">Zobrazit detail &rarr;</button>'+
+    '</div></div>';
+}
+
+// ── Fullscreen map ──
+function toggleFS(){
+  var ms=document.getElementById('mapside');
+  ms.classList.toggle('fullscreen');
+  setTimeout(function(){MAP.invalidateSize()},200);
+}
+
+// ── Visibility + Sort ──
+function isvis(p){
+  if(flt!=='all'&&p.type!==flt)return false;
+  if(qry){var q=qry.toLowerCase();return p.name.toLowerCase().indexOf(q)>=0||p.region.toLowerCase().indexOf(q)>=0}
+  return true;
+}
+function getsorted(){
+  var l=PARKS.filter(isvis);
+  l.sort(function(a,b){
+    if(srt==='dist')return a._d-b._d;
+    if(srt==='name')return a.name.localeCompare(b.name,'cs');
+    if(srt==='type')return a.type.localeCompare(b.type);
+    if(srt==='rating')return parseFloat((gu(b.id).my_rating||0))-parseFloat((gu(a.id).my_rating||0));
+    return 0;
+  });
+  return l;
+}
+
+// ── Render ──
+function render(){
+  var list=getsorted();
+  document.getElementById('cnt').textContent=list.length;
+  PARKS.forEach(function(p){var mk=MKS[p.id];if(!mk)return;isvis(p)?(!MAP.hasLayer(mk)&&mk.addTo(MAP)):(MAP.hasLayer(mk)&&MAP.removeLayer(mk))});
+  var cl=document.getElementById('cl');
+  cl.innerHTML='';
+  if(!list.length){cl.innerHTML='<div style="padding:40px 16px;text-align:center;color:var(--ink3);font-size:13px">Zadna lokalita neodpovida.</div>';return}
+  list.forEach(function(p){
+    var d=document.createElement('div');
+    d.innerHTML=mkcard(p);
+    var c=d.firstElementChild;
+    cl.appendChild(c);
+    wire(c,p);
+  });
+}
+
+function mkcard(p){
+  var bp=p.type==='bikepark',u=gu(p.id);
+  var r=parseFloat(u.my_rating||0);
+  var isSel=selId===p.id,isPl=u.my_status==='planned',isVi=u.my_status==='visited';
+  var hasN=!!(u.my_note||'').trim();
+  var tr=p.trails,cg=0,cb=0,cr=0,ck=0;
+  for(var i=0;i<tr.length;i++){var d=tr[i].d;if(d==='g')cg++;else if(d==='b')cb++;else if(d==='r')cr++;else ck++}
+  var tot=tr.length||1;
+  var dif=ck/tot>.25?'Velmi tezke':cr/tot>.4?'Tezke':cb/tot>.5?'Stredni':'Snadne';
+  var sh='';for(var s=1;s<=5;s++)sh+='<span class="star'+(r>=s?' on':'')+'" data-s="'+s+'">\u2605</span>';
+  var ph='';
+  tr.slice(0,6).forEach(function(t){
+    var ic=t.d==='g'?'\uD83D\uDFE2':t.d==='b'?'\uD83D\uDD35':t.d==='r'?'\uD83D\uDD34':'\u26AB';
+    ph+='<span class="tp">'+ic+' '+esc(t.n)+(t.km?'<span class="tp-km"> '+t.km+'km</span>':'')+'</span>';
+  });
+  if(tr.length>6)ph+='<span class="tp" style="color:var(--ink3)">+'+(tr.length-6)+'</span>';
+  var stag=isPl?'<span class="badge b-pl">V planu</span>':isVi?'<span class="badge b-vi">Navstiveno</span>':'';
+  var cls='card'+(isSel?(bp?' sel':' sel tc'):'');
+  var mcu='https://mapy.cz/zakladni?x='+p.lng+'&y='+p.lat+'&z=15';
+
+  return '<article class="'+cls+'" data-id="'+p.id+'">'+
+    '<div class="c-stripe '+(bp?'bp':'tc')+'"></div>'+
+    '<div class="c-head">'+
+      '<div class="c-ico '+(bp?'bp':'tc')+'">'+(bp?'\uD83D\uDEA0':'\uD83E\uDDFE')+'</div>'+
+      '<div class="c-body">'+
+        '<div class="c-name">'+esc(p.name)+'</div>'+
+        '<div class="c-tags"><span class="badge '+(bp?'b-bp':'b-tc')+'">'+(bp?'Bikepark':'Trail centrum')+'</span><span class="badge b-reg">'+esc(p.region)+'</span>'+stag+'</div>'+
+      '</div>'+
+      '<div class="c-btns">'+
+        '<button class="ab'+(isPl?' on-p':'')+'" data-a="pl" title="V planu">\uD83D\uDCCC</button>'+
+        '<button class="ab'+(isVi?' on-v':'')+'" data-a="vi" title="Navstiveno">&#10003;</button>'+
+        '<button class="ab" data-a="x" title="Detail">&#9660;'+(hasN?'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--orange);vertical-align:top;margin-top:2px;margin-left:1px"></span>':'')+'</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="c-stats">'+
+      '<div class="cst"><b>'+p._d+' km</b>&nbsp;<span style="color:var(--ink3)">'+p._t+'</span></div>'+
+      '<div class="cst'+(p.skipas==='Zdarma'?' fr':'')+'">Skipas:&nbsp;<b>'+esc(p.skipas)+'</b></div>'+
+      '<div class="cst'+(p.parking==='Zdarma'?' fr':'')+'">Park.:&nbsp;<b>'+esc(p.parking)+'</b></div>'+
+      '<div class="cst">Tras:&nbsp;<b>'+tr.length+'</b></div>'+
+      (p.season?'<div class="cst"><span style="color:var(--ink3)">'+esc(p.season)+'</span></div>':'')+
+    '</div>'+
+    /* WEATHER - shown if loaded, loading indicator if not yet */
+    (WX[p.id]!==undefined ? wxHTML(p.id) : WX[p.id]===null ? '' : '<div class="wx-loading"><div class="wxspin"></div> <span style="font-size:11.5px">Nacitam pocasi...</span></div>')+
+    '<button class="x-btn" data-a="x"><i class="x-arr">&#9660;</i>&nbsp; Rozbalit detail</button>'+
+    '<div class="c-det">'+
+      (p.desc?'<div class="ds"><div class="ds-t">O lokalite</div><div class="ds-desc">'+esc(p.desc)+'</div></div>':'')+
+      '<div class="ds"><div class="ds-t">Trasy</div>'+
+        '<div class="dbar"><div class="dsegs"><div class="dseg'+(cg?' g':'')+'"></div><div class="dseg'+(cb?' b':'')+'"></div><div class="dseg'+(cr?' r':'')+'"></div><div class="dseg'+(ck?' k':'')+'"></div></div><span class="dtxt">'+dif+' &middot; '+tr.length+' tras</span></div>'+
+        '<div class="tpills">'+ph+'</div>'+
+      '</div>'+
+      '<div class="ds"><div class="ds-t">Logistika</div><div class="mg">'+
+        '<div class="mc"><div class="mc-l">Skipas</div><div class="mc-v'+(p.skipas==='Zdarma'?' fr':'')+'">'+esc(p.skipas)+'</div></div>'+
+        '<div class="mc"><div class="mc-l">Parkovani</div><div class="mc-v'+(p.parking==='Zdarma'?' fr':'')+'">'+esc(p.parking)+'</div></div>'+
+        (p.lifts?'<div class="mc"><div class="mc-l">Lanovky</div><div class="mc-v">'+esc(p.lifts)+'</div></div>':'')+
+      '</div></div>'+
+      '<div class="ds"><div class="ds-t">Moje hodnoceni</div><div class="rrow"><div class="stars">'+sh+'</div><span class="rlbl">'+(r?r+'/5':'Neohodnoceno')+'</span></div></div>'+
+      '<div class="ds"><div class="ds-t">Moje poznamka <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;color:#c0bab2">(ulozi se do Google Sheets – vsechna zarizeni)</span></div>'+
+        '<div class="ntxt"><textarea placeholder="Napis poznamku...">'+esc(u.my_note||'')+'</textarea>'+
+          '<div class="nrow"><button class="bsave" data-a="sn">Ulozit poznamku</button><span class="nst" data-ns></span></div>'+
+        '</div></div>'+
+      '<div class="lrow">'+
+        (p.web?'<a href="'+p.web+'" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">&#127760; Oficialni web</a>':'')+
+        '<a href="'+mcu+'" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">&#128506; Navigovat</a>'+
+      '</div>'+
+    '</div>'+
+  '</article>';
+}
+
+function wire(card,p){
+  var id=p.id;
+  card.addEventListener('click',function(e){if(e.target.closest('.ab')||e.target.closest('.c-det')||e.target.closest('.lbtn')||e.target.closest('.x-btn'))return;pick(id)});
+  var bpl=card.querySelector('[data-a="pl"]');
+  if(bpl)bpl.addEventListener('click',function(e){e.stopPropagation();su(id,'my_status',gu(id).my_status==='planned'?'':'planned');toast('Stav ulozen','ok');render()});
+  var bvi=card.querySelector('[data-a="vi"]');
+  if(bvi)bvi.addEventListener('click',function(e){e.stopPropagation();su(id,'my_status',gu(id).my_status==='visited'?'':'visited');toast('Stav ulozen','ok');render()});
+  card.querySelectorAll('[data-a="x"]').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var det=card.querySelector('.c-det'),xb=card.querySelector('.x-btn');
+      var o=det.classList.contains('open');
+      det.classList.toggle('open');
+      if(xb){xb.classList.toggle('xo',!o);var arr=xb.querySelector('.x-arr');if(arr)arr.innerHTML=o?'&#9660;':'&#9650;';xb.lastChild.textContent=' '+(o?'Rozbalit detail':'Sbalit detail')}
+    })
+  });
+  card.querySelectorAll('.star').forEach(function(st){
+    st.addEventListener('click',function(e){e.stopPropagation();var rv=parseInt(st.dataset.s),cur=parseFloat(gu(id).my_rating||0);su(id,'my_rating',String(cur===rv?0:rv));toast('Hodnoceni ulozeno','ok');render()})
+  });
+  var bsn=card.querySelector('[data-a="sn"]');
+  if(bsn)bsn.addEventListener('click',function(e){
+    e.stopPropagation();
+    var ta=card.querySelector('textarea'),ns=card.querySelector('[data-ns]');
+    bsn.disabled=true;bsn.textContent='Ukladam...';ns.textContent='';ns.className='nst';
+    su(id,'my_note',ta.value);
+    setTimeout(function(){ns.textContent='Ulozeno do Sheets';ns.className='nst ok';bsn.disabled=false;bsn.textContent='Ulozit poznamku';toast('Poznamka ulozena','ok');setTimeout(function(){ns.textContent='';ns.className='nst'},4000)},700)
+  });
+}
+
+function pick(id){
+  selId=id;render();
+  setTimeout(function(){
+    var c=document.querySelector('.card[data-id="'+id+'"]');
+    if(!c)return;
+    c.scrollIntoView({behavior:'smooth',block:'nearest'});
+    var det=c.querySelector('.c-det'),xb=c.querySelector('.x-btn');
+    if(det&&!det.classList.contains('open')){det.classList.add('open');if(xb){xb.classList.add('xo');var arr=xb.querySelector('.x-arr');if(arr)arr.innerHTML='&#9650;';xb.lastChild.textContent=' Sbalit detail'}}
+  },50);
+  var p=PARKS.find(function(x){return x.id===id});
+  if(p){MAP.setView([p.lat,p.lng],Math.max(MAP.getZoom(),12),{animate:true});setTimeout(function(){var mk=MKS[id];if(mk)mk.openPopup()},420)}
+}
+
+var ttt;
+function toast(msg,type){var el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+(type||'');clearTimeout(ttt);ttt=setTimeout(function(){el.className='toast'},3000)}
+
+function pr(row){
+  var la=parseFloat(String(row.lat||'').replace(/[^0-9.\-]/g,'')),ln=parseFloat(String(row.lng||'').replace(/[^0-9.\-]/g,''));
+  if(isNaN(la)||isNaN(ln)||Math.abs(la)>90||Math.abs(ln)>180){console.warn('bad coords',row.name);return null}
+  var d=dist(la,ln),rawt=row.trails_json||row.trails||'',trails=[];
+  var s=String(rawt).trim();
+  if(s.charAt(0)==='['){try{trails=JSON.parse(s).map(function(t){return{d:String(t.d||'').trim(),n:String(t.n||''),km:parseFloat(t.km)||0}})}catch(e){}}
+  return{id:row.id||String(row.name||'').toLowerCase().replace(/[^a-z0-9]/g,'-'),name:String(row.name||''),type:String(row.type||'').toLowerCase().indexOf('bikepark')>=0?'bikepark':'trail',lat:la,lng:ln,region:String(row.region||''),skipas:String(row.skipas||'viz web'),parking:String(row.parking||'viz web'),web:String(row.web||''),season:String(row.season||''),lifts:String(row.lifts||''),desc:String(row.description||''),trails:trails,_d:d,_t:ftime(d)};
+}
+
+async function boot(){
+  var ldm=document.getElementById('ld-m'),ldb=document.getElementById('ldbar');
+  try {
+    initMap();
+  } catch(e) {
+    console.error('initMap failed:', e);
+  }
+
+  try {
+    // 1. Load park data
+    var isPlaceholder=!SU||SU.indexOf('VLOZ')===0||SU.indexOf('http')!==0;
+    var parks=[];
+    if(isPlaceholder){
+      if(ldm)ldm.textContent='Zobrazuji zabudovana data';
+      parks=FD();
+    } else {
+      try{
+        if(ldm)ldm.textContent='Nacitam z Google Sheets...';
+        var controller2=typeof AbortController!=='undefined'?new AbortController():null;
+        var t2=controller2?setTimeout(function(){controller2.abort()},10000):null;
+        var r=await fetch(SU+'?action=getData',controller2?{signal:controller2.signal}:{});
+        if(t2)clearTimeout(t2);
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        var j=await r.json();
+        if(j.error)throw new Error(j.error);
+        j.data.forEach(function(row){if(row.id)UD[row.id]={my_status:row.my_status||'',my_note:row.my_note||'',my_rating:row.my_rating||'',my_visited_date:row.my_visited_date||''}});
+        parks=j.data.map(pr).filter(Boolean);
+      }catch(e){
+        console.error('Sheets error:',e);
+        if(ldm)ldm.textContent='Chyba Sheets, pouzivam zabudovana data';
+        toast('Chyba Sheets: '+e.message,'err');
+        parks=FD();
+      }
+    }
+
+    PARKS=parks;
+    try{PARKS.forEach(addMk);}catch(e){console.error('addMk error:',e);}
+    try{
+      document.getElementById('sBP').textContent=PARKS.filter(function(p){return p.type==='bikepark'}).length+' bikepark';
+      document.getElementById('sTC').textContent=PARKS.filter(function(p){return p.type==='trail'}).length+' trail center';
+    }catch(e){}
+
+    // 2. Render immediately
+    try{render();}catch(e){console.error('render error:',e);}
+
+  } catch(e) {
+    console.error('Boot inner error:', e);
+    try{PARKS=FD();PARKS.forEach(addMk);render();}catch(e2){}
+  } finally {
+    // ALWAYS hide loader
+    var ld=document.getElementById('ld');
+    if(ld)ld.classList.add('gone');
+  }
+
+  // 3. Weather in background
+  setTimeout(function(){
+    try{
+      loadAllWeather(PARKS).then(function(){
+        try{render();}catch(e){}
+      }).catch(function(e){
+        console.warn('Weather failed:',e);
+      });
+    }catch(e){console.warn('loadAllWeather call failed:',e);}
+  }, 200);
+}
+
+// ── Events ──
+document.querySelectorAll('.pill').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.pill').forEach(function(x){x.classList.remove('on')});b.classList.add('on');flt=b.dataset.f;render()})});
+document.getElementById('sq').addEventListener('input',function(e){qry=e.target.value;render()});
+document.getElementById('ss').addEventListener('change',function(e){srt=e.target.value;render()});
+
+// Close fullscreen on Escape
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('mapside').classList.contains('fullscreen'))toggleFS()});
+
+// Safety: loader ALWAYS disappears after 5 seconds no matter what
+setTimeout(function(){
+  var ld=document.getElementById('ld');
+  if(ld&&!ld.classList.contains('gone')){
+    ld.classList.add('gone');
+    toast('Timeout - zobrazuji zabudovana data','err');
+    if(!PARKS||!PARKS.length){PARKS=FD();PARKS.forEach(addMk);render();}
+  }
+}, 5000);
+
+boot().catch(function(e){
+  console.error('Boot error:',e);
+  document.getElementById('ld').classList.add('gone');
+  document.getElementById('ld-m').textContent='Chyba: '+e.message;
+  toast('Chyba startu: '+e.message,'err');
+  if(!PARKS||!PARKS.length){PARKS=FD();PARKS.forEach(addMk);render();}
+});
+
+function FD() {
+  return [
+    /* BIKEPARKY — overene lokality s lanovkou */
+    {id:"klinovec",name:"Trail Park Klinovec",type:"bikepark",lat:50.3931,lng:12.9581,region:"Krusne hory",skipas:"viz web",parking:"Zdarma",web:"https://www.trailpark.cz",season:"Kveten-Rijen",lifts:"1 (4-sedacka Prima Express)",description:"Nejvetsi trail park v CR. Flow traily Azur (10 km) a Rubin (8 km) jsou mezi nejdelsimi v Evrope. Pumptrack a skill centrum u horni stanice. Pujcovna Mondraker.",trails_json:[{d:"g",n:"Azur (flow)",km:10},{d:"b",n:"Rubin (flow)",km:8},{d:"r",n:"Baron (enduro/DH)",km:6},{d:"k",n:"Illegal (enduro)",km:3.3}]},
+    {id:"dolnimorava",name:"Trail Park Dolni Morava",type:"bikepark",lat:50.1489,lng:16.7625,region:"Pardubicky kraj",skipas:"viz web",parking:"200 Kc/den",web:"https://www.dolnimorava.cz/bike",season:"Duben-Rijen",lifts:"2 (gondola + sedacka)",description:"Moderni areal na Snezniku. Gondola, flow trasy, pumptrack, dirtpark. Sky Walk v blizkosti. Vyborna infrastruktura a pujcovna.",trails_json:[{d:"g",n:"Beginner Flow",km:2.5},{d:"b",n:"Dolnacka (flow)",km:4.2},{d:"b",n:"Morava Trail",km:3.8},{d:"r",n:"Cervena enduro",km:2.2},{d:"k",n:"Dirtpark / jumps",km:0.4}]},
+    {id:"kares",name:"Bikepark Kares",type:"bikepark",lat:50.0589,lng:17.1225,region:"Jeseniky (Kouty nad Desnou)",skipas:"viz web",parking:"Zdarma",web:"https://bikepark-kares.cz",season:"Brezen-Rijen",lifts:"1",description:"Novejsi bikepark v Koutech nad Desnou v Jesenikach. Ciste DH a enduro trasy, oblibeny u pokrocilych jezdcu ze ZEVL teamu.",trails_json:[{d:"b",n:"Modrá",km:2.1},{d:"r",n:"Cervena",km:1.9},{d:"k",n:"Cerna DH",km:1.5}]},
+    {id:"jested",name:"Bikepark Jested",type:"bikepark",lat:50.7314,lng:15.1603,region:"Liberecky kraj",skipas:"viz web",parking:"Zdarma",web:"https://www.skijested.cz/bikepark",season:"Cerven-Rijen",lifts:"1 (sedacka Skalka)",description:"Pod ikonickou vezi Jested u Liberce. Sedacka Skalka vyveze i s kolem. Pumptrack u dolni stanice. Pouze 4 trasy ale s historii zavodni.",trails_json:[{d:"g",n:"Turisticka (freeride)",km:1.5},{d:"b",n:"La Spaghetta",km:2.1},{d:"b",n:"La Spaghetta II",km:2.4},{d:"r",n:"Cervena",km:2.0}]},
+    {id:"lipno",name:"Bikepark Lipno",type:"bikepark",lat:48.6376,lng:14.2122,region:"Jihocesky kraj",skipas:"viz web",parking:"150 Kc/den",web:"https://www.lipno.info/bike",season:"Cerven-Zarim",lifts:"1 (sedacka)",description:"Moderni bikepark u prehrady Lipno, vhodny pro rodiny. Fun Ride Trail idealni pro zacatecniky. Krasne prostredi jiznich Cech.",trails_json:[{d:"g",n:"Fun Ride Trail",km:3.5},{d:"b",n:"Lipno Flow",km:2.6},{d:"r",n:"Tech Zone",km:1.8},{d:"k",n:"Lipno Black",km:1.3}]},
+    {id:"monínec",name:"Bikepark Moninec",type:"bikepark",lat:49.5939,lng:14.5311,region:"Stredocesky kraj",skipas:"viz web",parking:"Zdarma",web:"https://www.moninec.cz/bike",season:"Vikendy: Duben-Rijen",lifts:"1 (sedacka)",description:"Bikepark ve Stredoceskem kraji, provoz o vikendech. Presto nabizi zajimave trasy pro rodiny i pokrocile.",trails_json:[{d:"g",n:"Zelena",km:1.2},{d:"b",n:"Modra",km:2.0},{d:"r",n:"Cervena",km:1.8}]},
+    {id:"polevsko",name:"Bikepark Polevsko",type:"bikepark",lat:50.7019,lng:14.4339,region:"Ustecky kraj",skipas:"viz web",parking:"Zdarma",web:"https://www.polevsko.cz",season:"Brezen-Rijen",lifts:"1 (poma)",description:"Maly ale dobre hodnoceny bikepark severne nad Ceskou Lipou. 5 tras vcetne DH sekce se skalnymi usseky.",trails_json:[{d:"g",n:"Zelena (XC)",km:1.5},{d:"b",n:"Modra (enduro)",km:2.8},{d:"r",n:"Cervena (tech)",km:2.2},{d:"r",n:"Cervena 2",km:1.9},{d:"k",n:"Cerna (DH + skalky)",km:1.3}]},
+    {id:"peklak",name:"Bikepark Peklak",type:"bikepark",lat:49.8978,lng:16.4428,region:"Pardubicky kraj",skipas:"viz web (vlek)",parking:"Zdarma",web:"https://www.peklak.cz",season:"Duben-Rijen (denně)",lifts:"1 (kotva/vlek)",description:"22+ km trati, 8 sjezdovych tras. Dostupne vlakem z Brna i Prahy. Pumptrack, skill centrum, skakaci trenazer Hip Hop. Vstup i parkovani ZDARMA.",trails_json:[{d:"g",n:"Ruzovka (kids)",km:1.5},{d:"b",n:"Modra 1",km:1.8},{d:"b",n:"Modra 2",km:2.2},{d:"r",n:"Cervena 1 (tech)",km:1.6},{d:"r",n:"Cervena 2 (tech)",km:1.4},{d:"k",n:"Cerna 1 (DH)",km:1.2},{d:"k",n:"Cerna 2 (DH)",km:1.0},{d:"g",n:"Dechovka (stoupani)",km:2.5}]},
+    {id:"bukovka",name:"TrailPark Bukovka (Bukova hora)",type:"bikepark",lat:50.0931,lng:16.7792,region:"Pardubicky kraj",skipas:"viz web",parking:"Zdarma",web:"https://www.trailparkbukovka.cz",season:"Kveten-Rijen",lifts:"1 (4-sedacka)",description:"Moderni cyklisticky areal na Bukove hore v Cervene vode. Mazna krajina, ruzne trasy pro vsechny urovne. Recenze prumer 3.8/5.",trails_json:[{d:"g",n:"Zelena",km:2.0},{d:"b",n:"Modra",km:3.1},{d:"r",n:"Cervena",km:2.4},{d:"k",n:"Cerna",km:1.6}]},
+    {id:"destne",name:"Bikepark Destne",type:"bikepark",lat:50.3064,lng:16.3867,region:"Kralovehradecky kraj",skipas:"viz web",parking:"Zdarma",web:"https://www.destne.cz/bike",season:"Cerven-Rijen",lifts:"1 (sedacka)",description:"Novy bikepark (2024) v Orlickych horach. Hlavnim lakadem je cervena trasa proverujici i zkusene jezdce. Krasna priroda.",trails_json:[{d:"g",n:"Zelena",km:1.5},{d:"b",n:"Modra",km:2.2},{d:"r",n:"Cervena",km:2.8},{d:"k",n:"Cerna",km:1.3}]},
+    {id:"vitkovice",name:"Vitkovice Bikepark (Aldrov)",type:"bikepark",lat:50.6658,lng:15.5261,region:"Kralovehradecky kraj",skipas:"viz web",parking:"Zdarma",web:"https://www.aldrov.cz/bike",season:"Duben-Rijen",lifts:"1 (sedacka)",description:"Novy bikepark (2023) v arealu Aldrov-Vitkovice v Krkonosich. Dva flow traily cca 2 km. Bufet, mycka kol, parkovani u lanovky.",trails_json:[{d:"g",n:"Flow Trail 1",km:2.0},{d:"b",n:"Flow Trail 2",km:2.0}]},
+    {id:"hradiste",name:"Bikepark Hradiste",type:"bikepark",lat:49.8342,lng:17.5219,region:"Olomoucky kraj",skipas:"viz web",parking:"Zdarma",web:"https://www.mtbczech.cz/strediska/Bikepark-Hradiste",season:"Duben-Rijen",lifts:"1 (vlek)",description:"4 trasy ruznych obtiznosti. Po vytazeni vlekem si vyberte: pesinka (zacatecnici), Flow (650 m s klopenkami a skoky), Hradistak (550 m technicke) a bonus odbocka.",trails_json:[{d:"g",n:"Pesinka (family)",km:0.5},{d:"b",n:"Flow (klopenky, skoky)",km:0.65},{d:"r",n:"Hradistak (tech, skalky)",km:0.55},{d:"k",n:"Bonus (lavky, sec. skaly)",km:0.3}]},
+    {id:"heipark",name:"HEIPARK Tosovice",type:"bikepark",lat:49.7244,lng:17.9153,region:"Moravskoslezsky kraj",skipas:"viz web",parking:"Zdarma",web:"https://www.heipark.cz",season:"Brezen-Rijen",lifts:"1 (lano/vlek)",description:"Maly ale vyborne hodnoceny bikepark v Tosovicich (u Oder). Skvela komunita, dobre udrzovane trasy. Hodnoceni 4.8/5.",trails_json:[{d:"b",n:"Modra (flow)",km:1.8},{d:"r",n:"Cervena (tech)",km:1.5},{d:"k",n:"Cerna",km:1.1}]},
+    {id:"plešivec",name:"TrailPark Plesivec",type:"bikepark",lat:50.7800,lng:15.5800,region:"Liberecky kraj",skipas:"viz web",parking:"Zdarma",web:"https://www.skiresort.cz/plesivec",season:"Brezen-Rijen",lifts:"1 (sedacka)",description:"Bikepark s lanovkou blizko Harrachova. Oteviraji mezi prvnimi v CR, jiz od zari.",trails_json:[{d:"g",n:"Zelena",km:1.5},{d:"b",n:"Modra",km:2.0},{d:"r",n:"Cervena",km:1.8}]},
+    /* TRAIL CENTRA — overene singltrekove lokality */
+    {id:"rychlebske",name:"Rychlebske stezky",type:"trail",lat:50.2908,lng:17.1086,region:"Olomoucky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.rychlebskestezky.cz",season:"Brezen-Listopad",lifts:"",description:"80+ km tras, centrum Cerna Voda. Navrzeno velsanym designerem Dafyddem Davisem. Jedna z nejnavstevovanejsich trailovych lokalit v CR. Sezona 2024 startovala 29. brezna.",trails_json:[{d:"g",n:"Rodinna",km:8.0},{d:"b",n:"Rapotin",km:12.3},{d:"b",n:"Velka Kras",km:9.5},{d:"r",n:"Travna",km:9.8},{d:"k",n:"Expert",km:4.5}]},
+    {id:"singltrek-smrk",name:"Singltrek pod Smrkem",type:"trail",lat:50.9164,lng:15.1722,region:"Liberecky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.singltrekpodsmrkem.cz",season:"Duben-Rijen",lifts:"",description:"12 udrzovanych tras, 3 nastupni mista se zazemim (parkoviste, pujcovna, sprchy, mycka). Mezinarodne prosluly singltrek v Jizerskych horach. Trasy 2-15 km.",trails_json:[{d:"g",n:"Rodinna",km:5.0},{d:"b",n:"Nova Ves",km:8.0},{d:"b",n:"Hlavni okruh",km:12.0},{d:"r",n:"Tech",km:7.0},{d:"k",n:"Narocna",km:4.0}]},
+    {id:"trutnov",name:"Trutnov Trails",type:"trail",lat:50.5609,lng:15.9037,region:"Kralovehradecky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.trutnovtrails.cz",season:"Celorocne (dle podminek)",lifts:"",description:"Jedna z nejprogresinejsich bikovych lokalit v Cesku (2026). 17 km jednosmernych singletrailu v Jestrebich horach. Vyhled na Krkonose, 4 nastupni mista.",trails_json:[{d:"g",n:"Rodinna",km:3.5},{d:"b",n:"Jestrebí hory",km:6.2},{d:"r",n:"Cizkovy kameny",km:5.1},{d:"k",n:"Expert",km:2.2}]},
+    {id:"semberske",name:"Semberske stezky",type:"trail",lat:49.8494,lng:15.5131,region:"Stredocesky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.semberske.cz",season:"Celorocne",lifts:"",description:"5 barevne rozdelenych trati v perfektnim stavu. Oteviraci 2024: 29. brezna. Opakavane chvaleny jezdci. Blizko Prahy.",trails_json:[{d:"g",n:"Zelena",km:4.0},{d:"b",n:"Modra 1",km:5.5},{d:"b",n:"Modra 2",km:6.0},{d:"r",n:"Cervena",km:4.8},{d:"k",n:"Cerna",km:2.5}]},
+    {id:"bila",name:"Single Trails Bila",type:"trail",lat:49.4658,lng:18.5158,region:"Moravskoslezsky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.skibila.cz/bike",season:"Duben-Rijen",lifts:"",description:"Jednosmerne stezky v okolí obce Bila vybudovane Moravskoslezskym krajem. Seleky AirLine, Oakley Trail. 69 recenzi, prumer 3.5. Velke parkoviste.",trails_json:[{d:"g",n:"Zelena - rodinna",km:3.5},{d:"b",n:"Selsky AirLine",km:3.0},{d:"b",n:"Oakley Trail (klopenky)",km:2.8},{d:"r",n:"Enduro Trail (2024)",km:2.2},{d:"k",n:"Mamuti Trail",km:1.8}]},
+    {id:"skalice",name:"Skalice Trails",type:"trail",lat:50.3908,lng:16.0022,region:"Kralovehradecky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.ceskebikeparky.cz/singltreky/skalice-trails/",season:"Duben-Rijen",lifts:"",description:"Novy trail centrum (2022) u Ceske Skalice. Za podpory mistnich nadsencuu a Trutnov Trails. Hodnoceni 4.7/5 - vyjimecna lokalita.",trails_json:[{d:"g",n:"Zelena",km:3.5},{d:"b",n:"Modra",km:5.8},{d:"r",n:"Cervena",km:4.1}]},
+    {id:"horice",name:"Traily Horice",type:"trail",lat:50.3619,lng:15.6311,region:"Kralovehradecky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.ceskebikeparky.cz/singltreky/traily-horice/",season:"Duben-Rijen",lifts:"",description:"Novinka 2024. Hodnoceni 4.7/5. Mensí lokalita ale velmi pozitivni ohlasy v oblasti Horice.",trails_json:[{d:"g",n:"Zelena",km:3.0},{d:"b",n:"Modra",km:4.5},{d:"r",n:"Cervena",km:3.2}]},
+    {id:"dolnimorava-trail",name:"Trail Park Dolni Morava (singltreky)",type:"trail",lat:50.1489,lng:16.7430,region:"Pardubicky kraj",skipas:"Zdarma",parking:"200 Kc/den",web:"https://www.dolnimorava.cz/bike",season:"Duben-Rijen",lifts:"",description:"Sit singletrailu pri upati Snezniku - oddelenych od bikeparku, pristupna bez lanovky. Dobre hodnoceno (92 recenzi). Rozsiruje se kazdou sezonu.",trails_json:[{d:"g",n:"Zelena - lesni",km:6.5},{d:"b",n:"Modra - Sneznik",km:9.0},{d:"r",n:"Cervena - tech",km:5.8}]},
+    {id:"suchak",name:"Singltrek Suchak",type:"trail",lat:50.1383,lng:16.8939,region:"Pardubicky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.ceskebikeparky.cz/singltreky/singltrek-suchak/",season:"Duben-Rijen",lifts:"",description:"22 km siti stezek na svazich Sucheho vrchu. Nastup na parkovisti na Cernovodskem sedle. Hodnoceni 4.1/5.",trails_json:[{d:"g",n:"Zelena",km:5.0},{d:"b",n:"Modra",km:8.5},{d:"r",n:"Cervena",km:6.5},{d:"k",n:"Cerna",km:3.2}]},
+    {id:"jedovnice",name:"Singletrail Moravsky kras - Jedovnicke stezky",type:"trail",lat:49.3537,lng:16.7660,region:"Jihomoravsky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://mtbczech.cz",season:"Brezen-Listopad",lifts:"",description:"Singletraily v NP Moravsky kras u Jedovnic. Unikatni krajina, skalni formace, propast Macocha v blizkosti.",trails_json:[{d:"g",n:"Krasova stezka",km:7.5},{d:"b",n:"Skalní mlyn",km:5.3},{d:"r",n:"Babi lom",km:4.1}]},
+    {id:"marianske",name:"Singletrail Moravsky kras - Marianke udoli",type:"trail",lat:49.3269,lng:16.7231,region:"Jihomoravsky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://mtbczech.cz",season:"Brezen-Listopad",lifts:"",description:"Singletraily v Marianskem udoli u Blanska. Cast site Moravsky kras. Oblibene u brnenskych bikeru jako kratsi vyjezd.",trails_json:[{d:"g",n:"Rodinna trasa",km:4.5},{d:"b",n:"Marianske udoli",km:6.8},{d:"r",n:"Cervena",km:3.9}]},
+    {id:"vir",name:"Traily Vir",type:"trail",lat:49.5867,lng:16.3353,region:"Vysocina",skipas:"Zdarma",parking:"Zdarma",web:"https://www.trailyvir.cz",season:"Brezen-Listopad",lifts:"",description:"MTB traily u prehrady Vir. Technicke lesni trasy, ruzne obtiznosti. Vybore zazemi.",trails_json:[{d:"g",n:"Podhorak",km:4.8},{d:"b",n:"Prehrada",km:8.2},{d:"r",n:"Norici",km:5.7},{d:"k",n:"Skalní",km:2.9}]},
+    {id:"bikexzone",name:"BIKE X ZONE Susice",type:"trail",lat:49.2322,lng:13.5161,region:"Plzensky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.ceskebikeparky.cz/singltreky/bike-x-zone/",season:"Duben-Rijen",lifts:"",description:"Nova trail lokalita u Susice, brany Sumavy (2025). Novu vybudovane flow traily + prirodni stezky. Hodnoceni 4.4/5.",trails_json:[{d:"g",n:"Flow trail (novy)",km:3.5},{d:"b",n:"Modra - prirodni",km:6.0},{d:"r",n:"Cervena",km:4.2}]},
+    {id:"klintraily",name:"Klinske Traily",type:"trail",lat:50.6347,lng:13.6186,region:"Ustecky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.ceskebikeparky.cz/singltreky/klinske-traily/",season:"Brezen-Listopad",lifts:"",description:"Opravdove enduro traily v Krusnych horach. Skalní sekce, technicke usseky. Hodnoceni 3.8/5.",trails_json:[{d:"b",n:"Modra",km:3.5},{d:"r",n:"Cervena - enduro",km:4.8},{d:"k",n:"Cerna - tech",km:2.9}]},
+    {id:"zlatnicka",name:"Zlatnicka Dolina (SK)",type:"trail",lat:48.8917,lng:17.0172,region:"Slovensko / Zahori",skipas:"Zdarma",parking:"Zdarma",web:"https://www.ceskebikeparky.cz/singltreky/zlatnicka-dolina/",season:"Duben-Rijen",lifts:"",description:"Trail centrum par km za hranicemi Jizni Moravy. Otevreno 2018. Idealni kombinace s vyjezdem na Moravu.",trails_json:[{d:"g",n:"Zelena",km:4.5},{d:"b",n:"Modra",km:7.0},{d:"r",n:"Cervena",km:4.8}]},
+    {id:"zdobnice",name:"Singletrack Zdobnice",type:"trail",lat:50.2256,lng:16.5022,region:"Kralovehradecky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.ceskebikeparky.cz/singltreky/singletrack-zdobnice/",season:"Duben-Rijen",lifts:"",description:"Singletraily v Orlickych horach ve Zdobnici. Krasne prirodni prostredi jako letni vyuziti lyzarskeho strediska.",trails_json:[{d:"g",n:"Zelena",km:3.0},{d:"b",n:"Modra",km:5.5},{d:"r",n:"Cervena",km:4.2}]}
+  ].map(function(row){
+    var la=row.lat, ln=row.lng, d=dist(la,ln);
+    return {id:row.id,name:row.name,type:row.type,lat:la,lng:ln,region:row.region,
+      skipas:row.skipas,parking:row.parking,web:row.web,season:row.season,lifts:row.lifts,
+      desc:row.description,trails:row.trails_json,_d:d,_t:ftime(d)};
+  });
+}
+
+</script>
+</body>
+</html>
