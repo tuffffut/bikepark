@@ -315,16 +315,21 @@ function addMk(p){
 }
 
 function mkpop(p){
-  var bp=p.type==='bikepark', u=gu(p.id);
-  var st=u.my_status==='planned'?'<br><b style="color:#d4500e">V plánu</b>':u.my_status==='visited'?'<br><b style="color:#24603f">Navštíveno</b>':'';
-  var wx=WX[p.id], wxl='';
-  if(wx&&wx[0]){wxl='<br>Víkend: '+wxi(wx[0].code).i+' '+wx[0].maxT+'&#176;C, vítr '+wx[0].wind+' km/h';}
-  return '<div><div class="pop-bar '+(bp?'bp':'tc')+'"></div><div class="pop-body">'+
-    '<div class="pop-name">'+esc(p.name)+'</div>'+
-    '<div class="pop-type '+(bp?'bp':'tc')+'">'+(bp?'Bikepark':'Trail centrum')+' &middot; '+esc(p.region)+'</div>'+
-    '<div class="pop-meta">'+p._d+' km &middot; '+p._t+'<br>Skipas: '+esc(p.skipas)+'<br>Parkování: '+esc(p.parking)+wxl+st+'</div>'+
-    '<button class="pop-btn '+(bp?'bp':'tc')+'" onclick="pick(''+p.id+'');var c=document.querySelector('.leaflet-popup-close-button');if(c)c.click();">Zobrazit detail &rarr;</button>'+
-    '</div></div>';
+  var bp = p.type === 'bikepark', u = gu(p.id);
+  var st = u.my_status === 'planned' ? '<br><b style="color:#d4500e">V plánu</b>' : u.my_status === 'visited' ? '<br><b style="color:#24603f">Navštíveno</b>' : '';
+  var wx = WX[p.id], wxl = '';
+  if(wx && wx[0]){ wxl = `<br>Víkend: ${wxi(wx[0].code).i} ${wx[0].maxT}°C, vítr ${wx[0].wind} km/h`; }
+
+  // Používáme šablonový literál (backtick), který řeší problémy s uvozovkami
+  return `<div>
+    <div class="pop-bar ${bp ? 'bp' : 'tc'}"></div>
+    <div class="pop-body">
+      <div class="pop-name">${esc(p.name)}</div>
+      <div class="pop-type ${bp ? 'bp' : 'tc'}">${bp ? 'Bikepark' : 'Trail centrum'} &middot; ${esc(p.region)}</div>
+      <div class="pop-meta">${p._d} km &middot; ${p._t}<br>Skipas: ${esc(p.skipas)}<br>Parkování: ${esc(p.parking)}${wxl}${st}</div>
+      <button class="pop-btn ${bp ? 'bp' : 'tc'}" onclick="pick('${p.id}'); var c=document.querySelector('.leaflet-popup-close-button'); if(c) c.click();">Zobrazit detail &rarr;</button>
+    </div>
+  </div>`;
 }
 
 // Fullscreen mapa
