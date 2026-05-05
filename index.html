@@ -252,7 +252,7 @@ body{font-family:'Inter',sans-serif;background:#f0ede7;color:#18160f;font-size:1
 <script>
 // ===================================================
 // NASTAVENI - vloz svou Apps Script URL:
-var SCRIPT_URL= 'https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
+var SCRIPT_URL='https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
 // ===================================================
 
 var OLA=49.1694, OLN=16.5928;
@@ -769,10 +769,10 @@ function FD() {
     {id:"zlatnicka",name:"Zlatnicka Dolina (SK)",type:"trail",lat:48.8917,lng:17.0172,region:"Slovensko / Zahori",skipas:"Zdarma",parking:"Zdarma",web:"https://www.ceskebikeparky.cz/singltreky/zlatnicka-dolina/",season:"Duben-Rijen",lifts:"",description:"Trail centrum par km za hranicemi Jizni Moravy. Otevreno 2018. Idealni kombinace s vyjezdem na Moravu.",trails_json:[{d:"g",n:"Zelena",km:4.5},{d:"b",n:"Modra",km:7.0},{d:"r",n:"Cervena",km:4.8}]},
     {id:"zdobnice",name:"Singletrack Zdobnice",type:"trail",lat:50.2256,lng:16.5022,region:"Kralovehradecky kraj",skipas:"Zdarma",parking:"Zdarma",web:"https://www.ceskebikeparky.cz/singltreky/singletrack-zdobnice/",season:"Duben-Rijen",lifts:"",description:"Singletraily v Orlickych horach ve Zdobnici. Krasne prirodni prostredi jako letni vyuziti lyzarskeho strediska.",trails_json:[{d:"g",n:"Zelena",km:3.0},{d:"b",n:"Modra",km:5.5},{d:"r",n:"Cervena",km:4.2}]}
   ].map(function(row){
-    var la=row.lat, ln=row.lng, d=dist(la,ln);
+    var la=row.lat, ln=row.lng, d=gd(la,ln);
     return {id:row.id,name:row.name,type:row.type,lat:la,lng:ln,region:row.region,
       skipas:row.skipas,parking:row.parking,web:row.web,season:row.season,lifts:row.lifts,
-      desc:row.description,trails:row.trails_json,_d:d,_t:ftime(d)};
+      desc:row.description,trails:row.trails_json,_d:d,_t:ft(d)};
   });
 }
 
