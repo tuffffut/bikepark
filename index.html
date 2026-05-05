@@ -409,47 +409,62 @@ function wxHTML(id){
   return h+'</div>';
 }
 
-// Nacist pocasi po kliknuti
-document.getElementById('btnWx').addEventListener('click',function(){
-  if(wxDone)return;
-  var btn=document.getElementById('btnWx');
-  btn.disabled=true;
-  var wknd=nxtWk();
-  var sat=wknd[0].toISOString().slice(0,10);
-  var sun=wknd[1].toISOString().slice(0,10);
-  var total=PARKS.length, done=0;
-  btn.textContent='Načítám... 0/'+total;
-  function oneDone(){
-    done++;
-    btn.textContent='Načítám... '+done+'/'+total;
-    if(done===total){
-      wxDone=true;
-      btn.textContent='&#9925; Počasí načteno';
-      render();
-      toast('Počasí načteno pro '+total+' lokalit','ok');
+// Načtení počasí postupně (jedno po druhém)
+document.getElementById('btnWx').addEventListener('click', async function() {
+  if (wxDone) return;
+  
+  const btn = document.getElementById('btnWx');
+  btn.disabled = true;
+  
+  const wknd = nxtWk();
+  // Použití lokálního formátu data (prevence chyby UTC posunu)
+  const toIsoLocal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const sat = toIsoLocal(wknd[0]);
+  const sun = toIsoLocal(wknd[1]);
+
+  const total = PARKS.length;
+  btn.textContent = `Načítám... 0/${total}`;
+
+  // Helper pro drobné zpoždění mezi dotazy (např. 50ms), aby byl prohlížeč v klidu
+  const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+  for (let i = 0; i < total; i++) {
+    const p = PARKS[i];
+    btn.textContent = `Načítám... ${i + 1}/${total}`;
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${p.lat.toFixed(4)}&longitude=${p.lng.toFixed(4)}&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=14`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      const dates = data.daily.time;
+      const si = dates.indexOf(sat);
+      const ui = dates.indexOf(sun);
+
+      if (si >= 0 && ui >= 0) {
+        WX[p.id] = [
+          { date: wknd[0], maxT: Math.round(data.daily.temperature_2m_max[si]), minT: Math.round(data.daily.temperature_2m_min[si]), code: data.daily.weathercode[si], wind: Math.round(data.daily.windspeed_10m_max[si]), precip: data.daily.precipitation_probability_max[si] },
+          { date: wknd[1], maxT: Math.round(data.daily.temperature_2m_max[ui]), minT: Math.round(data.daily.temperature_2m_min[ui]), code: data.daily.weathercode[ui], wind: Math.round(data.daily.windspeed_10m_max[ui]), precip: data.daily.precipitation_probability_max[ui] }
+        ];
+      } else {
+        WX[p.id] = null;
+      }
+    } catch (err) {
+      console.error(`Chyba u lokality ${p.id}:`, err);
+      WX[p.id] = null;
     }
+
+    // Tady se děje to kouzlo: po každém načtení překreslíme aplikaci
+    render(); 
+    
+    // Krátká pauza, aby API nemělo pocit, že ho bombarduje robot
+    await delay(50); 
   }
-  for(var i=0;i<PARKS.length;i++){
-    (function(p){
-      var url='https://api.open-meteo.com/v1/forecast?latitude='+p.lat.toFixed(4)+'&longitude='+p.lng.toFixed(4)+'&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=14';
-      fetch(url)
-        .then(function(r){return r.json();})
-        .then(function(data){
-          var dates=data.daily.time;
-          var si=dates.indexOf(sat), ui=dates.indexOf(sun);
-          if(si>=0&&ui>=0){
-            WX[p.id]=[
-              {date:wknd[0],maxT:Math.round(data.daily.temperature_2m_max[si]),minT:Math.round(data.daily.temperature_2m_min[si]),code:data.daily.weathercode[si],wind:Math.round(data.daily.windspeed_10m_max[si]),precip:data.daily.precipitation_probability_max[si]},
-              {date:wknd[1],maxT:Math.round(data.daily.temperature_2m_max[ui]),minT:Math.round(data.daily.temperature_2m_min[ui]),code:data.daily.weathercode[ui],wind:Math.round(data.daily.windspeed_10m_max[ui]),precip:data.daily.precipitation_probability_max[ui]}
-            ];
-          } else {
-            WX[p.id]=null;
-          }
-        })
-        .catch(function(){WX[p.id]=null;})
-        .then(function(){oneDone();});
-    })(PARKS[i]);
-  }
+
+  wxDone = true;
+  btn.textContent = '☀️ Počasí načteno';
+  toast('Počasí bylo úspěšně aktualizováno', 'ok');
 });
 
 // --- Filtrovani a razeni ---
