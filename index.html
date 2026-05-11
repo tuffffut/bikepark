@@ -199,54 +199,138 @@
         .btn-wx-all { background: rgba(255,255,255,.08); color: var(--muted); border: 1px solid var(--border); padding: 7px 11px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; font-family: inherit; white-space: nowrap; transition: all .15s; }
         .btn-wx-all:hover { border-color: #60a5fa; color: #60a5fa; }
 
-        /* Mobil – kompletní přepracování */
+        /* ── QUICK FILTRY (plovoucí přes mapu) ── */
+        .quick-filters {
+            display: none;
+            position: absolute;
+            top: 10px; left: 10px; right: 10px;
+            z-index: 600;
+            gap: 6px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            flex-wrap: nowrap;
+            padding-bottom: 2px;
+        }
+        .quick-filters::-webkit-scrollbar { display: none; }
+        .qf-pill {
+            flex-shrink: 0;
+            padding: 6px 13px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,.22);
+            background: rgba(15,23,42,.88);
+            backdrop-filter: blur(10px);
+            color: rgba(248,250,252,.8);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: inherit;
+            transition: all .15s;
+        }
+        .qf-pill:hover { border-color: var(--primary); color: var(--primary); }
+        .qf-pill.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .qf-pill.on.tc { background: var(--green); border-color: var(--green); }
+        .qf-pill.on.dist50 { background: #8b5cf6; border-color: #8b5cf6; }
+        .qf-pill.on.free { background: var(--green); border-color: var(--green); }
+
+        /* ── FAB poloha ── */
+        .fab-loc {
+            display: none;
+            position: absolute;
+            bottom: 16px; right: 12px;
+            z-index: 600;
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: rgba(15,23,42,.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,.18);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: background .15s;
+        }
+        .fab-loc:hover { background: rgba(240,90,34,.2); }
+
+        /* ── BOTTOM NAV ── */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 58px;
+            background: rgba(15,23,42,.97);
+            backdrop-filter: blur(14px);
+            border-top: 1px solid var(--border);
+            z-index: 1100;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .bn-item {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; gap: 3px;
+            color: var(--muted);
+            cursor: pointer; padding: 4px 0;
+            border: none; background: none;
+            font-family: inherit;
+            transition: color .15s;
+        }
+        .bn-item.active { color: var(--primary); }
+        .bn-icon { font-size: 20px; line-height: 1; }
+        .bn-label { font-size: 9px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
+
+        /* ── MOBIL LAYOUT ── */
         @media (max-width: 850px) {
             body { overflow: hidden; }
 
+            /* Header: jen logo + hledání + lokace */
             .hdr {
                 position: relative; top: auto;
-                height: auto; padding: 8px 10px;
-                flex-wrap: wrap; gap: 5px;
-                flex-shrink: 0;
+                height: auto; padding: 8px 12px;
+                gap: 8px; flex-wrap: nowrap;
             }
-            .hdr-sep { display: none; }
-            .logo { font-size: 14px; }
-            .pills { gap: 3px; }
-            .pill { font-size: 10px; padding: 4px 8px; }
-            .srch { max-width: none; flex: 1; min-width: 90px; }
-            .hdr-r { gap: 4px; }
-            .btn-loc { font-size: 10px; padding: 5px 8px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .btn-wx-all { font-size: 10px; padding: 5px 8px; }
-            .btn-update { font-size: 10px; padding: 5px 8px; }
+            .hdr-sep, .pills, .btn-update, .btn-wx-all { display: none; }
+            .logo { font-size: 15px; }
+            .srch { max-width: none; flex: 1; }
+            .btn-loc { font-size: 10px; padding: 5px 9px; }
 
-            /* Celý layout jako flex sloupec */
+            /* Hlavní layout */
             .app {
                 margin-top: 0 !important;
-                height: 100dvh !important;
+                height: calc(100dvh - 58px) !important;
                 flex-direction: column;
             }
 
-            /* Mapa – pevná výška */
-            .map-side {
-                height: 38vh;
-                flex-shrink: 0;
-                position: relative;
-                z-index: 5;
-            }
+            /* Mapa = celá výška */
+            .map-side { flex: 1; position: relative; z-index: 5; }
 
-            /* Sidebar – zbytek */
+            /* Quick filtry + FAB viditelné */
+            .quick-filters { display: flex; }
+            .fab-loc { display: flex; }
+
+            /* Sidebar – skrytý panel přes celou obrazovku */
             .sidebar {
+                display: none;
                 width: 100%;
-                flex: 1;
+                position: fixed;
+                top: 0; bottom: 58px; left: 0; right: 0;
+                z-index: 900;
                 overflow-y: auto;
                 border-right: none;
-                border-top: 2px solid var(--border);
+                background: var(--bg);
             }
+            .sidebar.mob-visible { display: block; }
 
-            /* Karty */
-            .card { margin: 12px 10px; }
-            .card-summary { padding: 14px 14px 10px; }
+            /* Bottom nav viditelný */
+            .bottom-nav { display: flex; }
+
+            /* Karty na mobilu */
+            .card { margin: 10px 10px 0; }
+            .card:last-child { margin-bottom: 68px; }
+            .card-summary { padding: 13px 13px 10px; }
             .mgrid { grid-template-columns: 1fr 1fr; }
+            .sb-top { position: sticky; top: 0; z-index: 10; }
         }
     </style>
 </head>
@@ -318,9 +402,39 @@
     </aside>
     <main class="map-side">
         <div id="map"></div>
+        <!-- Quick filtry přes mapu (jen mobil) -->
+        <div class="quick-filters" id="quick-filters">
+            <button class="qf-pill on" data-qf="all">Vše</button>
+            <button class="qf-pill" data-qf="bikepark">🚠 Bikeparky</button>
+            <button class="qf-pill tc" data-qf="trail">🥾 Trail centra</button>
+            <button class="qf-pill dist50" data-qf="dist50">📍 Do 50 km</button>
+            <button class="qf-pill free" data-qf="free">💸 Zdarma</button>
+        </div>
+        <!-- FAB – moje poloha -->
+        <button class="fab-loc" id="fab-loc" title="Moje poloha" onclick="locateMe()">📍</button>
         <div class="map-origin" id="map-origin">📍 Výchozí bod: Brno – Nový Lískovec</div>
     </main>
 </div>
+
+<!-- Bottom navigation (jen mobil) -->
+<nav class="bottom-nav" id="bottom-nav">
+    <button class="bn-item active" id="bn-map" onclick="switchTab('map')">
+        <span class="bn-icon">🗺</span>
+        <span class="bn-label">Mapa</span>
+    </button>
+    <button class="bn-item" id="bn-list" onclick="switchTab('list')">
+        <span class="bn-icon">☰</span>
+        <span class="bn-label">Seznam</span>
+    </button>
+    <button class="bn-item" id="bn-wx" onclick="loadAllWeather();switchTab('list')">
+        <span class="bn-icon">☁</span>
+        <span class="bn-label">Počasí</span>
+    </button>
+    <button class="bn-item" id="bn-settings" onclick="openLocModal()">
+        <span class="bn-icon">⚙</span>
+        <span class="bn-label">Nastavení</span>
+    </button>
+</nav>
 
 <script>
 // ═══════════════════════════════════════════════
@@ -444,6 +558,64 @@ async function loadAllWeather() {
 // ═══════════════════════════════════════════════
 let PARKS = [], flt = 'all', qry = '', srt = 'dist', selId = null;
 let MAP, MARKERS = {}, UD = {};
+let qfDist50 = false, qfFree = false; // quick filtry
+
+// Quick filtry
+function initQuickFilters() {
+    document.querySelectorAll('.qf-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const qf = btn.dataset.qf;
+            if (qf === 'all') {
+                flt = 'all'; qfDist50 = false; qfFree = false;
+                document.querySelectorAll('.qf-pill').forEach(b => b.classList.remove('on'));
+                btn.classList.add('on');
+            } else if (qf === 'bikepark' || qf === 'trail') {
+                const wasOn = btn.classList.contains('on');
+                document.querySelectorAll('.qf-pill[data-qf="all"],.qf-pill[data-qf="bikepark"],.qf-pill[data-qf="trail"]').forEach(b => b.classList.remove('on'));
+                if (wasOn) { flt = 'all'; document.querySelector('.qf-pill[data-qf="all"]').classList.add('on'); }
+                else { flt = qf; btn.classList.add('on'); }
+            } else if (qf === 'dist50') {
+                qfDist50 = !qfDist50; btn.classList.toggle('on', qfDist50);
+            } else if (qf === 'free') {
+                qfFree = !qfFree; btn.classList.toggle('on', qfFree);
+            }
+            renderUI();
+        });
+    });
+}
+
+// Tab switching (mobil)
+function switchTab(tab) {
+    if (window.innerWidth > 850) return;
+    const sidebar = document.getElementById('sidebar');
+    document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+    if (tab === 'map') {
+        document.getElementById('bn-map').classList.add('active');
+        sidebar.classList.remove('mob-visible');
+        setTimeout(() => MAP && MAP.invalidateSize(), 100);
+    } else {
+        document.getElementById('bn-' + tab).classList.add('active');
+        sidebar.classList.add('mob-visible');
+    }
+}
+
+// Locate me (FAB)
+function locateMe() {
+    if (!navigator.geolocation) { toast('Poloha není dostupná', 'err'); return; }
+    toast('Zjišťuji polohu...', '');
+    navigator.geolocation.getCurrentPosition(pos => {
+        START_LAT = pos.coords.latitude; START_LNG = pos.coords.longitude;
+        const name = 'Moje poloha';
+        localStorage.setItem('bp_origin', JSON.stringify({ lat: START_LAT, lng: START_LNG, name }));
+        updateOriginUI(name);
+        if (window._originMarker) MAP.removeLayer(window._originMarker);
+        window._originMarker = L.circleMarker([START_LAT, START_LNG], { radius: 7, fillColor: '#f59e0b', color: '#fff', weight: 2, fillOpacity: 1 })
+            .addTo(MAP).bindTooltip('📍 Moje poloha');
+        MAP.flyTo([START_LAT, START_LNG], 10);
+        toast('Poloha nalezena, přepočítávám...', 'ok');
+        updateAll();
+    }, () => toast('Polohu nelze zjistit', 'err'));
+}
 
 // Načti uložená uživatelská data
 try { UD = JSON.parse(localStorage.getItem('bp_ud') || '{}'); } catch(e) { UD = {}; }
@@ -603,6 +775,8 @@ async function updateAll() {
 // ═══════════════════════════════════════════════
 function isVisible(p) {
     if (flt !== 'all' && !(p.type && p.type.includes(flt))) return false;
+    if (qfDist50 && (p.distKm || 9999) > 50) return false;
+    if (qfFree && p.skipas && p.skipas.toLowerCase() !== 'zdarma') return false;
     if (qry) {
         const q = qry.toLowerCase();
         return p.name.toLowerCase().includes(q) || (p.region||'').toLowerCase().includes(q);
@@ -648,6 +822,40 @@ function renderUI() {
         side.appendChild(card);
         wireCard(card, p);
     });
+
+    // Načti inline počasí pro všechny viditelné parky (v pozadí)
+    loadInlineWeather(list);
+}
+
+// Inline počasí – malá ikona + teplota v kartičce
+const WX_CACHE = {};
+const WXC = {
+    0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌦',61:'🌧',63:'🌧',
+    65:'🌧',71:'🌨',80:'🌦',81:'🌧',95:'⛈'
+};
+function wxIcon(code) {
+    const k = Object.keys(WXC).map(Number).sort((a,b)=>a-b);
+    for (let i=k.length-1;i>=0;i--) if(k[i]<=code) return WXC[k[i]];
+    return '🌡';
+}
+async function loadInlineWeather(list) {
+    const today = new Date().getDay();
+    const dSat = ((6-today+7)%7)||7;
+    await Promise.all(list.map(async p => {
+        const el = document.getElementById('wx-inline-'+p.id);
+        if (!el) return;
+        // Použij cache
+        if (WX_CACHE[p.id]) { el.innerHTML = WX_CACHE[p.id]; return; }
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lng}&daily=weathercode,temperature_2m_max&timezone=Europe%2FPrague&forecast_days=14`);
+            const data = await res.json();
+            const icon = wxIcon(data.daily.weathercode[dSat]);
+            const temp = Math.round(data.daily.temperature_2m_max[dSat]);
+            const html = `<span title="Sobota">${icon} <b style="color:var(--text)">${temp}°</b></span>`;
+            WX_CACHE[p.id] = html;
+            if (el) el.innerHTML = html;
+        } catch(e) { if(el) el.textContent = ''; }
+    }));
 }
 
 // ═══════════════════════════════════════════════
@@ -682,7 +890,7 @@ function buildCard(p) {
 
     const stag = isPlan ? '<span class="tag tag-plan">📌 V plánu</span>' : isVis ? '<span class="tag tag-vis">✅ Navštíveno</span>' : '';
     const cls = `card${isActive ? (isBP ? ' active' : ' active tc') : ''}`;
-    const mcu = `https://mapy.cz/zakladni?x=${p.lng}&y=${p.lat}&z=15`;
+    const mcu = `https://mapy.com/fnc/v1/route?mapset=outdoor&start=${START_LNG},${START_LAT}&end=${p.lng},${p.lat}&routeType=car_fast&navigate=true`;
     const hrs = Math.floor((p.duration||0)/60), mins = (p.duration||0)%60;
 
     return `<article class="${cls}" data-id="${p.id}">
@@ -707,10 +915,14 @@ function buildCard(p) {
             <div class="card-stats">
                 <span class="cst"><b>${Math.round(p.distKm||0)} km</b> · ${hrs}h ${mins}min</span>
                 <span class="cst${p.skipas==='Zdarma'?' fr':''}">Skipas: <b>${p.skipas||'—'}</b></span>
-                <span class="cst${p.parking==='Zdarma'?' fr':''}">Parkování: <b>${p.parking||'—'}</b></span>
-                <span class="cst">Tras: <b>${tr.length}</b></span>
-                ${p.season?`<span class="cst" style="color:var(--muted)">${p.season}</span>`:''}
+                <span class="cst${p.parking==='Zdarma'?' fr':''}">P: <b>${p.parking||'—'}</b></span>
+                <span class="cst">Tras: <b>${tr.length||'—'}</b></span>
+                <span class="cst wx-inline" id="wx-inline-${p.id}" style="margin-left:auto;font-weight:700;color:var(--muted)">☁…</span>
             </div>
+            ${(u.note||'').trim() ? `
+            <div class="card-note-preview" data-a="x" title="Klikni pro editaci poznámky">
+                <span style="opacity:.5;font-size:10px;margin-right:4px">📝</span>${(u.note).trim().slice(0,120)}${(u.note).trim().length>120?'…':''}
+            </div>` : ''}
         </div>
 
         <button class="x-btn" data-a="x"><span class="x-arr">▼</span>&nbsp; Rozbalit detail</button>
@@ -939,6 +1151,7 @@ document.getElementById('ss').addEventListener('change', e => { srt = e.target.v
 // SPUŠTĚNÍ
 // ═══════════════════════════════════════════════
 initMap();
+initQuickFilters();
 fetchData();
 </script>
 </body>
