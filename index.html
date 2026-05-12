@@ -162,6 +162,30 @@
         .leaflet-popup-content-wrapper { background: #1e293b !important; border: 1px solid rgba(255,255,255,.15) !important; border-radius: 12px !important; color: #fff !important; box-shadow: 0 8px 30px rgba(0,0,0,.5) !important; padding: 0 !important; overflow: hidden; }
         .leaflet-popup-content { margin: 0 !important; }
         .leaflet-popup-tip { background: #1e293b !important; }
+        .visit-row { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; position: relative; }
+        .visit-row:last-child { border-bottom: none; }
+        .visit-date { color: var(--primary); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+        .visit-note { color: var(--muted); flex: 1; line-height: 1.4; }
+        .visit-del { background: none; border: none; color: rgba(255,255,255,.2); cursor: pointer; font-size: 12px; padding: 0 4px; flex-shrink: 0; transition: color .15s; }
+        .visit-del:hover { color: #ef4444; }
+        .visit-add { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+        .visit-date-input { background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; font-family: inherit; font-size: 12px; color: #fff; outline: none; width: 140px; }
+        .visit-date-input:focus { border-color: var(--primary); }
+        .visit-note-input { background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; font-family: inherit; font-size: 12px; color: #fff; outline: none; flex: 1; min-width: 120px; }
+        .visit-note-input:focus { border-color: var(--primary); }
+        .visit-row { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .visit-row:last-child { border-bottom: none; }
+        .visit-date { color: var(--primary); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+        .visit-note { color: var(--muted); flex: 1; line-height: 1.4; }
+        .visit-del { background: none; border: none; color: rgba(255,255,255,.2); cursor: pointer; font-size: 12px; padding: 0 4px; flex-shrink: 0; transition: color .15s; }
+        .visit-del:hover { color: #ef4444; }
+        .visit-add { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+        .visit-date-input { background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; font-family: inherit; font-size: 12px; color: #fff; outline: none; width: 140px; }
+        .visit-date-input:focus { border-color: var(--primary); }
+        .visit-note-input { background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; font-family: inherit; font-size: 12px; color: #fff; outline: none; flex: 1; min-width: 120px; }
+        .visit-note-input:focus { border-color: var(--primary); }
+        .visit-date-input::placeholder, .visit-note-input::placeholder { color: rgba(255,255,255,.25); }
+        .visits-list { max-height: 200px; overflow-y: auto; scrollbar-width: thin; margin-bottom: 2px; }
         .coords-popup .leaflet-popup-content-wrapper { background: #1e293b !important; border: 1px solid rgba(255,255,255,.15) !important; border-radius: 12px !important; color: #fff !important; padding: 0 !important; }
         .coords-popup .leaflet-popup-content { margin: 0 !important; }
         .coords-popup .leaflet-popup-tip { background: #1e293b !important; }
@@ -561,7 +585,8 @@ async function loadAllWeather() {
 // ═══════════════════════════════════════════════
 let PARKS = [], flt = 'all', qry = '', srt = 'dist', selId = null;
 let MAP, MARKERS = {}, UD = {};
-let qfDist50 = false, qfFree = false; // quick filtry
+let qfDist50 = false, qfFree = false;
+let VISITS = {}; // { park_id: [{date, note}, ...] }
 
 // Quick filtry
 function initQuickFilters() {
@@ -622,6 +647,37 @@ function locateMe() {
 
 // Načti uložená uživatelská data
 try { UD = JSON.parse(localStorage.getItem('bp_ud') || '{}'); } catch(e) { UD = {}; }
+async function deleteVisit(e, parkId, card) {
+    e.stopPropagation();
+    const btn = e.target.closest('[data-a="dv"]');
+    if (!btn) return;
+    const vid = btn.dataset.vid;
+    if (!confirm('Smazat tuto návštěvu?')) return;
+    btn.textContent = '…';
+    try {
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteVisit', visit_id: vid, park_id: parkId })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            btn.closest('.visit-row').remove();
+            if (VISITS[parkId]) VISITS[parkId] = VISITS[parkId].filter(v => v.id != vid);
+            const vlist = document.getElementById('vlist-' + parkId);
+            if (vlist && vlist.children.length === 0) {
+                vlist.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:4px 0">Zatím žádná návštěva</div>';
+            }
+            toast('Návštěva smazána', 'ok');
+        } else {
+            btn.textContent = '✕';
+            toast('Chyba mazání: ' + (data.error||''), 'err');
+        }
+    } catch(err) {
+        btn.textContent = '✕';
+        toast('Nelze smazat – zkontroluj spojení', 'err');
+    }
+}
+
 function saveUD() { try { localStorage.setItem('bp_ud', JSON.stringify(UD)); } catch(e) {} }
 function gu(id) { return UD[id] || {}; }
 function su(id, f, v) {
@@ -762,7 +818,7 @@ async function fetchData() {
         const result = await res.json();
 
         PARKS = result.data.map(row => {
-            // Flexibilní načtení sloupců — funguje s libovolnými názvy
+            // Flexibilní načtení sloupců
             const g = (...keys) => {
                 const k = Object.keys(row).find(k => keys.includes(k.toLowerCase().trim().replace(/\s+/g,'_')));
                 return k ? String(row[k] || '') : '';
@@ -771,42 +827,67 @@ async function fetchData() {
             const lng = parseFloat(g('lng','délka','longitude'));
             if (isNaN(lat) || isNaN(lng) || lat === 0) return null;
 
-            // Načti trails_json
+            // Trails JSON
             let trails = [];
-            const rawT = g('trails_json','trails','tratě','trasy');
+            const rawT = g('trails_json','trasy_json','trasy','trails');
             if (rawT && rawT.trim().startsWith('[')) {
                 try { trails = JSON.parse(rawT); } catch(e) {}
             }
 
             return {
-                id: g('id') || g('name','jméno','název').toLowerCase().replace(/[^a-z0-9]/g,'-'),
-                name: g('name','jméno','název'),
+                id:                 g('id'),
+                name:               g('name','název','jméno'),
                 lat, lng,
-                region: g('region','kraj'),
-                skipas: g('skipas','cena'),
-                parking: g('parking','parkování'),
-                desc: g('description','popis'),
-                web: g('web','website','url'),
-                season: g('season','sezóna','sezona'),
-                lifts: g('lifts','lanovky'),
+                region:             g('region','kraj'),
+                skipas:             g('skipas','cena'),
+                parking:            g('parking','parkování'),
+                desc:               g('description','popis'),
+                web:                g('web','web_url','url'),
+                season:             g('season','sezóna','sezona'),
+                lifts:              g('lifts','lanovky','počet_lanovek'),
+                elevation:          g('elevation','m_n.m.','nadmořská_výška','m_nm'),
                 overall_difficulty: g('overall_difficulty','obtížnost'),
-                type: g('type','typ').toLowerCase(),
+                type:               g('type','typ').toLowerCase(),
+                trail_count:        g('trail_count','počet_tras'),
+                green_count:        g('green_count','zelené'),
+                blue_count:         g('blue_count','modré'),
+                red_count:          g('red_count','červené/černé','červené_černé'),
                 trails,
-                // Uživatelská data přepíšou lokální UD
-                _my_status: g('my_status'),
-                _my_note: g('my_note'),
-                _my_rating: g('my_rating'),
+                _my_status:         g('my_status','stav'),
+                _my_note:           g('my_note'),
+                _my_rating:         g('my_rating','hodnocení'),
             };
         }).filter(Boolean);
 
         // Načti uživatelská data ze Sheets do UD
-        PARKS.forEach(p => {
-            if (!UD[p.id]) UD[p.id] = {};
-            if (p._my_status) UD[p.id].status = p._my_status;
-            if (p._my_note) UD[p.id].note = p._my_note;
-            if (p._my_rating) UD[p.id].rating = p._my_rating;
-        });
-        saveUD();
+        // Sheets má přednost před localStorage
+        try {
+            const udRes = await fetch(SCRIPT_URL + '?action=getUserData');
+            const udResult = await udRes.json();
+            if (udResult.userData) {
+                // Slouč: Sheets přepíše localStorage
+                Object.entries(udResult.userData).forEach(([id, fields]) => {
+                    if (!UD[id]) UD[id] = {};
+                    if (fields.status) UD[id].status = fields.status;
+                    if (fields.note)   UD[id].note   = fields.note;
+                    if (fields.rating) UD[id].rating = fields.rating;
+                });
+                saveUD();
+            }
+        } catch(e) {
+            console.warn('getUserData ze Sheets selhal, používám localStorage:', e.message);
+        }
+
+        // Načti návštěvy ze Sheets
+        try {
+            const vRes = await fetch(SCRIPT_URL + '?action=getVisits');
+            const vResult = await vRes.json();
+            if (vResult.visits) {
+                VISITS = vResult.visits; // { park_id: [{date, note}, ...] }
+            }
+        } catch(e) {
+            console.warn('getVisits selhal:', e.message);
+        }
 
         await updateAll();
 
@@ -1048,6 +1129,29 @@ function buildCard(p) {
                 </div>
             </div>
 
+            <div class="ds">
+                <div class="ds-t">Historie návštěv
+                    <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;opacity:.5;margin-left:4px">(list Navstevnost)</span>
+                </div>
+                <div class="visits-list" id="vlist-${p.id}">
+                ${(VISITS[p.id]||[]).length === 0
+                    ? `<div style="font-size:12px;color:var(--muted);padding:4px 0">Zatím žádná návštěva</div>`
+                    : (VISITS[p.id]||[]).slice().reverse().map(v => `
+                        <div class="visit-row" data-vid="${v.id}">
+                            <div class="visit-date">📅 ${v.date}</div>
+                            <div class="visit-note">${v.note||'—'}</div>
+                            <button class="visit-del" data-a="dv" data-vid="${v.id}" title="Smazat návštěvu">✕</button>
+                        </div>`).join('')
+                }
+                </div>
+                <div class="visit-add">
+                    <input type="date" class="visit-date-input" id="vdate-${p.id}" value="${new Date().toISOString().slice(0,10)}">
+                    <input type="text" class="visit-note-input" id="vnote-${p.id}" placeholder="Poznámka k návštěvě (volitelné)">
+                    <button class="btn-save" data-a="av">+ Přidat návštěvu</button>
+                    <span class="nst" data-vns></span>
+                </div>
+            </div>
+
             <div class="lrow">
                 ${p.web?`<a href="${p.web}" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">🌐 Oficiální web</a>`:''}
                 <a href="${mcu}" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">🗺 Navigovat</a>
@@ -1163,23 +1267,86 @@ function wireCard(card, p) {
         });
     });
 
-    // Uložit poznámku
-    card.querySelector('[data-a="sn"]')?.addEventListener('click', e => {
+    // Přidat návštěvu
+    card.querySelector('[data-a="av"]')?.addEventListener('click', async e => {
         e.stopPropagation();
-        const ta = card.querySelector('textarea');
+        const btn  = e.currentTarget;
+        const date = document.getElementById('vdate-' + id)?.value;
+        const note = document.getElementById('vnote-' + id)?.value.trim();
+        const vns  = card.querySelector('[data-vns]');
+        if (!date) { toast('Vyber datum návštěvy', 'err'); return; }
+        btn.disabled = true; btn.textContent = 'Ukládám…';
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'addVisit', park_id: id, date, note })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                // Přidej do lokálního VISITS
+                if (!VISITS[id]) VISITS[id] = [];
+                VISITS[id].push({ id: data.visit_id, date, note });
+                // Překresli seznam návštěv
+                const vlist = document.getElementById('vlist-' + id);
+                if (vlist) {
+                    const row = document.createElement('div');
+                    row.className = 'visit-row';
+                    row.dataset.vid = data.visit_id;
+                    row.innerHTML = `<div class="visit-date">📅 ${date}</div><div class="visit-note">${note||'—'}</div><button class="visit-del" data-a="dv" data-vid="${data.visit_id}" title="Smazat">✕</button>`;
+                    row.querySelector('[data-a="dv"]').addEventListener('click', ev => deleteVisit(ev, id, card));
+                    vlist.insertBefore(row, vlist.firstChild);
+                    if (vlist.querySelector('div[style]')) vlist.querySelector('div[style]').remove();
+                }
+                document.getElementById('vnote-' + id).value = '';
+                toast('Návštěva přidána ✓', 'ok');
+                if (vns) { vns.textContent = '✓ Uloženo do Sheets'; vns.className = 'nst ok'; setTimeout(() => { vns.textContent=''; vns.className='nst'; }, 4000); }
+            } else {
+                toast('Chyba: ' + (data.error||'neznámá'), 'err');
+            }
+        } catch(err) {
+            toast('Nelze uložit – zkontroluj spojení', 'err');
+        }
+        btn.disabled = false; btn.textContent = '+ Přidat návštěvu';
+    });
+
+    // Smazat návštěvu (delegace na vlist)
+    card.querySelector('.visits-list')?.addEventListener('click', e => {
+        const btn = e.target.closest('[data-a="dv"]');
+        if (btn) deleteVisit(e, id, card);
+    });
+
+
+    card.querySelector('[data-a="sn"]')?.addEventListener('click', async e => {
+        e.stopPropagation();
+        const ta  = card.querySelector('textarea');
         const btn = e.currentTarget;
-        const ns = card.querySelector('[data-ns]');
+        const ns  = card.querySelector('[data-ns]');
         btn.disabled = true; btn.textContent = 'Ukládám…';
         ns.textContent = ''; ns.className = 'nst';
         su(id, 'note', ta.value);
-        setTimeout(() => {
-            ns.textContent = '✓ Uloženo do Sheets';
-            ns.className = 'nst ok';
-            btn.disabled = false;
-            btn.textContent = 'Uložit poznámku';
-            toast('Poznámka uložena', 'ok');
-            setTimeout(() => { ns.textContent = ''; ns.className = 'nst'; }, 4000);
-        }, 700);
+        // Čekej na odpověď ze Sheets
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'saveUserData', id, field: 'note', value: ta.value })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                ns.textContent = '✓ Uloženo do Google Sheets';
+                ns.className = 'nst ok';
+                toast('Poznámka uložena do Sheets', 'ok');
+            } else {
+                ns.textContent = '⚠ Uloženo lokálně (Sheets nedostupné)';
+                ns.className = 'nst';
+                toast('Uloženo lokálně', '');
+            }
+        } catch(err) {
+            ns.textContent = '⚠ Uloženo lokálně (offline)';
+            ns.className = 'nst';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Uložit poznámku';
+        setTimeout(() => { ns.textContent = ''; ns.className = 'nst'; }, 5000);
     });
 }
 
