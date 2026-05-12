@@ -162,6 +162,9 @@
         .leaflet-popup-content-wrapper { background: #1e293b !important; border: 1px solid rgba(255,255,255,.15) !important; border-radius: 12px !important; color: #fff !important; box-shadow: 0 8px 30px rgba(0,0,0,.5) !important; padding: 0 !important; overflow: hidden; }
         .leaflet-popup-content { margin: 0 !important; }
         .leaflet-popup-tip { background: #1e293b !important; }
+        .coords-popup .leaflet-popup-content-wrapper { background: #1e293b !important; border: 1px solid rgba(255,255,255,.15) !important; border-radius: 12px !important; color: #fff !important; padding: 0 !important; }
+        .coords-popup .leaflet-popup-content { margin: 0 !important; }
+        .coords-popup .leaflet-popup-tip { background: #1e293b !important; }
         .leaflet-popup-close-button { color: rgba(255,255,255,.5) !important; top: 8px !important; right: 10px !important; }
         .leaflet-control-zoom a { background: #1e293b !important; color: #fff !important; border-color: rgba(255,255,255,.15) !important; }
         .leaflet-control-attribution { background: rgba(15,23,42,.8) !important; color: rgba(255,255,255,.4) !important; }
@@ -652,13 +655,82 @@ function initMap() {
         .addTo(MAP).bindTooltip('📍 ' + (document.getElementById('loc-label').textContent || 'Výchozí bod'));
 }
 
-function addMarker(p, i) {
+// Custom SVG drop-pin ikona
+function makeIcon(isBP, active) {
+    const bg   = isBP ? '#F05A22' : '#22c55e';
+    const ring = active ? '#fff' : 'rgba(255,255,255,0.55)';
+    const sw   = active ? 2.5 : 1.5;
+    const em   = isBP ? '🚠' : '🥾';
+    const s    = active ? 42 : 34;
+    const h    = Math.round(s * 1.35);
+    const svg  = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${h}" viewBox="0 0 42 57">
+      <filter id="ds"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.45"/></filter>
+      <ellipse cx="21" cy="54" rx="7" ry="2.5" fill="rgba(0,0,0,0.22)"/>
+      <path d="M21 2C11.1 2 3 10.1 3 20c0 13.8 18 35 18 35s18-21.2 18-35C39 10.1 30.9 2 21 2z"
+        fill="${bg}" stroke="${ring}" stroke-width="${sw}" filter="url(#ds)"/>
+      <text x="21" y="22" text-anchor="middle" dominant-baseline="middle" font-size="15">${em}</text>
+    </svg>`;
+    return L.divIcon({ html: svg, className: '', iconSize: [s, h], iconAnchor: [s/2, h], popupAnchor: [0, -h + 4] });
+}
+
+function addMarker(p) {
     const isBP = p.type && p.type.includes('bikepark');
-    const color = isBP ? '#f05a22' : '#22c55e';
-    const mk = L.circleMarker([p.lat, p.lng], { radius: 9, fillColor: color, color: '#fff', weight: 2, fillOpacity: 1 }).addTo(MAP);
-    mk.bindPopup(buildPopup(p), { maxWidth: 260 });
-    mk.on('click', () => selectPark(p.id));
+    const mk = L.marker([p.lat, p.lng], { icon: makeIcon(isBP, false) }).addTo(MAP);
+    mk.bindPopup(buildPopup(p), { maxWidth: 280 });
+    mk.on('click', () => {
+        PARKS.forEach(q => MARKERS[q.id]?.setIcon(makeIcon(q.type?.includes('bikepark'), false)));
+        mk.setIcon(makeIcon(isBP, true));
+    });
+    mk.on('popupclose', () => mk.setIcon(makeIcon(isBP, false)));
     MARKERS[p.id] = mk;
+}
+
+// Klik na prázdné místo mapy = zobraz souřadnice
+function initMapClick() {
+    MAP.on('click', e => {
+        if (e.originalEvent._stopped) return;
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        // Ulož souřadnice globálně pro použití v tlačítkách
+        window._clickedLat = lat;
+        window._clickedLng = lng;
+
+        if (window._coordPopup) MAP.closePopup(window._coordPopup);
+        window._coordPopup = L.popup({ closeButton: true, className: 'coords-popup' })
+            .setLatLng(e.latlng)
+            .setContent(`<div style="padding:10px 13px;font-family:inherit;min-width:210px">
+                <div style="font-size:10px;color:rgba(255,255,255,.45);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Souřadnice bodu</div>
+                <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:9px;letter-spacing:.3px">${lat}, ${lng}</div>
+                <div style="display:flex;gap:6px">
+                    <button onclick="copyClickedCoords()"
+                        style="flex:1;padding:7px 0;border-radius:7px;border:none;background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">
+                        📋 Kopírovat
+                    </button>
+                    <button onclick="setClickedAsOrigin()"
+                        style="flex:1;padding:7px 0;border-radius:7px;border:none;background:#F05A22;color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">
+                        📍 Výchozí bod
+                    </button>
+                </div>
+            </div>`)
+            .openOn(MAP);
+    });
+}
+
+function copyClickedCoords() {
+    const text = window._clickedLat + ', ' + window._clickedLng;
+    navigator.clipboard.writeText(text).then(() => toast('Zkopírováno! ✓', 'ok'));
+}
+
+function setClickedAsOrigin() {
+    MAP.closePopup();
+    // Předvyplň modal – bez resetování hodnot
+    document.getElementById('loc-lat').value = window._clickedLat;
+    document.getElementById('loc-lng').value = window._clickedLng;
+    document.getElementById('loc-name').value = '';
+    // Otevři modal bez resetování inputů
+    document.getElementById('loc-modal').classList.remove('hide');
+    document.querySelectorAll('.loc-preset').forEach(b => b.classList.remove('active'));
 }
 
 function buildPopup(p) {
@@ -1117,22 +1189,26 @@ function wireCard(card, p) {
 function selectPark(id) {
     selId = id;
     renderUI();
+
+    // Na mobilu přepni na Seznam tab aby byl detail vidět
+    if (window.innerWidth <= 850) {
+        switchTab('list');
+    }
+
     setTimeout(() => {
         const card = document.querySelector(`.card[data-id="${id}"]`);
         if (!card) return;
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         const det = card.querySelector('.card-detail');
         const xb = card.querySelector('.x-btn');
         if (det && !det.classList.contains('open')) {
             det.classList.add('open');
             if (xb) { xb.classList.add('xo'); xb.querySelector('.x-arr').textContent='▲'; xb.lastChild.textContent=' Sbalit detail'; }
         }
-    }, 50);
+    }, 80);
+
     const p = PARKS.find(x => x.id === id);
-    if (p) {
-        MAP.flyTo([p.lat, p.lng], 13);
-        setTimeout(() => MARKERS[id]?.openPopup(), 500);
-    }
+    if (p) MAP.flyTo([p.lat, p.lng], 13);
 }
 
 // ═══════════════════════════════════════════════
@@ -1151,6 +1227,7 @@ document.getElementById('ss').addEventListener('change', e => { srt = e.target.v
 // SPUŠTĚNÍ
 // ═══════════════════════════════════════════════
 initMap();
+initMapClick();
 initQuickFilters();
 fetchData();
 </script>
