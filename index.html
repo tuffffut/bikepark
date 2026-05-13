@@ -4,7 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#F05A22">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="BikePark">
+    <link id="manifest-link" rel="manifest">
     <title>Bikepark Atlas ČR</title>
+    <script>
+    // Generuj ikonu jako canvas PNG a vlož do manifestu
+    (function() {
+        // SVG ikona – oranžové pozadí + 🚠 emoji
+        const iconSvg = (size, r) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <rect width="${size}" height="${size}" rx="${r}" fill="#F05A22"/>
+            <text x="${size/2}" y="${size*0.72}" text-anchor="middle" dominant-baseline="middle" font-size="${size*0.55}" font-family="sans-serif">🚠</text>
+            <text x="${size/2}" y="${size*0.92}" text-anchor="middle" font-size="${size*0.13}" font-weight="bold" font-family="sans-serif" fill="rgba(255,255,255,0.9)" letter-spacing="1">BIKEPARK</text>
+        </svg>`;
+
+        function svgToDataUrl(svgStr) {
+            return 'data:image/svg+xml,' + encodeURIComponent(svgStr);
+        }
+
+        const manifest = {
+            name: 'BikePark Atlas ČR',
+            short_name: 'BikePark',
+            description: 'Průvodce bikeparky a trail centry v ČR',
+            start_url: './',
+            display: 'standalone',
+            background_color: '#F5F0EB',
+            theme_color: '#F05A22',
+            orientation: 'portrait-primary',
+            icons: [
+                { src: svgToDataUrl(iconSvg(192, 38)),  sizes: '192x192',  type: 'image/svg+xml', purpose: 'any maskable' },
+                { src: svgToDataUrl(iconSvg(512, 102)), sizes: '512x512',  type: 'image/svg+xml', purpose: 'any maskable' }
+            ]
+        };
+
+        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        document.getElementById('manifest-link').href = url;
+    })();
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
