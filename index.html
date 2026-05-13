@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="color-scheme" content="light">
     <title>Bikepark Atlas ČR</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root {
+            color-scheme: light;
             --primary:    #F05A22;
             --primary-lt: #FEF0EA;
             --primary-dk: #C94A19;
@@ -263,6 +265,10 @@
         /* Leaflet light theme */
         .leaflet-control-zoom a { background: #fff !important; color: var(--text) !important; border-color: var(--border-md) !important; }
         .leaflet-control-zoom a:hover { background: var(--surface2) !important; color: var(--primary) !important; }
+        /* Na mobilu posuň zoom nad bottom nav (58px) + mezera */
+        @media (max-width: 850px) {
+            .leaflet-bottom.leaflet-right { bottom: 68px !important; }
+        }
         .leaflet-control-attribution { background: rgba(255,255,255,.85) !important; color: var(--text2) !important; font-size: 10px !important; }
         .leaflet-bar { box-shadow: var(--shadow-sm) !important; border: 1px solid var(--border-md) !important; }
 
