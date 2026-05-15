@@ -8,37 +8,27 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BikePark">
-    <link id="manifest-link" rel="manifest">
+    <link rel="manifest" id="manifest-link">
     <title>BikePark Atlas ČR</title>
     <script>
     (function() {
-        // PWA ikona – stejná gondola jako v kartách, 512×512
-        const gondola = (s) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 48 48">
-  <circle cx="24" cy="24" r="24" fill="#F05A22"/>
-  <line x1="4" y1="14" x2="44" y2="18" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/>
-  <line x1="24" y1="16" x2="24" y2="21" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="24" cy="14.5" r="2.2" fill="#fff"/>
-  <rect x="12" y="21" width="24" height="16" rx="4" fill="#fff"/>
-  <rect x="15" y="25" width="8" height="9" rx="2" fill="#F05A22"/>
-  <rect x="25" y="25" width="8" height="9" rx="2" fill="#F05A22"/>
-  <rect x="16.5" y="26.5" width="2.5" height="2.5" rx=".8" fill="rgba(255,255,255,.4)"/>
-  <rect x="26.5" y="26.5" width="2.5" height="2.5" rx=".8" fill="rgba(255,255,255,.4)"/>
-</svg>`;
-        const du = s => 'data:image/svg+xml,' + encodeURIComponent(gondola(s));
+        const icon = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 48 48'><circle cx='24' cy='24' r='24' fill='%23F05A22'/><line x1='4' y1='14' x2='44' y2='18' stroke='%23fff' stroke-width='2' stroke-linecap='round' opacity='.8'/><line x1='24' y1='16' x2='24' y2='21' stroke='%23fff' stroke-width='2' stroke-linecap='round'/><circle cx='24' cy='14.5' r='2.2' fill='%23fff'/><rect x='12' y='21' width='24' height='16' rx='4' fill='%23fff'/><rect x='15' y='25' width='8' height='9' rx='2' fill='%23F05A22'/><rect x='25' y='25' width='8' height='9' rx='2' fill='%23F05A22'/><rect x='16.5' y='26.5' width='2.5' height='2.5' rx='.8' fill='rgba(255,255,255,.4)'/><rect x='26.5' y='26.5' width='2.5' height='2.5' rx='.8' fill='rgba(255,255,255,.4)'/></svg>";
         const m = {
-            name:'BikePark Atlas ČR', short_name:'BikePark',
-            start_url:'./', display:'standalone',
-            background_color:'#F05A22', theme_color:'#F05A22',
-            orientation:'portrait-primary',
-            icons:[
-                { src:du(192), sizes:'192x192', type:'image/svg+xml', purpose:'any maskable' },
-                { src:du(512), sizes:'512x512', type:'image/svg+xml', purpose:'any maskable' }
+            name: "BikePark Atlas ČR",
+            short_name: "BikePark",
+            description: "Průvodce bikeparky a trail centry v ČR",
+            start_url: "./",
+            display: "standalone",
+            background_color: "#F05A22",
+            theme_color: "#F05A22",
+            orientation: "portrait-primary",
+            icons: [
+                { src: icon, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+                { src: icon, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
             ]
         };
-        const url = URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));
-        document.getElementById('manifest-link').href = url;
-    })();
-        document.getElementById('manifest-link').href = url;
+        const blob = new Blob([JSON.stringify(m)], { type: "application/json" });
+        document.getElementById("manifest-link").href = URL.createObjectURL(blob);
     })();
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800;900&display=swap" rel="stylesheet">
