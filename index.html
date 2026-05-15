@@ -3,397 +3,321 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="color-scheme" content="light">
     <meta name="theme-color" content="#F05A22">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BikePark">
     <link id="manifest-link" rel="manifest">
-    <title>Bikepark Atlas ČR</title>
+    <title>BikePark Atlas ČR</title>
     <script>
-    // Generuj ikonu jako canvas PNG a vlož do manifestu
     (function() {
-        // SVG ikona – oranžové pozadí + 🚠 emoji
-        const iconSvg = (size, r) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-            <rect width="${size}" height="${size}" rx="${r}" fill="#F05A22"/>
-            <text x="${size/2}" y="${size*0.52}" text-anchor="middle" dominant-baseline="middle" font-size="${size*0.42}" font-family="sans-serif">🚠</text>
-            <text x="${size/2}" y="${size*0.82}" text-anchor="middle" dominant-baseline="middle" font-size="${size*0.12}" font-weight="bold" font-family="sans-serif" fill="rgba(255,255,255,0.95)" letter-spacing="2">BIKEPARK</text>
-        </svg>`;
-
-        function svgToDataUrl(svgStr) {
-            return 'data:image/svg+xml,' + encodeURIComponent(svgStr);
-        }
-
-        const manifest = {
-            name: 'BikePark Atlas ČR',
-            short_name: 'BikePark',
-            description: 'Průvodce bikeparky a trail centry v ČR',
-            start_url: './',
-            display: 'standalone',
-            background_color: '#F5F0EB',
-            theme_color: '#F05A22',
-            orientation: 'portrait-primary',
-            icons: [
-                { src: svgToDataUrl(iconSvg(192, 38)),  sizes: '192x192',  type: 'image/svg+xml', purpose: 'any maskable' },
-                { src: svgToDataUrl(iconSvg(512, 102)), sizes: '512x512',  type: 'image/svg+xml', purpose: 'any maskable' }
+        // PWA ikona – stejná gondola jako v kartách, 512×512
+        const gondola = (s) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 48 48">
+  <circle cx="24" cy="24" r="24" fill="#F05A22"/>
+  <line x1="4" y1="14" x2="44" y2="18" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+  <line x1="24" y1="16" x2="24" y2="21" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="24" cy="14.5" r="2.2" fill="#fff"/>
+  <rect x="12" y="21" width="24" height="16" rx="4" fill="#fff"/>
+  <rect x="15" y="25" width="8" height="9" rx="2" fill="#F05A22"/>
+  <rect x="25" y="25" width="8" height="9" rx="2" fill="#F05A22"/>
+  <rect x="16.5" y="26.5" width="2.5" height="2.5" rx=".8" fill="rgba(255,255,255,.4)"/>
+  <rect x="26.5" y="26.5" width="2.5" height="2.5" rx=".8" fill="rgba(255,255,255,.4)"/>
+</svg>`;
+        const du = s => 'data:image/svg+xml,' + encodeURIComponent(gondola(s));
+        const m = {
+            name:'BikePark Atlas ČR', short_name:'BikePark',
+            start_url:'./', display:'standalone',
+            background_color:'#F05A22', theme_color:'#F05A22',
+            orientation:'portrait-primary',
+            icons:[
+                { src:du(192), sizes:'192x192', type:'image/svg+xml', purpose:'any maskable' },
+                { src:du(512), sizes:'512x512', type:'image/svg+xml', purpose:'any maskable' }
             ]
         };
-
-        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-        const url  = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));
+        document.getElementById('manifest-link').href = url;
+    })();
         document.getElementById('manifest-link').href = url;
     })();
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
+    :root {
+        --p:   #F05A22; --pdk: #C94A19; --plt: rgba(240,90,34,.15);
+        --g:   #3DB968; --gdk: #2E9B52; --glt: rgba(61,185,104,.15);
+        --bl:  #3B82F6;
+        --bg:  #111318; --s1: #1C2030; --s2: #242838; --s3: #2C3144;
+        --b1:  rgba(255,255,255,.07); --b2: rgba(255,255,255,.13);
+        --t1:  #F0EDE8; --t2: #9DA8B8; --mu: #5C6478;
+        --sh1: 0 1px 4px rgba(0,0,0,.4);
+        --sh2: 0 4px 20px rgba(0,0,0,.5);
+        --sh3: 0 8px 40px rgba(0,0,0,.6);
+        --popup-bg: #1C2030;
+    }
+    @media (prefers-color-scheme: light) {
         :root {
-            color-scheme: light;
-            --primary:    #F05A22;
-            --primary-lt: #FEF0EA;
-            --primary-dk: #C94A19;
-            --green:      #22C55E;
-            --green-lt:   #DCFCE7;
-            --green-dk:   #16A34A;
-            --blue:       #3B82F6;
-            --bg:         #F5F0EB;
-            --surface:    #FFFFFF;
-            --surface2:   #FAF7F5;
-            --border:     rgba(0,0,0,0.08);
-            --border-md:  rgba(0,0,0,0.13);
-            --text:       #1A1410;
-            --text2:      #6B5E57;
-            --muted:      #A0928A;
-            --shadow-sm:  0 1px 4px rgba(0,0,0,0.07);
-            --shadow-md:  0 4px 16px rgba(0,0,0,0.10);
-            --shadow-lg:  0 8px 32px rgba(0,0,0,0.13);
-            --orange-dim: rgba(240,90,34,0.10);
-            --green-dim:  rgba(34,197,94,0.12);
-            --card-bg:    #FFFFFF;
-            --card-bg2:   #FAF7F5;
+            --bg:  #F5F0EB; --s1: #FFFFFF; --s2: #FAF7F5; --s3: #F0EBE6;
+            --b1:  rgba(0,0,0,.07); --b2: rgba(0,0,0,.12);
+            --t1:  #1A1410; --t2: #6B5E57; --mu: #A0928A;
+            --sh1: 0 1px 4px rgba(0,0,0,.08);
+            --sh2: 0 4px 16px rgba(0,0,0,.12);
+            --sh3: 0 8px 32px rgba(0,0,0,.16);
+            --popup-bg: #FFFFFF;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); height: 100dvh; overflow: hidden; line-height: 1.4; }
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--t1);height:100dvh;overflow:hidden;line-height:1.4}
 
-        /* LOADER */
-        #loader { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
-        #loader.hide { opacity: 0; pointer-events: none; }
-        .spinner { width: 40px; height: 40px; border: 3px solid rgba(240,90,34,0.15); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── LOADER ── */
+    #loader{position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}
+    #loader.hide{opacity:0;pointer-events:none}
+    .spinner{width:42px;height:42px;border:3px solid var(--plt);border-top-color:var(--p);border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-        /* HEADER */
-        .hdr { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(255,255,255,0.95); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); z-index: 1000; display: flex; align-items: center; padding: 0 16px; gap: 10px; box-shadow: var(--shadow-sm); }
-        .logo { font-weight: 800; font-size: 17px; white-space: nowrap; color: var(--text); }
-        .logo span { color: var(--primary); }
-        .hdr-sep { width: 1px; height: 24px; background: var(--border-md); flex-shrink: 0; }
-        .pills { display: flex; gap: 4px; }
-        .pill { font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border-md); background: transparent; color: var(--text2); cursor: pointer; white-space: nowrap; transition: all .15s; }
-        .pill:hover { border-color: var(--primary); color: var(--primary); background: var(--orange-dim); }
-        .pill.on { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(240,90,34,0.3); }
-        .pill.on.tc { background: var(--green); border-color: var(--green); box-shadow: 0 2px 8px rgba(34,197,94,0.3); }
-        .srch { position: relative; flex: 1; max-width: 180px; }
-        .srch input { width: 100%; background: var(--surface2); border: 1.5px solid var(--border-md); color: var(--text); padding: 7px 10px 7px 28px; border-radius: 20px; font-size: 12px; outline: none; font-family: inherit; transition: border-color .15s; }
-        .srch input:focus { border-color: var(--primary); }
-        .srch input::placeholder { color: var(--muted); }
-        .srch-ic { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 12px; opacity: .45; pointer-events: none; }
-        .hdr-r { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-        .btn-update { background: var(--primary); color: #fff; border: none; padding: 8px 14px; border-radius: 9px; font-weight: 700; cursor: pointer; font-size: 12px; font-family: inherit; white-space: nowrap; transition: background .15s; box-shadow: 0 2px 8px rgba(240,90,34,0.25); }
-        .btn-update:hover { background: var(--primary-dk); }
-        .btn-loc { background: var(--surface2); color: var(--text2); border: 1.5px solid var(--border-md); padding: 7px 11px; border-radius: 9px; font-weight: 700; cursor: pointer; font-size: 12px; font-family: inherit; white-space: nowrap; transition: all .15s; }
-        .btn-loc:hover { border-color: var(--primary); color: var(--primary); }
-        .btn-wx-all { background: var(--surface2); color: var(--text2); border: 1.5px solid var(--border-md); padding: 7px 11px; border-radius: 9px; font-weight: 700; cursor: pointer; font-size: 12px; font-family: inherit; white-space: nowrap; transition: all .15s; }
-        .btn-wx-all:hover { border-color: var(--blue); color: var(--blue); }
+    /* ── HEADER ── */
+    .hdr{position:fixed;top:0;width:100%;height:62px;background:rgba(var(--bg-rgb,17,19,24),.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);z-index:1000;display:flex;align-items:center;padding:0 18px;gap:12px}
+    @media (prefers-color-scheme: light) { .hdr { background: rgba(255,255,255,.95); } }
+    @media (prefers-color-scheme: dark)  { .hdr { background: rgba(17,19,24,.97); } }
+    .logo{font-size:22px;white-space:nowrap;letter-spacing:-.5px;flex-shrink:0}
+    .logo b{color:var(--t1);font-weight:900}
+    .logo span{color:var(--t2);font-weight:400}
+    .hdr-sep{width:1px;height:26px;background:var(--b2);flex-shrink:0}
+    .pills{display:flex;gap:6px}
+    .pill{font-size:12px;font-weight:700;padding:7px 15px;border-radius:22px;border:1.5px solid var(--b2);background:var(--s1);color:var(--t2);cursor:pointer;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:5px}
+    .pill:hover{border-color:var(--p);color:var(--t1)}
+    .pill.on{background:var(--p);border-color:var(--p);color:#fff;box-shadow:0 2px 12px rgba(240,90,34,.45)}
+    .pill.on.tc{background:var(--g);border-color:var(--g);box-shadow:0 2px 12px rgba(61,185,104,.45)}
+    .srch{position:relative;flex:1;max-width:200px}
+    .srch input{width:100%;background:var(--s1);border:1.5px solid var(--b2);color:var(--t1);padding:8px 12px 8px 33px;border-radius:22px;font-size:12px;outline:none;font-family:inherit;transition:all .15s}
+    .srch input:focus{border-color:var(--p);background:var(--s2)}
+    .srch input::placeholder{color:var(--mu)}
+    .srch-ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.35;pointer-events:none}
+    .hdr-r{margin-left:auto;display:flex;gap:7px;align-items:center;flex-shrink:0}
+    .btn-hdr{background:var(--s1);color:var(--t2);border:1.5px solid var(--b2);padding:7px 12px;border-radius:9px;font-weight:700;cursor:pointer;font-size:11.5px;font-family:inherit;white-space:nowrap;transition:all .15s}
+    .btn-hdr:hover{border-color:var(--p);color:var(--p)}
+    .btn-update{background:var(--p);color:#fff;border:none;padding:7px 14px;border-radius:9px;font-weight:700;cursor:pointer;font-size:11.5px;font-family:inherit;transition:background .15s;box-shadow:0 2px 10px rgba(240,90,34,.35)}
+    .btn-update:hover{background:var(--pdk)}
+    .btn-update:disabled{background:var(--s3);color:var(--mu);cursor:not-allowed;box-shadow:none}
 
-        /* LAYOUT */
-        .app { display: flex; height: calc(100dvh - 60px); margin-top: 60px; }
+    /* ── LAYOUT ── */
+    .app{display:flex;height:calc(100dvh - 62px);margin-top:62px}
+    .sidebar{width:460px;flex-shrink:0;border-right:1px solid var(--b1);overflow-y:auto;background:var(--bg)}
+    .sidebar::-webkit-scrollbar{width:3px}
+    .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+    .sb-top{padding:10px 14px;background:var(--s2);backdrop-filter:blur(8px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--t2);position:sticky;top:0;z-index:10}
+    .sb-top b{color:var(--p)}
+    .sb-top select{background:var(--s2);border:1px solid var(--b2);color:var(--t1);padding:4px 8px;border-radius:7px;font-family:inherit;font-size:11px;outline:none;cursor:pointer}
+    .map-side{flex:1;position:relative}
+    #map{width:100%;height:100%}
+    .map-origin{position:absolute;bottom:28px;left:10px;z-index:500;background:var(--s1);border:1px solid var(--b2);border-radius:9px;padding:6px 10px;font-size:11px;color:var(--t2);pointer-events:none;box-shadow:var(--sh1)}
 
-        /* SIDEBAR */
-        .sidebar { width: 480px; flex-shrink: 0; border-right: 1px solid var(--border); overflow-y: auto; background: var(--bg); }
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 2px; }
-        .sb-top { padding: 10px 14px; background: rgba(245,240,235,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text2); position: sticky; top: 0; z-index: 10; }
-        .sb-top b { color: var(--primary); }
-        .sb-top select { background: var(--surface); border: 1.5px solid var(--border-md); color: var(--text); padding: 4px 8px; border-radius: 7px; font-family: inherit; font-size: 11px; outline: none; cursor: pointer; }
-        .map-side { flex: 1; position: relative; }
-        #map { width: 100%; height: 100%; }
-        .map-origin { position: absolute; bottom: 28px; left: 10px; z-index: 500; background: rgba(255,255,255,.92); border: 1px solid var(--border-md); border-radius: 9px; padding: 6px 10px; font-size: 11px; color: var(--text2); pointer-events: none; box-shadow: var(--shadow-sm); }
+    /* ── KARTY ── */
+    .card{background:var(--s1);border-radius:14px;margin:8px 10px;border:1px solid var(--b1);transition:all .18s;cursor:pointer;overflow:hidden;box-shadow:var(--sh1)}
+    .card:hover{border-color:rgba(240,90,34,.4);transform:translateY(-1px);box-shadow:var(--sh2);background:var(--s2)}
+    .card.active{border-color:rgba(240,90,34,.6);box-shadow:var(--sh2),0 0 0 2px rgba(240,90,34,.15);background:var(--s2)}
+    .card.active.tc{border-color:rgba(61,185,104,.6);box-shadow:var(--sh2),0 0 0 2px rgba(61,185,104,.15)}
+    .card-bar{display:none}
+    .card-summary{padding:13px 14px 11px}
+    .card-head{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+    .card-ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+    .card-ico.bp{background:none}
+    .card-ico.tc{background:none}
+    .card-title{font-size:15px;font-weight:800;color:var(--t1);margin-bottom:5px;letter-spacing:-.1px}
+    .card-sub{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+    .tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:3px}
+    .tag-bp{background:var(--plt);color:var(--p)}
+    .tag-tc{background:var(--glt);color:var(--g)}
+    .tag-reg{background:var(--s3);color:var(--t2);font-size:9.5px}
+    .tag-plan{background:var(--plt);color:var(--p)}
+    .tag-vis{background:var(--glt);color:var(--g)}
+    .card-btns{display:flex;gap:4px;flex-shrink:0;margin-left:auto;align-self:flex-start}
+    .ab{width:30px;height:30px;border-radius:8px;border:1px solid var(--b2);background:var(--s3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s}
+    .ab:hover{border-color:var(--p);background:var(--plt)}
+    .ab.on-p{background:var(--plt);border-color:var(--p)}
+    .ab.on-v{background:var(--glt);border-color:var(--g)}
+    .card-stats{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--t2)}
+    .cst{display:flex;align-items:center;gap:3px}
+    .cst b{color:var(--t1);font-weight:700}
+    .cst.fr b{color:var(--g)}
+    .card-note-preview{font-size:11.5px;color:var(--t2);background:var(--s3);border-radius:7px;padding:6px 10px;margin-top:6px;border-left:2px solid var(--p);line-height:1.4}
+    .wx-inline{font-size:12px;margin-left:auto}
+    .x-btn{width:100%;background:transparent;border:none;border-top:1px solid var(--b1);padding:7px 14px;display:flex;align-items:center;gap:5px;font-family:inherit;font-size:11px;font-weight:600;color:var(--mu);cursor:pointer;transition:color .13s}
+    .x-btn:hover,.x-btn.xo{color:var(--p)}
+    .x-arr{display:inline-block;font-size:9px;transition:transform .2s}
+    .x-btn.xo .x-arr{transform:rotate(180deg)}
+    .card-detail{display:none;padding:4px 14px 16px;border-top:1px solid var(--b1);background:var(--s2)}
+    .card-detail.open{display:block}
+    .ds{margin-top:14px}
+    .ds-t{font-size:9.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--mu);margin-bottom:7px}
+    .ds-d{font-size:12.5px;color:var(--t2);line-height:1.65}
+    .tpills{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+    .tp{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--t2);background:var(--s1);border:1px solid var(--b2);border-radius:6px;padding:3px 9px}
+    .tp-km{font-size:10px;color:var(--mu)}
+    .diff-bar{display:flex;align-items:center;gap:6px;margin-top:4px}
+    .diff-segs{display:flex;gap:3px;flex:1}
+    .dseg{height:5px;flex:1;border-radius:3px;background:rgba(255,255,255,.08)}
+    .dseg.g{background:#3DB968}.dseg.b{background:#3b82f6}.dseg.r{background:#ef4444}.dseg.k{background:#e0e0e0}
+    .diff-lbl{font-size:10px;color:var(--mu);white-space:nowrap}
+    .mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    .mc{background:var(--s3);border:1px solid var(--b1);border-radius:9px;padding:8px 10px}
+    .mc-l{font-size:8.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--mu);margin-bottom:3px}
+    .mc-v{font-size:12px;font-weight:800;color:var(--t1)}
+    .mc-v.fr{color:var(--g)}
+    .stars{display:flex;gap:3px;margin-top:4px}
+    .star{font-size:22px;color:rgba(255,255,255,.12);cursor:pointer;transition:color .1s,transform .1s;line-height:1}
+    .star.on{color:#F59E0B}
+    .star:hover{transform:scale(1.18);color:#F59E0B}
+    .rrow{display:flex;align-items:center;gap:8px}
+    .rlbl{font-size:11px;color:var(--mu)}
+    .ntxt{margin-top:6px}
+    .ntxt textarea{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:12px;color:var(--t1);resize:vertical;min-height:68px;outline:none;line-height:1.5;transition:border-color .14s}
+    .ntxt textarea:focus{border-color:var(--p)}
+    .ntxt textarea::placeholder{color:var(--mu)}
+    .nrow{margin-top:6px;display:flex;align-items:center;gap:8px}
+    .btn-save{font-family:inherit;font-size:11.5px;font-weight:700;padding:7px 15px;background:var(--p);color:#fff;border:none;border-radius:8px;cursor:pointer;transition:background .13s;box-shadow:0 2px 6px rgba(240,90,34,.25)}
+    .btn-save:hover{background:var(--pdk)}
+    .btn-save:disabled{background:var(--s3);color:var(--mu);cursor:not-allowed;box-shadow:none}
+    .nst{font-size:11px;color:var(--mu)}
+    .nst.ok{color:var(--g);font-weight:600}
+    .wx-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .wx-box{background:var(--s3);padding:11px;border-radius:11px;font-size:11px;border:1px solid var(--b1)}
+    .wx-day{font-weight:800;color:var(--p);text-transform:uppercase;margin-bottom:4px;font-size:10px}
+    .wx-temp{font-size:17px;font-weight:800;margin-bottom:4px;color:var(--t1)}
+    .wx-ic{font-size:26px;margin-bottom:4px}
+    .lrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .lbtn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:1px solid var(--b2);border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;color:var(--t2);text-decoration:none;background:var(--s3);cursor:pointer;transition:all .13s}
+    .lbtn:hover{border-color:var(--p);color:var(--p);background:var(--plt)}
+    .visit-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:12px}
+    .visit-row:last-child{border-bottom:none}
+    .visit-date{color:var(--p);font-weight:700;white-space:nowrap;flex-shrink:0}
+    .visit-note{color:var(--t2);flex:1;line-height:1.4}
+    .visit-del{background:none;border:none;color:var(--mu);cursor:pointer;font-size:12px;padding:0 4px;flex-shrink:0;transition:color .15s}
+    .visit-del:hover{color:#DC2626}
+    .visit-add{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+    .visit-date-input{background:var(--s3);border:1px solid var(--b2);border-radius:8px;padding:6px 9px;font-family:inherit;font-size:12px;color:var(--t1);outline:none;width:140px;transition:border-color .15s;color-scheme:dark}
+    .visit-date-input:focus{border-color:var(--p)}
+    .visit-note-input{background:var(--s3);border:1px solid var(--b2);border-radius:8px;padding:6px 9px;font-family:inherit;font-size:12px;color:var(--t1);outline:none;flex:1;min-width:120px;transition:border-color .15s}
+    .visit-note-input:focus{border-color:var(--p)}
+    .visit-date-input::placeholder,.visit-note-input::placeholder{color:var(--mu)}
+    .visits-list{max-height:200px;overflow-y:auto;scrollbar-width:thin;margin-bottom:2px}
 
-        /* KARTA */
-        .card { background: var(--surface); border-radius: 16px; margin: 10px 12px; border: 1.5px solid var(--border); transition: all .2s; cursor: pointer; overflow: hidden; box-shadow: var(--shadow-sm); }
-        .card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md), 0 0 0 3px rgba(240,90,34,0.08); }
-        .card.active { border-color: var(--primary); box-shadow: var(--shadow-md), 0 0 0 3px rgba(240,90,34,0.12); }
-        .card.active.tc { border-color: var(--green); box-shadow: var(--shadow-md), 0 0 0 3px rgba(34,197,94,0.12); }
+    /* ── LEAFLET ── */
+    .leaflet-popup-content-wrapper{background:var(--s1)!important;border:1px solid var(--b2)!important;border-radius:14px!important;color:var(--t1)!important;box-shadow:var(--sh3)!important;padding:0!important;overflow:hidden}
+    .leaflet-popup-content{margin:0!important}
+    .leaflet-popup-tip{background:var(--s1)!important}
+    .leaflet-popup-close-button{color:var(--t2)!important;top:8px!important;right:10px!important;font-size:18px!important}
+    .leaflet-control-zoom a{background:var(--s1)!important;color:var(--t1)!important;border-color:var(--b2)!important}
+    .leaflet-control-zoom a:hover{background:var(--s2)!important;color:var(--p)!important}
+    .leaflet-control-attribution{background:var(--s1)!important;color:var(--t2)!important;font-size:10px!important;opacity:.8}
+    .leaflet-bar{box-shadow:var(--sh1)!important;border:1px solid var(--b2)!important;border-radius:8px!important;overflow:hidden}
+    .coords-popup .leaflet-popup-content-wrapper{background:var(--s1)!important;border:1px solid var(--b2)!important}
+    .coords-popup .leaflet-popup-tip{background:var(--s1)!important}
+    @media(max-width:850px){.leaflet-bottom.leaflet-right{bottom:68px!important}}
 
-        /* barevný pruh */
-        .card-bar { height: 4px; }
-        .card-bar.bp { background: linear-gradient(90deg, var(--primary), #F48A5A); }
-        .card-bar.tc { background: linear-gradient(90deg, var(--green), #4ADE80); }
+    /* ── TOAST ── */
+    #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s2);color:var(--t1);border:1px solid var(--b2);padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;box-shadow:var(--sh2)}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    #toast.ok{background:var(--gdk);color:#fff;border-color:var(--g)}
+    #toast.err{background:#7F1D1D;color:#fff;border-color:#DC2626}
 
-        .card-summary { padding: 14px 16px 12px; }
-        .card-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-        .card-ico { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-        .card-ico.bp { background: var(--orange-dim); }
-        .card-ico.tc { background: var(--green-dim); }
-        .card-title { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
-        .card-sub { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
-        .tag { font-size: 9.5px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; }
-        .tag-bp { background: var(--orange-dim); color: var(--primary); }
-        .tag-tc { background: var(--green-dim); color: var(--green-dk); }
-        .tag-reg { background: rgba(0,0,0,.06); color: var(--text2); font-size: 9px; }
-        .tag-plan { background: var(--orange-dim); color: var(--primary); }
-        .tag-vis { background: var(--green-dim); color: var(--green-dk); }
-        .card-btns { display: flex; gap: 4px; flex-shrink: 0; margin-left: auto; }
-        .ab { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--border-md); background: var(--surface2); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .13s; }
-        .ab:hover { border-color: var(--primary); background: var(--orange-dim); }
-        .ab.on-p { background: var(--orange-dim); border-color: var(--primary); }
-        .ab.on-v { background: var(--green-dim); border-color: var(--green); }
+    /* ── QUICK FILTRY (mobil) ── */
+    .quick-filters{display:none;position:absolute;top:12px;left:10px;right:10px;z-index:600;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap;padding-bottom:2px}
+    .quick-filters::-webkit-scrollbar{display:none}
+    .qf-pill{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid var(--b2);background:var(--s1);backdrop-filter:blur(12px);color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s;box-shadow:var(--sh1)}
+    .qf-pill:hover{border-color:var(--p);color:var(--t1)}
+    .qf-pill.on{background:var(--p);border-color:var(--p);color:#fff;box-shadow:0 2px 8px rgba(240,90,34,.4)}
+    .qf-pill.on.tc{background:var(--g);border-color:var(--g);box-shadow:0 2px 8px rgba(61,185,104,.4)}
+    .qf-pill.on.dist50{background:#8B5CF6;border-color:#8B5CF6}
+    .qf-pill.on.free{background:var(--g);border-color:var(--g)}
 
-        /* rychlé info */
-        .card-stats { display: flex; flex-wrap: wrap; gap: 3px 12px; font-size: 12.5px; color: var(--text2); margin-bottom: 8px; }
-        .cst b { color: var(--text); font-weight: 700; }
-        .cst.fr b { color: var(--green-dk); }
+    /* ── FAB ── */
+    .fab-loc{display:none;position:absolute;bottom:16px;right:12px;z-index:600;width:44px;height:44px;border-radius:50%;background:var(--s1);backdrop-filter:blur(8px);border:1px solid var(--b2);color:var(--p);font-size:18px;cursor:pointer;align-items:center;justify-content:center;box-shadow:var(--sh2);transition:background .15s}
+    .fab-loc:hover{background:var(--plt)}
 
-        /* poznámka náhled v kartičce */
-        .card-note-preview { font-size: 11.5px; color: var(--text2); background: var(--surface2); border-radius: 7px; padding: 6px 10px; margin-top: 4px; border-left: 3px solid var(--primary); line-height: 1.4; }
+    /* ── BOTTOM NAV ── */
+    .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--s1);backdrop-filter:blur(20px);border-top:1px solid var(--b1);z-index:1100;justify-content:space-around;align-items:center;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+    .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--mu);cursor:pointer;padding:4px 0;border:none;background:none;font-family:inherit;transition:color .15s}
+    .bn-item.active{color:var(--p)}
+    .bn-icon{font-size:20px;line-height:1}
+    .bn-label{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
 
-        /* wx inline */
-        .wx-inline { font-size: 12px; }
+    /* ── MODAL LOKALITY ── */
+    .loc-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+    .loc-modal.hide{display:none}
+    .loc-box{background:var(--s1);border:1px solid var(--b2);border-radius:18px;padding:24px;width:340px;max-width:94vw;box-shadow:var(--sh3)}
+    .loc-box h3{font-size:15px;font-weight:800;margin-bottom:16px;color:var(--t1)}
+    .loc-presets{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+    .loc-preset{background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:9px 13px;font-family:inherit;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;text-align:left;transition:all .13s}
+    .loc-preset:hover{border-color:var(--p);background:var(--plt);color:var(--p)}
+    .loc-preset.active{border-color:var(--p);background:var(--plt);color:var(--p)}
+    .loc-sep{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+    .loc-custom{display:flex;flex-direction:column;gap:6px}
+    .loc-custom input{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:8px 11px;font-family:inherit;font-size:12px;color:var(--t1);outline:none;transition:border-color .13s}
+    .loc-custom input:focus{border-color:var(--p)}
+    .loc-custom input::placeholder{color:var(--mu)}
+    .loc-row{display:flex;gap:6px}
+    .loc-row input{flex:1}
+    .loc-btns{display:flex;gap:8px;margin-top:16px}
+    .loc-btns button{flex:1;padding:10px;border-radius:9px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:background .13s}
+    .loc-cancel{background:var(--s2);color:var(--t2)}
+    .loc-cancel:hover{background:var(--s3)}
+    .loc-ok{background:var(--p);color:#fff;box-shadow:0 2px 8px rgba(240,90,34,.3)}
+    .loc-ok:hover{background:var(--pdk)}
 
-        /* expand tlačítko */
-        .x-btn { width: 100%; background: transparent; border: none; border-top: 1px solid var(--border); padding: 7px 14px; display: flex; align-items: center; gap: 5px; font-family: inherit; font-size: 11.5px; font-weight: 600; color: var(--muted); cursor: pointer; transition: color .13s; }
-        .x-btn:hover, .x-btn.xo { color: var(--primary); }
-        .x-arr { display: inline-block; font-size: 9px; transition: transform .2s; }
-        .x-btn.xo .x-arr { transform: rotate(180deg); }
-
-        /* detail sekce */
-        .card-detail { display: none; padding: 4px 16px 16px; border-top: 1px solid var(--border); background: var(--surface2); }
-        .card-detail.open { display: block; }
-        .ds { margin-top: 14px; }
-        .ds-t { font-size: 9.5px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
-        .ds-d { font-size: 12.5px; color: var(--text2); line-height: 1.65; }
-
-        /* trasy */
-        .tpills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-        .tp { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--text2); background: var(--surface); border: 1.5px solid var(--border-md); border-radius: 6px; padding: 3px 9px; }
-        .tp-km { font-size: 10px; color: var(--muted); }
-
-        /* diff bar */
-        .diff-bar { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-        .diff-segs { display: flex; gap: 3px; flex: 1; }
-        .dseg { height: 5px; flex: 1; border-radius: 3px; background: rgba(0,0,0,.08); }
-        .dseg.g { background: #22c55e; } .dseg.b { background: #3b82f6; } .dseg.r { background: #ef4444; } .dseg.k { background: #1a1410; }
-        .diff-lbl { font-size: 10px; color: var(--muted); white-space: nowrap; }
-
-        /* meta grid */
-        .mgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .mc { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; }
-        .mc-l { font-size: 8.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
-        .mc-v { font-size: 12px; font-weight: 800; color: var(--text); }
-        .mc-v.fr { color: var(--green-dk); }
-
-        /* hvězdičky */
-        .stars { display: flex; gap: 3px; margin-top: 4px; }
-        .star { font-size: 22px; color: rgba(0,0,0,.15); cursor: pointer; transition: color .1s, transform .1s; line-height: 1; }
-        .star.on { color: #F59E0B; }
-        .star:hover { transform: scale(1.18); color: #F59E0B; }
-        .rrow { display: flex; align-items: center; gap: 8px; }
-        .rlbl { font-size: 11px; color: var(--muted); }
-
-        /* poznámka */
-        .ntxt { margin-top: 6px; }
-        .ntxt textarea { width: 100%; background: var(--surface); border: 1.5px solid var(--border-md); border-radius: 9px; padding: 9px 11px; font-family: inherit; font-size: 12px; color: var(--text); resize: vertical; min-height: 68px; outline: none; line-height: 1.5; transition: border-color .14s; }
-        .ntxt textarea:focus { border-color: var(--primary); }
-        .ntxt textarea::placeholder { color: var(--muted); }
-        .nrow { margin-top: 6px; display: flex; align-items: center; gap: 8px; }
-        .btn-save { font-family: inherit; font-size: 11.5px; font-weight: 700; padding: 7px 15px; background: var(--primary); color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: background .13s; box-shadow: 0 2px 6px rgba(240,90,34,0.2); }
-        .btn-save:hover { background: var(--primary-dk); }
-        .btn-save:disabled { background: var(--border-md); color: var(--muted); cursor: not-allowed; box-shadow: none; }
-        .nst { font-size: 11px; color: var(--muted); }
-        .nst.ok { color: var(--green-dk); font-weight: 600; }
-
-        /* počasí */
-        .wx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-        .wx-box { background: var(--surface); padding: 11px; border-radius: 11px; font-size: 11px; border: 1.5px solid var(--border); }
-        .wx-day { font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 4px; font-size: 10px; }
-        .wx-temp { font-size: 17px; font-weight: 800; margin-bottom: 4px; color: var(--text); }
-        .wx-ic { font-size: 26px; margin-bottom: 4px; }
-
-        /* linky */
-        .lrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-        .lbtn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border: 1.5px solid var(--border-md); border-radius: 8px; font-family: inherit; font-size: 11px; font-weight: 700; color: var(--text2); text-decoration: none; background: var(--surface); cursor: pointer; transition: all .13s; }
-        .lbtn:hover { border-color: var(--primary); color: var(--primary); background: var(--orange-dim); }
-
-        /* popup */
-        .leaflet-popup-content-wrapper { background: #fff !important; border: 1.5px solid var(--border-md) !important; border-radius: 14px !important; color: var(--text) !important; box-shadow: var(--shadow-lg) !important; padding: 0 !important; overflow: hidden; }
-        .leaflet-popup-content { margin: 0 !important; }
-        .leaflet-popup-tip { background: #fff !important; }
-        .leaflet-popup-close-button { color: var(--muted) !important; top: 8px !important; right: 10px !important; font-size: 18px !important; }
-
-        /* toast */
-        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-md); }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        #toast.ok  { background: var(--green-dk); }
-        #toast.err { background: #DC2626; }
-
-        /* návštěvy */
-        .visit-row { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
-        .visit-row:last-child { border-bottom: none; }
-        .visit-date { color: var(--primary); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
-        .visit-note { color: var(--text2); flex: 1; line-height: 1.4; }
-        .visit-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 0 4px; flex-shrink: 0; transition: color .15s; }
-        .visit-del:hover { color: #DC2626; }
-        .visit-add { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
-        .visit-date-input { background: var(--surface); border: 1.5px solid var(--border-md); border-radius: 8px; padding: 6px 9px; font-family: inherit; font-size: 12px; color: var(--text); outline: none; width: 140px; transition: border-color .15s; }
-        .visit-date-input:focus { border-color: var(--primary); }
-        .visit-note-input { background: var(--surface); border: 1.5px solid var(--border-md); border-radius: 8px; padding: 6px 9px; font-family: inherit; font-size: 12px; color: var(--text); outline: none; flex: 1; min-width: 120px; transition: border-color .15s; }
-        .visit-note-input:focus { border-color: var(--primary); }
-        .visit-date-input::placeholder, .visit-note-input::placeholder { color: var(--muted); }
-        .visits-list { max-height: 200px; overflow-y: auto; scrollbar-width: thin; margin-bottom: 2px; }
-
-        /* QUICK FILTRY */
-        .quick-filters { display: none; position: absolute; top: 12px; left: 10px; right: 10px; z-index: 600; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap; padding-bottom: 2px; }
-        .quick-filters::-webkit-scrollbar { display: none; }
-        .qf-pill { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; border: 1.5px solid rgba(0,0,0,.12); background: rgba(255,255,255,.92); backdrop-filter: blur(10px); color: var(--text2); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; font-family: inherit; transition: all .15s; box-shadow: var(--shadow-sm); }
-        .qf-pill:hover { border-color: var(--primary); color: var(--primary); }
-        .qf-pill.on { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(240,90,34,0.3); }
-        .qf-pill.on.tc { background: var(--green); border-color: var(--green); box-shadow: 0 2px 8px rgba(34,197,94,0.3); }
-        .qf-pill.on.dist50 { background: #8B5CF6; border-color: #8B5CF6; box-shadow: 0 2px 8px rgba(139,92,246,0.3); }
-        .qf-pill.on.free { background: var(--green); border-color: var(--green); box-shadow: 0 2px 8px rgba(34,197,94,0.3); }
-
-        /* FAB */
-        .fab-loc { display: none; position: absolute; bottom: 16px; right: 12px; z-index: 600; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.95); backdrop-filter: blur(8px); border: 1.5px solid var(--border-md); color: var(--primary); font-size: 18px; cursor: pointer; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: background .15s; }
-        .fab-loc:hover { background: var(--orange-dim); }
-
-        /* BOTTOM NAV */
-        .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 58px; background: rgba(255,255,255,.97); backdrop-filter: blur(14px); border-top: 1px solid var(--border); z-index: 1100; justify-content: space-around; align-items: center; box-shadow: 0 -2px 12px rgba(0,0,0,0.06); }
-        .bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--muted); cursor: pointer; padding: 4px 0; border: none; background: none; font-family: inherit; transition: color .15s; }
-        .bn-item.active { color: var(--primary); }
-        .bn-icon { font-size: 20px; line-height: 1; }
-        .bn-label { font-size: 9px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
-
-        /* MODAL lokality */
-        .loc-modal { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 9000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .loc-modal.hide { display: none; }
-        .loc-box { background: var(--surface); border: 1.5px solid var(--border-md); border-radius: 18px; padding: 24px; width: 340px; max-width: 94vw; box-shadow: var(--shadow-lg); }
-        .loc-box h3 { font-size: 15px; font-weight: 800; margin-bottom: 16px; color: var(--text); }
-        .loc-presets { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-        .loc-preset { background: var(--surface2); border: 1.5px solid var(--border-md); border-radius: 9px; padding: 9px 13px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; text-align: left; transition: all .13s; }
-        .loc-preset:hover { border-color: var(--primary); background: var(--orange-dim); color: var(--primary); }
-        .loc-preset.active { border-color: var(--primary); background: var(--orange-dim); color: var(--primary); }
-        .loc-sep { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-        .loc-custom { display: flex; flex-direction: column; gap: 6px; }
-        .loc-custom input { background: var(--surface2); border: 1.5px solid var(--border-md); border-radius: 8px; padding: 8px 11px; font-family: inherit; font-size: 12px; color: var(--text); outline: none; transition: border-color .13s; }
-        .loc-custom input:focus { border-color: var(--primary); }
-        .loc-custom input::placeholder { color: var(--muted); }
-        .loc-row { display: flex; gap: 6px; }
-        .loc-row input { flex: 1; }
-        .loc-btns { display: flex; gap: 8px; margin-top: 16px; }
-        .loc-btns button { flex: 1; padding: 10px; border-radius: 9px; border: none; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .13s; }
-        .loc-cancel { background: var(--surface2); color: var(--text2); border: 1.5px solid var(--border-md) !important; }
-        .loc-cancel:hover { background: var(--bg); }
-        .loc-ok { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(240,90,34,0.25); }
-        .loc-ok:hover { background: var(--primary-dk); }
-
-        /* COORDS POPUP */
-        .coords-popup .leaflet-popup-content-wrapper { background: #fff !important; border: 1.5px solid var(--border-md) !important; border-radius: 14px !important; color: var(--text) !important; padding: 0 !important; }
-        .coords-popup .leaflet-popup-content { margin: 0 !important; }
-        .coords-popup .leaflet-popup-tip { background: #fff !important; }
-
-
-        /* Leaflet light theme */
-        .leaflet-control-zoom a { background: #fff !important; color: var(--text) !important; border-color: var(--border-md) !important; }
-        .leaflet-control-zoom a:hover { background: var(--surface2) !important; color: var(--primary) !important; }
-        /* Na mobilu posuň zoom nad bottom nav (58px) + mezera */
-        @media (max-width: 850px) {
-            .leaflet-bottom.leaflet-right { bottom: 68px !important; }
-        }
-        .leaflet-control-attribution { background: rgba(255,255,255,.85) !important; color: var(--text2) !important; font-size: 10px !important; }
-        .leaflet-bar { box-shadow: var(--shadow-sm) !important; border: 1px solid var(--border-md) !important; }
-
-        /* Mobile media query */
-        @media (max-width: 850px) {
-            body { overflow: hidden; }
-
-            /* Header: jen logo + hledání + lokace */
-            .hdr {
-                position: relative; top: auto;
-                height: auto; padding: 8px 12px;
-                gap: 8px; flex-wrap: nowrap;
-            }
-            .hdr-sep, .pills, .btn-update, .btn-wx-all { display: none; }
-            .logo { font-size: 15px; }
-            .srch { max-width: none; flex: 1; }
-            .btn-loc { font-size: 10px; padding: 5px 9px; }
-
-            /* Hlavní layout */
-            .app {
-                margin-top: 0 !important;
-                height: calc(100dvh - 58px) !important;
-                flex-direction: column;
-            }
-
-            /* Mapa = celá výška */
-            .map-side { flex: 1; position: relative; z-index: 5; }
-
-            /* Quick filtry + FAB viditelné */
-            .quick-filters { display: flex; }
-            .fab-loc { display: flex; }
-
-            /* Sidebar – skrytý panel přes celou obrazovku */
-            .sidebar {
-                display: none;
-                width: 100%;
-                position: fixed;
-                top: 0; bottom: 58px; left: 0; right: 0;
-                z-index: 900;
-                overflow-y: auto;
-                border-right: none;
-                background: var(--bg);
-            }
-            .sidebar.mob-visible { display: block; }
-
-            /* Bottom nav viditelný */
-            .bottom-nav { display: flex; }
-
-            /* Karty na mobilu */
-            .card { margin: 10px 10px 0; }
-            .card:last-child { margin-bottom: 68px; }
-            .card-summary { padding: 13px 13px 10px; }
-            .mgrid { grid-template-columns: 1fr 1fr; }
-            .sb-top { position: sticky; top: 0; z-index: 10; }
-        }
+    /* ── MOBIL ── */
+    @media(max-width:850px){
+        body{overflow:hidden}
+        .hdr{position:relative;top:auto;height:auto;padding:8px 12px;gap:8px;flex-wrap:nowrap}
+        .hdr-sep,.pills,.btn-update,.btn-hdr:not(#btn-loc){display:none}
+        .logo{font-size:16px}
+        .srch{max-width:none;flex:1}
+        #btn-loc{display:flex}
+        .app{margin-top:0!important;height:calc(100dvh - 58px)!important;flex-direction:column}
+        .map-side{flex:1;position:relative;z-index:5}
+        .sidebar{display:none;width:100%;position:fixed;top:0;bottom:58px;left:0;right:0;z-index:900;overflow-y:auto;border-right:none;background:var(--bg)}
+        .sidebar.mob-visible{display:block}
+        .quick-filters{display:flex}
+        .fab-loc{display:flex}
+        .bottom-nav{display:flex}
+        .card{margin:8px 10px 0}
+        .card:last-child{margin-bottom:68px}
+        .card-summary{padding:12px 13px 10px}
+        .sb-top{position:sticky;top:0;z-index:10}
+    }
     </style>
 </head>
 <body>
 
 <div id="loader">
     <div class="spinner"></div>
-    <p style="margin-top:15px;font-size:12px;opacity:0.6;" id="loader-status">Připojování...</p>
+    <p style="margin-top:16px;font-size:12px;color:var(--mu)" id="loader-status">Připojování...</p>
 </div>
 <div id="toast"></div>
 
+<!-- HEADER -->
 <header class="hdr">
-    <div class="logo">BIKE<span>park</span> Atlas</div>
+    <div class="logo"><b>BIKE</b><span>park</span> <b style="color:var(--p)">Atlas</b></div>
     <div class="hdr-sep"></div>
     <div class="pills">
         <button class="pill on" data-f="all">Vše</button>
-        <button class="pill" data-f="bikepark">Bikeparky</button>
-        <button class="pill tc" data-f="trail">Trail centra</button>
+        <button class="pill tc" data-f="trail" id="pill-trail">Trail centra</button>
+        <button class="pill" data-f="bikepark" id="pill-bp">Bikeparky</button>
     </div>
     <div class="srch">
         <span class="srch-ic">🔍</span>
         <input type="text" id="sq" placeholder="Hledat...">
     </div>
     <div class="hdr-r">
-        <button class="btn-loc" onclick="openLocModal()">📍 <span id="loc-label">Brno – Nový Lískovec</span></button>
-        <button class="btn-wx-all" onclick="loadAllWeather()">☁ Počasí vše</button>
-        <button class="btn-update" onclick="updateAll()">Přepočítat trasy</button>
+        <button class="btn-hdr" id="btn-loc" onclick="openLocModal()">📍 <span id="loc-label">Brno – Nový Lískovec</span></button>
+        <button class="btn-hdr" onclick="loadAllWeather()">☁ Počasí</button>
+        <button class="btn-update" onclick="updateAll()">↺ Přepočítat</button>
     </div>
 </header>
 
-<!-- Modal výběru lokality -->
+<!-- MODAL LOKALITY -->
 <div class="loc-modal hide" id="loc-modal" onclick="if(event.target===this)closeLocModal()">
     <div class="loc-box">
         <h3>📍 Změnit výchozí bod</h3>
@@ -421,11 +345,12 @@
     </div>
 </div>
 
+<!-- HLAVNÍ LAYOUT -->
 <div class="app">
     <aside class="sidebar" id="sidebar">
         <div class="sb-top">
-            <span>Zobrazeno: <b id="cnt">-</b> lokalit</span>
-            <select id="ss" style="background:#1e293b;border:1px solid var(--border);color:#fff;padding:4px 8px;border-radius:6px;font-family:inherit;font-size:11px;outline:none;cursor:pointer;">
+            <span>Zobrazeno: <b id="cnt">–</b> lokalit</span>
+            <select id="ss">
                 <option value="dist">Vzdálenost</option>
                 <option value="name">Název A–Z</option>
                 <option value="rating">Hodnocení</option>
@@ -434,71 +359,78 @@
     </aside>
     <main class="map-side">
         <div id="map"></div>
-        <!-- Quick filtry přes mapu (jen mobil) -->
         <div class="quick-filters" id="quick-filters">
             <button class="qf-pill on" data-qf="all">Vše</button>
-            <button class="qf-pill" data-qf="bikepark">🚠 Bikeparky</button>
-            <button class="qf-pill tc" data-qf="trail">🥾 Trail centra</button>
+            <button class="qf-pill" data-qf="bikepark" id="qf-bp">Bikeparky</button>
+            <button class="qf-pill tc" data-qf="trail" id="qf-trail">Trail centra</button>
             <button class="qf-pill dist50" data-qf="dist50">📍 Do 50 km</button>
             <button class="qf-pill free" data-qf="free">💸 Zdarma</button>
         </div>
-        <!-- FAB – moje poloha -->
         <button class="fab-loc" id="fab-loc" title="Moje poloha" onclick="locateMe()">📍</button>
-        <div class="map-origin" id="map-origin">📍 Výchozí bod: Brno – Nový Lískovec</div>
+        <div class="map-origin" id="map-origin">📍 Brno – Nový Lískovec</div>
     </main>
 </div>
 
-<!-- Bottom navigation (jen mobil) -->
+<!-- BOTTOM NAV (mobil) -->
 <nav class="bottom-nav" id="bottom-nav">
-    <button class="bn-item active" id="bn-map" onclick="switchTab('map')">
-        <span class="bn-icon">🗺</span>
-        <span class="bn-label">Mapa</span>
-    </button>
-    <button class="bn-item" id="bn-list" onclick="switchTab('list')">
-        <span class="bn-icon">☰</span>
-        <span class="bn-label">Seznam</span>
-    </button>
-    <button class="bn-item" id="bn-wx" onclick="loadAllWeather();switchTab('list')">
-        <span class="bn-icon">☁</span>
-        <span class="bn-label">Počasí</span>
-    </button>
-    <button class="bn-item" id="bn-settings" onclick="openLocModal()">
-        <span class="bn-icon">⚙</span>
-        <span class="bn-label">Nastavení</span>
-    </button>
+    <button class="bn-item active" id="bn-map" onclick="switchTab('map')"><span class="bn-icon">🗺</span><span class="bn-label">Mapa</span></button>
+    <button class="bn-item" id="bn-list" onclick="switchTab('list')"><span class="bn-icon">☰</span><span class="bn-label">Seznam</span></button>
+    <button class="bn-item" id="bn-wx" onclick="loadAllWeather();switchTab('list')"><span class="bn-icon">☁</span><span class="bn-label">Počasí</span></button>
+    <button class="bn-item" id="bn-settings" onclick="openLocModal()"><span class="bn-icon">⚙</span><span class="bn-label">Nastavení</span></button>
 </nav>
 
 <script>
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 // KONFIGURACE
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYrMpmabpG58oWuiQwLNrkYUyJu53ZLFFgQBrBsCdVR7Sg8diz6PmeqMyKOmd0eu3a/exec';
-const DEFAULT_LAT = 49.1694, DEFAULT_LNG = 16.5928, DEFAULT_NAME = 'Brno – Nový Lískovec';
-let START_LAT = DEFAULT_LAT, START_LNG = DEFAULT_LNG;
+const DEF_LAT = 49.1694, DEF_LNG = 16.5928, DEF_NAME = 'Brno – Nový Lískovec';
+let START_LAT = DEF_LAT, START_LNG = DEF_LNG;
 
-// Načti uložený výchozí bod
 try {
-    const saved = JSON.parse(localStorage.getItem('bp_origin') || 'null');
-    if (saved && saved.lat && saved.lng) { START_LAT = saved.lat; START_LNG = saved.lng; updateOriginUI(saved.name || `${saved.lat}, ${saved.lng}`); }
+    const sv = JSON.parse(localStorage.getItem('bp_origin') || 'null');
+    if (sv?.lat && sv?.lng) { START_LAT = sv.lat; START_LNG = sv.lng; updateOriginUI(sv.name || `${sv.lat}, ${sv.lng}`); }
 } catch(e) {}
 
-function updateOriginUI(name) {
-    document.getElementById('loc-label').textContent = name;
-    document.getElementById('map-origin').textContent = '📍 Výchozí bod: ' + name;
+// ═══════════════════════
+// STAV
+// ═══════════════════════
+let PARKS = [], flt = 'all', qry = '', srt = 'dist', selId = null;
+let MAP, MARKERS = {}, UD = {}, VISITS = {};
+let qfDist50 = false, qfFree = false;
+
+try { UD = JSON.parse(localStorage.getItem('bp_ud') || '{}'); } catch(e) { UD = {}; }
+
+function gu(id) { return UD[id] || {}; }
+function su(id, f, v) {
+    if (!UD[id]) UD[id] = {};
+    UD[id][f] = v;
+    try { localStorage.setItem('bp_ud', JSON.stringify(UD)); } catch(e) {}
+    fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'saveUserData', id, field:f, value:v }) }).catch(() => {});
 }
 
+let _toastT;
+function toast(m, t) {
+    const el = document.getElementById('toast');
+    el.textContent = m; el.className = 'show ' + (t||'');
+    clearTimeout(_toastT); _toastT = setTimeout(() => el.className = '', 3000);
+}
+
+// ═══════════════════════
+// LOKACE & MODAL
+// ═══════════════════════
+function updateOriginUI(name) {
+    document.getElementById('loc-label').textContent = name;
+    document.getElementById('map-origin').textContent = '📍 ' + name;
+}
 function openLocModal() {
     document.getElementById('loc-modal').classList.remove('hide');
     document.getElementById('loc-lat').value = '';
     document.getElementById('loc-lng').value = '';
     document.getElementById('loc-name').value = '';
-    // Označ aktivní preset
-    document.querySelectorAll('.loc-preset').forEach(b => {
-        b.classList.toggle('active', parseFloat(b.dataset.lat) === START_LAT && parseFloat(b.dataset.lng) === START_LNG);
-    });
+    document.querySelectorAll('.loc-preset').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.lat) === START_LAT && parseFloat(b.dataset.lng) === START_LNG));
 }
 function closeLocModal() { document.getElementById('loc-modal').classList.add('hide'); }
-
 function selectPreset(btn) {
     document.querySelectorAll('.loc-preset').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -506,7 +438,6 @@ function selectPreset(btn) {
     document.getElementById('loc-lng').value = btn.dataset.lng;
     document.getElementById('loc-name').value = btn.dataset.name;
 }
-
 function applyLocation() {
     const lat = parseFloat(document.getElementById('loc-lat').value);
     const lng = parseFloat(document.getElementById('loc-lng').value);
@@ -515,85 +446,60 @@ function applyLocation() {
     START_LAT = lat; START_LNG = lng;
     localStorage.setItem('bp_origin', JSON.stringify({ lat, lng, name }));
     updateOriginUI(name);
-    // Přesuň marker výchozího bodu
-    if (window._originMarker) MAP.removeLayer(window._originMarker);
-    window._originMarker = L.circleMarker([START_LAT, START_LNG], { radius: 7, fillColor: '#f59e0b', color: '#fff', weight: 2, fillOpacity: 1 })
-        .addTo(MAP).bindTooltip('📍 ' + name);
-    MAP.flyTo([START_LAT, START_LNG], 10);
+    if (window._oM) MAP.removeLayer(window._oM);
+    window._oM = L.circleMarker([lat, lng], { radius:7, fillColor:'#f59e0b', color:'#fff', weight:2, fillOpacity:1 }).addTo(MAP).bindTooltip('📍 ' + name);
+    MAP.flyTo([lat, lng], 10);
     closeLocModal();
-    toast('Výchozí bod změněn, přepočítávám...', 'ok');
+    toast('Výchozí bod změněn', 'ok');
     updateAll();
 }
-
-// Počasí pro všechny viditelné lokality najednou
-async function loadAllWeather() {
-    const btn = document.querySelector('.btn-wx-all');
-    btn.textContent = '⏳ Načítám...';
-    btn.disabled = true;
-
-    const today = new Date().getDay();
-    const dSat = ((6 - today + 7) % 7) || 7;
-    const dSun = dSat + 1;
-    const WXC = {
-        0:['☀️','Jasno'], 1:['🌤','Převážně jasno'], 2:['⛅','Polojasno'], 3:['☁️','Zataženo'],
-        45:['🌫','Mlha'], 51:['🌦','Mrholení'], 61:['🌧','Slabý déšť'], 63:['🌧','Déšť'],
-        65:['🌧','Vydatný déšť'], 71:['🌨','Sněžení'], 80:['🌦','Přeháňky'],
-        81:['🌧','Silné přeháňky'], 95:['⛈','Bouřka']
-    };
-    function wxInfo(code) {
-        const k = Object.keys(WXC).map(Number).sort((a,b)=>a-b);
-        for (let i = k.length-1; i >= 0; i--) if (k[i] <= code) return WXC[k[i]];
-        return ['🌡','—'];
-    }
-    const visible = PARKS.filter(isVisible);
-    // Otevři detaily a načti počasí pro každou lokalitu
-    await Promise.all(visible.map(async p => {
-        try {
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lng}&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=14`);
-            const data = await res.json();
-            const days = data.daily;
-            const card = document.querySelector(`.card[data-id="${p.id}"]`);
-            if (!card) return;
-            const box = card.querySelector('[data-wx-box]');
-            const wxBtn = card.querySelector('[data-a="wx"]');
-            if (!box) return;
-            // Otevři detail karty pokud není otevřen
-            const det = card.querySelector('.card-detail');
-            const xb = card.querySelector('.x-btn');
-            if (det && !det.classList.contains('open')) {
-                det.classList.add('open');
-                if (xb) { xb.classList.add('xo'); xb.querySelector('.x-arr').textContent='▲'; xb.lastChild.textContent=' Sbalit detail'; }
-            }
-            const html = (d) => {
-                const w = wxInfo(days.weathercode[d]);
-                return `<div class="wx-box">
-                    <div class="wx-day">${d===dSat?'Sobota':'Neděle'}</div>
-                    <div class="wx-ic">${w[0]}</div>
-                    <div class="wx-temp">${Math.round(days.temperature_2m_max[d])}°C <span style="font-size:11px;opacity:.6">/ ${Math.round(days.temperature_2m_min[d])}°C</span></div>
-                    <div style="margin-top:3px;opacity:.7">${w[1]}</div>
-                    <div style="margin-top:4px;opacity:.7">💨 ${Math.round(days.windspeed_10m_max[d])} km/h</div>
-                    ${days.precipitation_probability_max[d]>0?`<div style="opacity:.7">🌂 ${days.precipitation_probability_max[d]}%</div>`:''}
-                </div>`;
-            };
-            box.innerHTML = html(dSat) + html(dSun);
-            box.style.display = 'grid';
-            if (wxBtn) wxBtn.style.display = 'none';
-        } catch(e) {}
-    }));
-    btn.textContent = '☁ Počasí vše';
-    btn.disabled = false;
-    toast(`Počasí načteno pro ${visible.length} lokalit`, 'ok');
+function locateMe() {
+    if (!navigator.geolocation) { toast('Poloha není dostupná', 'err'); return; }
+    toast('Zjišťuji polohu…', '');
+    navigator.geolocation.getCurrentPosition(pos => {
+        START_LAT = pos.coords.latitude; START_LNG = pos.coords.longitude;
+        const name = 'Moje poloha';
+        localStorage.setItem('bp_origin', JSON.stringify({ lat:START_LAT, lng:START_LNG, name }));
+        updateOriginUI(name);
+        if (window._oM) MAP.removeLayer(window._oM);
+        window._oM = L.circleMarker([START_LAT, START_LNG], { radius:7, fillColor:'#f59e0b', color:'#fff', weight:2, fillOpacity:1 }).addTo(MAP).bindTooltip('📍 Moje poloha');
+        MAP.flyTo([START_LAT, START_LNG], 10);
+        toast('Poloha nalezena', 'ok');
+        updateAll();
+    }, () => toast('Polohu nelze zjistit', 'err'));
 }
 
-// ═══════════════════════════════════════════════
-// STAV APLIKACE
-// ═══════════════════════════════════════════════
-let PARKS = [], flt = 'all', qry = '', srt = 'dist', selId = null;
-let MAP, MARKERS = {}, UD = {};
-let qfDist50 = false, qfFree = false;
-let VISITS = {}; // { park_id: [{date, note}, ...] }
+// Souřadnice klikem na mapu
+function copyClickedCoords() { navigator.clipboard.writeText(window._cLat + ', ' + window._cLng).then(() => toast('Zkopírováno! ✓', 'ok')); }
+function setClickedAsOrigin() {
+    MAP.closePopup();
+    document.getElementById('loc-lat').value = window._cLat;
+    document.getElementById('loc-lng').value = window._cLng;
+    document.getElementById('loc-name').value = '';
+    document.getElementById('loc-modal').classList.remove('hide');
+    document.querySelectorAll('.loc-preset').forEach(b => b.classList.remove('active'));
+}
 
-// Quick filtry
+// ═══════════════════════
+// MOBIL TABS
+// ═══════════════════════
+function switchTab(tab) {
+    if (window.innerWidth > 850) return;
+    const sb = document.getElementById('sidebar');
+    document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+    if (tab === 'map') {
+        document.getElementById('bn-map').classList.add('active');
+        sb.classList.remove('mob-visible');
+        setTimeout(() => MAP?.invalidateSize(), 100);
+    } else {
+        document.getElementById('bn-' + tab).classList.add('active');
+        sb.classList.add('mob-visible');
+    }
+}
+
+// ═══════════════════════
+// QUICK FILTRY
+// ═══════════════════════
 function initQuickFilters() {
     document.querySelectorAll('.qf-pill').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -603,161 +509,192 @@ function initQuickFilters() {
                 document.querySelectorAll('.qf-pill').forEach(b => b.classList.remove('on'));
                 btn.classList.add('on');
             } else if (qf === 'bikepark' || qf === 'trail') {
-                const wasOn = btn.classList.contains('on');
+                const was = btn.classList.contains('on');
                 document.querySelectorAll('.qf-pill[data-qf="all"],.qf-pill[data-qf="bikepark"],.qf-pill[data-qf="trail"]').forEach(b => b.classList.remove('on'));
-                if (wasOn) { flt = 'all'; document.querySelector('.qf-pill[data-qf="all"]').classList.add('on'); }
+                if (was) { flt = 'all'; document.querySelector('.qf-pill[data-qf="all"]').classList.add('on'); }
                 else { flt = qf; btn.classList.add('on'); }
-            } else if (qf === 'dist50') {
-                qfDist50 = !qfDist50; btn.classList.toggle('on', qfDist50);
-            } else if (qf === 'free') {
-                qfFree = !qfFree; btn.classList.toggle('on', qfFree);
-            }
+            } else if (qf === 'dist50') { qfDist50 = !qfDist50; btn.classList.toggle('on', qfDist50); }
+            else if (qf === 'free') { qfFree = !qfFree; btn.classList.toggle('on', qfFree); }
             renderUI();
         });
     });
 }
 
-// Tab switching (mobil)
-function switchTab(tab) {
-    if (window.innerWidth > 850) return;
-    const sidebar = document.getElementById('sidebar');
-    document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-    if (tab === 'map') {
-        document.getElementById('bn-map').classList.add('active');
-        sidebar.classList.remove('mob-visible');
-        setTimeout(() => MAP && MAP.invalidateSize(), 100);
-    } else {
-        document.getElementById('bn-' + tab).classList.add('active');
-        sidebar.classList.add('mob-visible');
-    }
-}
-
-// Locate me (FAB)
-function locateMe() {
-    if (!navigator.geolocation) { toast('Poloha není dostupná', 'err'); return; }
-    toast('Zjišťuji polohu...', '');
-    navigator.geolocation.getCurrentPosition(pos => {
-        START_LAT = pos.coords.latitude; START_LNG = pos.coords.longitude;
-        const name = 'Moje poloha';
-        localStorage.setItem('bp_origin', JSON.stringify({ lat: START_LAT, lng: START_LNG, name }));
-        updateOriginUI(name);
-        if (window._originMarker) MAP.removeLayer(window._originMarker);
-        window._originMarker = L.circleMarker([START_LAT, START_LNG], { radius: 7, fillColor: '#f59e0b', color: '#fff', weight: 2, fillOpacity: 1 })
-            .addTo(MAP).bindTooltip('📍 Moje poloha');
-        MAP.flyTo([START_LAT, START_LNG], 10);
-        toast('Poloha nalezena, přepočítávám...', 'ok');
-        updateAll();
-    }, () => toast('Polohu nelze zjistit', 'err'));
-}
-
-// Načti uložená uživatelská data
-try { UD = JSON.parse(localStorage.getItem('bp_ud') || '{}'); } catch(e) { UD = {}; }
-async function deleteVisit(e, parkId, card) {
-    e.stopPropagation();
-    const btn = e.target.closest('[data-a="dv"]');
-    if (!btn) return;
-    const vid = btn.dataset.vid;
-    if (!confirm('Smazat tuto návštěvu?')) return;
-    btn.textContent = '…';
-    try {
-        const res = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'deleteVisit', visit_id: vid, park_id: parkId })
-        });
-        const data = await res.json();
-        if (data.ok) {
-            btn.closest('.visit-row').remove();
-            if (VISITS[parkId]) VISITS[parkId] = VISITS[parkId].filter(v => v.id != vid);
-            const vlist = document.getElementById('vlist-' + parkId);
-            if (vlist && vlist.children.length === 0) {
-                vlist.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:4px 0">Zatím žádná návštěva</div>';
-            }
-            toast('Návštěva smazána', 'ok');
-        } else {
-            btn.textContent = '✕';
-            toast('Chyba mazání: ' + (data.error||''), 'err');
-        }
-    } catch(err) {
-        btn.textContent = '✕';
-        toast('Nelze smazat – zkontroluj spojení', 'err');
-    }
-}
-
-function updateStatusTag(card, status) {
-    // Odstraň staré status tagy
-    card.querySelectorAll('.tag-plan, .tag-vis').forEach(t => t.remove());
-    const sub = card.querySelector('.card-sub');
-    if (!sub) return;
-    if (status === 'planned') {
-        const t = document.createElement('span');
-        t.className = 'tag tag-plan'; t.textContent = '📌 V plánu';
-        sub.appendChild(t);
-    } else if (status === 'visited') {
-        const t = document.createElement('span');
-        t.className = 'tag tag-vis'; t.textContent = '✅ Navštíveno';
-        sub.appendChild(t);
-    }
-}
-
-function saveUD() { try { localStorage.setItem('bp_ud', JSON.stringify(UD)); } catch(e) {} }
-function gu(id) { return UD[id] || {}; }
-function su(id, f, v) {
-    if (!UD[id]) UD[id] = {};
-    UD[id][f] = v;
-    saveUD();
-    // Sync do Sheets
-    if (SCRIPT_URL) {
-        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveUserData', id, field: f, value: v }) }).catch(() => {});
-    }
-}
-
-// Toast
-let toastT;
-function toast(m, t) {
-    const el = document.getElementById('toast');
-    el.textContent = m; el.className = 'toast show ' + (t || '');
-    clearTimeout(toastT); toastT = setTimeout(() => el.className = 'toast', 3000);
-}
-
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 // MAPA
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 function initMap() {
-    MAP = L.map('map', { zoomControl: false }).setView([49.8, 15.5], 7);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
-        subdomains: 'abcd', maxZoom: 19
+    MAP = L.map('map', { zoomControl:false }).setView([49.8, 15.5], 7);
+    const dark = isDark();
+    const tileUrl = dark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    L.tileLayer(tileUrl, {
+        attribution:'&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
+        subdomains:'abcd', maxZoom:19
     }).addTo(MAP);
-
-    // Zoom do pravého dolního rohu – pryč od headeru a sidebaru
-    L.control.zoom({ position: 'bottomright' }).addTo(MAP);
-
-    window._originMarker = L.circleMarker([START_LAT, START_LNG], { radius: 7, fillColor: '#f59e0b', color: '#fff', weight: 2, fillOpacity: 1 })
+    L.control.zoom({ position:'bottomright' }).addTo(MAP);
+    window._oM = L.circleMarker([START_LAT, START_LNG], { radius:7, fillColor:'#f59e0b', color:'#fff', weight:2, fillOpacity:1 })
         .addTo(MAP).bindTooltip('📍 ' + (document.getElementById('loc-label')?.textContent || 'Výchozí bod'));
+    MAP.on('click', e => {
+        if (e.originalEvent._stopped) return;
+        const lat = e.latlng.lat.toFixed(6), lng = e.latlng.lng.toFixed(6);
+        window._cLat = lat; window._cLng = lng;
+        if (window._cP) MAP.closePopup(window._cP);
+        window._cP = L.popup({ closeButton:true, className:'coords-popup' })
+            .setLatLng(e.latlng)
+            .setContent(`<div style="padding:12px 14px;font-family:inherit;min-width:210px">
+                <div style="font-size:10px;color:var(--mu);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Souřadnice bodu</div>
+                <div style="font-size:14px;font-weight:800;color:var(--t1);margin-bottom:10px">${lat}, ${lng}</div>
+                <div style="display:flex;gap:6px">
+                    <button onclick="copyClickedCoords()" style="flex:1;padding:7px;border-radius:7px;border:1px solid var(--b2);background:var(--s2);color:var(--t2);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">📋 Kopírovat</button>
+                    <button onclick="setClickedAsOrigin()" style="flex:1;padding:7px;border-radius:7px;border:none;background:var(--p);color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">📍 Výchozí bod</button>
+                </div></div>`)
+            .openOn(MAP);
+    });
 }
 
-// Custom SVG drop-pin ikona
+// ═══════════════════════
+// SVG IKONY
+// ═══════════════════════
+// ═══════════════════════════════════════════════
+// UNIVERZÁLNÍ SVG IKONY  – 1 design všude
+// bp() = gondola lanovky   tc() = hora + serpentina
+// size = px, color = fill barva pozadí čtverce
+// ═══════════════════════════════════════════════
+
+function svgBP(size) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 48 48">
+  <circle cx="24" cy="24" r="24" fill="#F05A22"/>
+  <!-- lano -->
+  <line x1="4" y1="14" x2="44" y2="18" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+  <!-- závěs -->
+  <line x1="24" y1="16" x2="24" y2="21" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <!-- kladka -->
+  <circle cx="24" cy="14.5" r="2.2" fill="#fff"/>
+  <!-- tělo gondoly -->
+  <rect x="12" y="21" width="24" height="16" rx="4" fill="#fff"/>
+  <!-- okno L -->
+  <rect x="15" y="25" width="8" height="9" rx="2" fill="#F05A22"/>
+  <!-- okno P -->
+  <rect x="25" y="25" width="8" height="9" rx="2" fill="#F05A22"/>
+  <!-- odlesk L -->
+  <rect x="16.5" y="26.5" width="2.5" height="2.5" rx=".8" fill="rgba(255,255,255,.4)"/>
+  <!-- odlesk P -->
+  <rect x="26.5" y="26.5" width="2.5" height="2.5" rx=".8" fill="rgba(255,255,255,.4)"/>
+</svg>`;
+}
+
+function svgTC(size) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 48 48">
+  <circle cx="24" cy="24" r="24" fill="#3DB968"/>
+  <!-- zadní kolo -->
+  <circle cx="13" cy="30" r="9" fill="none" stroke="#fff" stroke-width="2.2"/>
+  <circle cx="13" cy="30" r="2" fill="#fff"/>
+  <!-- přední kolo -->
+  <circle cx="35" cy="30" r="9" fill="none" stroke="#fff" stroke-width="2.2"/>
+  <circle cx="35" cy="30" r="2" fill="#fff"/>
+  <!-- rám – sedlová trubka -->
+  <line x1="13" y1="30" x2="22" y2="18" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- rám – řetězová trubka -->
+  <line x1="13" y1="30" x2="27" y2="30" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- rám – horní trubka -->
+  <line x1="22" y1="18" x2="30" y2="18" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- rám – přední vidlice -->
+  <line x1="30" y1="18" x2="35" y2="30" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- rám – zadní vzpěra -->
+  <line x1="27" y1="30" x2="22" y2="18" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- střed kola (kliky) -->
+  <circle cx="27" cy="30" r="2.5" fill="#fff"/>
+  <!-- řídítka -->
+  <line x1="30" y1="18" x2="30" y2="14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="28" y1="14" x2="32" y2="14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- sedlo -->
+  <line x1="22" y1="18" x2="22" y2="14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="19.5" y1="14" x2="24.5" y2="14" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+</svg>`;
+}
+
+function pillIcon(isBP) {
+    const svg = isBP ? svgBP(20) : svgTC(20);
+    return `<span style="display:inline-flex;align-items:center;vertical-align:middle;margin-right:4px;border-radius:50%;overflow:hidden;flex-shrink:0">${svg}</span>`;
+}
+
+function iconBikeparkMarker() {
+    return `<g transform="translate(21,19) scale(0.7)">
+      <line x1="-14" y1="-10" x2="14" y2="-6" stroke="rgba(255,255,255,.8)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="0" y1="-8" x2="0" y2="-2" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="0" cy="-10.5" r="2.5" fill="#fff"/>
+      <rect x="-13" y="-2" width="26" height="16" rx="4" fill="#fff"/>
+      <rect x="-11" y="2" width="9" height="9" rx="2" fill="#F05A22"/>
+      <rect x="2" y="2" width="9" height="9" rx="2" fill="#F05A22"/>
+      <rect x="-9.5" y="3.5" width="2.5" height="2.5" rx=".8" fill="rgba(255,255,255,.4)"/>
+      <rect x="3.5" y="3.5" width="2.5" height="2.5" rx=".8" fill="rgba(255,255,255,.4)"/>
+    </g>`;
+}
+
+function iconTrailMarker() {
+    return `<g transform="translate(21,21) scale(0.78)">
+      <!-- zadní kolo -->
+      <circle cx="-10" cy="7" r="8" fill="none" stroke="#fff" stroke-width="2"/>
+      <circle cx="-10" cy="7" r="1.8" fill="#fff"/>
+      <!-- přední kolo -->
+      <circle cx="10" cy="7" r="8" fill="none" stroke="#fff" stroke-width="2"/>
+      <circle cx="10" cy="7" r="1.8" fill="#fff"/>
+      <!-- rám -->
+      <line x1="-10" y1="7" x2="-2" y2="-4" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-10" y1="7" x2="4" y2="7" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-2" y1="-4" x2="6" y2="-4" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="6" y1="-4" x2="10" y2="7" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="4" y1="7" x2="-2" y2="-4" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <!-- střed kliky -->
+      <circle cx="4" cy="7" r="2.2" fill="#fff"/>
+      <!-- řídítka -->
+      <line x1="6" y1="-4" x2="6" y2="-8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="4" y1="-8" x2="8" y2="-8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <!-- sedlo -->
+      <line x1="-2" y1="-4" x2="-2" y2="-8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-4.5" y1="-8" x2="0.5" y2="-8" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    </g>`;
+}
+
 function makeIcon(isBP, active) {
-    const bg   = isBP ? '#F05A22' : '#22c55e';
-    const ring = active ? '#fff' : 'rgba(255,255,255,0.55)';
-    const sw   = active ? 2.5 : 1.5;
-    const em   = isBP ? '🚠' : '🥾';
-    const s    = active ? 42 : 34;
-    const h    = Math.round(s * 1.35);
-    const svg  = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${h}" viewBox="0 0 42 57">
-      <filter id="ds"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.45"/></filter>
-      <ellipse cx="21" cy="54" rx="7" ry="2.5" fill="rgba(0,0,0,0.22)"/>
+    const bg = isBP ? '#F05A22' : '#3DB968';
+    const s  = active ? 42 : 34, h = Math.round(s * 1.35);
+    const rg = active ? '#fff' : 'rgba(255,255,255,.5)', sw = active ? 2.5 : 1.5;
+    const ico = isBP ? iconBikeparkMarker() : iconTrailMarker();
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${h}" viewBox="0 0 42 57">
+      <filter id="d${isBP?'b':'t'}${active?'a':''}"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity=".5"/></filter>
+      <ellipse cx="21" cy="54" rx="7" ry="2.5" fill="rgba(0,0,0,.2)"/>
       <path d="M21 2C11.1 2 3 10.1 3 20c0 13.8 18 35 18 35s18-21.2 18-35C39 10.1 30.9 2 21 2z"
-        fill="${bg}" stroke="${ring}" stroke-width="${sw}" filter="url(#ds)"/>
-      <text x="21" y="22" text-anchor="middle" dominant-baseline="middle" font-size="15">${em}</text>
+        fill="${bg}" stroke="${rg}" stroke-width="${sw}" filter="url(#d${isBP?'b':'t'}${active?'a':''})"/>
+      ${ico}
     </svg>`;
-    return L.divIcon({ html: svg, className: '', iconSize: [s, h], iconAnchor: [s/2, h], popupAnchor: [0, -h + 4] });
+    return L.divIcon({ html:svg, className:'', iconSize:[s,h], iconAnchor:[s/2,h], popupAnchor:[0,-h+4] });
+}
+
+function isDark() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+// Injektuj SVG ikony do všech statických prvků po načtení stránky
+function injectStaticIcons() {
+    // Header pills
+    const pb = document.getElementById('pill-bp');
+    const pt = document.getElementById('pill-trail');
+    if (pb) pb.innerHTML = pillIcon(true) + 'Bikeparky';
+    if (pt) pt.innerHTML = pillIcon(false) + 'Trail centra';
+    // Quick filter pills
+    const qb = document.getElementById('qf-bp');
+    const qt = document.getElementById('qf-trail');
+    if (qb) qb.innerHTML = pillIcon(true) + 'Bikeparky';
+    if (qt) qt.innerHTML = pillIcon(false) + 'Trail centra';
 }
 
 function addMarker(p) {
-    const isBP = p.type && p.type.includes('bikepark');
-    const mk = L.marker([p.lat, p.lng], { icon: makeIcon(isBP, false) }).addTo(MAP);
-    mk.bindPopup(buildPopup(p), { maxWidth: 280 });
+    const isBP = p.type?.includes('bikepark');
+    const mk = L.marker([p.lat, p.lng], { icon:makeIcon(isBP, false) }).addTo(MAP);
+    mk.bindPopup(buildPopup(p), { maxWidth:280 });
     mk.on('click', () => {
         PARKS.forEach(q => MARKERS[q.id]?.setIcon(makeIcon(q.type?.includes('bikepark'), false)));
         mk.setIcon(makeIcon(isBP, true));
@@ -766,493 +703,371 @@ function addMarker(p) {
     MARKERS[p.id] = mk;
 }
 
-// Klik na prázdné místo mapy = zobraz souřadnice
-function initMapClick() {
-    MAP.on('click', e => {
-        if (e.originalEvent._stopped) return;
-        const lat = e.latlng.lat.toFixed(6);
-        const lng = e.latlng.lng.toFixed(6);
-
-        // Ulož souřadnice globálně pro použití v tlačítkách
-        window._clickedLat = lat;
-        window._clickedLng = lng;
-
-        if (window._coordPopup) MAP.closePopup(window._coordPopup);
-        window._coordPopup = L.popup({ closeButton: true, className: 'coords-popup' })
-            .setLatLng(e.latlng)
-            .setContent(`<div style="padding:12px 14px;font-family:inherit;min-width:210px">
-                <div style="font-size:10px;color:#A0928A;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">Souřadnice bodu</div>
-                <div style="font-size:14px;font-weight:800;color:#1A1410;margin-bottom:9px;letter-spacing:.3px">${lat}, ${lng}</div>
-                <div style="display:flex;gap:6px">
-                    <button onclick="copyClickedCoords()"
-                        style="flex:1;padding:7px 0;border-radius:7px;border:1.5px solid #e5e0dc;background:#FAF7F5;color:#6B5E57;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">
-                        📋 Kopírovat
-                    </button>
-                    <button onclick="setClickedAsOrigin()"
-                        style="flex:1;padding:7px 0;border-radius:7px;border:none;background:#F05A22;color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(240,90,34,0.25)">
-                        📍 Výchozí bod
-                    </button>
-                </div>
-            </div>`)
-            .openOn(MAP);
-    });
-}
-
-function copyClickedCoords() {
-    const text = window._clickedLat + ', ' + window._clickedLng;
-    navigator.clipboard.writeText(text).then(() => toast('Zkopírováno! ✓', 'ok'));
-}
-
-function setClickedAsOrigin() {
-    MAP.closePopup();
-    // Předvyplň modal – bez resetování hodnot
-    document.getElementById('loc-lat').value = window._clickedLat;
-    document.getElementById('loc-lng').value = window._clickedLng;
-    document.getElementById('loc-name').value = '';
-    // Otevři modal bez resetování inputů
-    document.getElementById('loc-modal').classList.remove('hide');
-    document.querySelectorAll('.loc-preset').forEach(b => b.classList.remove('active'));
-}
-
 function buildPopup(p) {
-    const isBP = p.type && p.type.includes('bikepark');
+    const isBP = p.type?.includes('bikepark');
     const u = gu(p.id);
-    const st = u.status === 'planned' ? '<br>📌 <b style="color:#C94A19">V plánu</b>' : u.status === 'visited' ? '<br>✅ <b style="color:#16A34A">Navštíveno</b>' : '';
-    return `<div style="padding:13px 15px 14px;font-family:inherit">
-        <div style="font-weight:800;font-size:14px;margin-bottom:3px;color:#1A1410">${p.name}</div>
-        <div style="font-size:11px;color:${isBP?'#F05A22':'#16A34A'};font-weight:700;margin-bottom:8px">${isBP?'🚠 Bikepark':'🥾 Trail centrum'} · ${p.region}</div>
-        <div style="font-size:12px;color:#6B5E57;line-height:1.8">
-            📏 <span style="color:#1A1410;font-weight:700">${Math.round(p.distKm||0)} km</span> · ⏱ <span style="color:#1A1410;font-weight:700">${Math.floor((p.duration||0)/60)}h ${(p.duration||0)%60}min</span><br>
+    const st = u.status==='planned' ? '<br>📌 <b style="color:var(--p)">V plánu</b>' : u.status==='visited' ? '<br>✅ <b style="color:var(--g)">Navštíveno</b>' : '';
+    const hrs = Math.floor((p.duration||0)/60), mins = (p.duration||0)%60;
+    return `<div style="padding:14px 16px;font-family:inherit">
+        <div style="font-weight:800;font-size:14px;margin-bottom:3px;color:var(--t1)">${p.name}</div>
+        <div style="font-size:11px;color:${isBP?'var(--p)':'var(--g)'};font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:5px">
+            <span style="display:inline-flex;border-radius:5px;overflow:hidden;vertical-align:middle">${isBP ? svgBP(18) : svgTC(18)}</span>
+            ${isBP?'Bikepark':'Trail centrum'} · ${p.region||''}
+        </div>
+        <div style="font-size:12px;color:var(--t2);line-height:1.8">
+            📏 <span style="color:var(--t1);font-weight:700">${Math.round(p.distKm||0)} km</span> ·
+            ⏱ <span style="color:var(--t1);font-weight:700">${hrs}h ${mins}min</span><br>
             🎫 ${p.skipas||'—'} · 🅿️ ${p.parking||'—'}${st}
         </div>
-        <button onclick="selectPark('${p.id}');document.querySelector('.leaflet-popup-close-button').click()"
-            style="margin-top:10px;width:100%;padding:8px;border-radius:8px;border:none;background:#F05A22;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(240,90,34,0.25)">
+        <button onclick="selectPark('${p.id}');document.querySelector('.leaflet-popup-close-button')?.click()"
+            style="margin-top:11px;width:100%;padding:8px;border-radius:8px;border:none;background:var(--p);color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">
             Zobrazit detail →
-        </button>
-    </div>`;
+        </button></div>`;
 }
 
-// ═══════════════════════════════════════════════
-// NAČTENÍ DAT ZE SHEETS
-// ═══════════════════════════════════════════════
+// ═══════════════════════
+// DATA ZE SHEETS
+// ═══════════════════════
 async function fetchData() {
-    const status = document.getElementById('loader-status');
+    const st = document.getElementById('loader-status');
     try {
-        status.textContent = 'Stahování dat ze Sheetu...';
+        st.textContent = 'Stahování dat…';
         const res = await fetch(SCRIPT_URL + '?action=getData');
         const result = await res.json();
 
         PARKS = result.data.map(row => {
-            // Flexibilní načtení sloupců
             const g = (...keys) => {
-                const k = Object.keys(row).find(k => keys.includes(k.toLowerCase().trim().replace(/\s+/g,'_')));
-                return k ? String(row[k] || '') : '';
+                const k = Object.keys(row).find(k => keys.includes(k.toLowerCase().trim().replace(/[\s/]+/g,'_')));
+                return k ? String(row[k]||'') : '';
             };
             const lat = parseFloat(g('lat','šířka','latitude'));
             const lng = parseFloat(g('lng','délka','longitude'));
-            if (isNaN(lat) || isNaN(lng) || lat === 0) return null;
-
-            // Trails JSON
+            if (isNaN(lat) || isNaN(lng) || lat===0) return null;
             let trails = [];
             const rawT = g('trails_json','trasy_json','trasy','trails');
-            if (rawT && rawT.trim().startsWith('[')) {
-                try { trails = JSON.parse(rawT); } catch(e) {}
-            }
-
+            if (rawT?.trim().startsWith('[')) { try { trails = JSON.parse(rawT); } catch(e) {} }
             return {
-                id:                 g('id'),
-                name:               g('name','název','jméno'),
+                id: g('id'), name: g('name','název','jméno'),
                 lat, lng,
-                region:             g('region','kraj'),
-                skipas:             g('skipas','cena'),
-                parking:            g('parking','parkování'),
-                desc:               g('description','popis'),
-                web:                g('web','web_url','url'),
-                season:             g('season','sezóna','sezona'),
-                lifts:              g('lifts','lanovky','počet_lanovek'),
-                elevation:          g('elevation','m_n.m.','nadmořská_výška','m_nm'),
+                region: g('region','kraj'),
+                skipas: g('skipas','cena'),
+                parking: g('parking','parkování'),
+                desc: g('description','popis'),
+                web: g('web','web_url','url'),
+                season: g('season','sezóna','sezona'),
+                lifts: g('lifts','lanovky','počet_lanovek'),
+                elevation: g('elevation','m_n.m.','nadmořská_výška'),
                 overall_difficulty: g('overall_difficulty','obtížnost'),
-                type:               g('type','typ').toLowerCase(),
-                trail_count:        g('trail_count','počet_tras'),
-                green_count:        g('green_count','zelené'),
-                blue_count:         g('blue_count','modré'),
-                red_count:          g('red_count','červené/černé','červené_černé'),
+                type: g('type','typ').toLowerCase(),
+                trail_count: g('trail_count','počet_tras'),
+                green_count: g('green_count','zelené'),
+                blue_count: g('blue_count','modré'),
+                red_count: g('red_count','červené_černé'),
                 trails,
-                _my_status:         g('my_status','stav'),
-                _my_note:           g('my_note'),
-                _my_rating:         g('my_rating','hodnocení'),
+                _my_status: g('my_status','stav'),
+                _my_note: g('my_note'),
+                _my_rating: g('my_rating','hodnocení'),
             };
         }).filter(Boolean);
 
-        // Načti uživatelská data ze Sheets do UD
-        // Sheets má přednost před localStorage
+        // User data ze Sheets
         try {
-            const udRes = await fetch(SCRIPT_URL + '?action=getUserData');
-            const udResult = await udRes.json();
-            if (udResult.userData) {
-                // Slouč: Sheets přepíše localStorage
-                Object.entries(udResult.userData).forEach(([id, fields]) => {
+            const ur = await fetch(SCRIPT_URL + '?action=getUserData');
+            const ud = await ur.json();
+            if (ud.userData) {
+                Object.entries(ud.userData).forEach(([id, f]) => {
                     if (!UD[id]) UD[id] = {};
-                    if (fields.status) UD[id].status = fields.status;
-                    if (fields.note)   UD[id].note   = fields.note;
-                    if (fields.rating) UD[id].rating = fields.rating;
+                    if (f.status) UD[id].status = f.status;
+                    if (f.note)   UD[id].note   = f.note;
+                    if (f.rating) UD[id].rating  = f.rating;
                 });
-                saveUD();
+                try { localStorage.setItem('bp_ud', JSON.stringify(UD)); } catch(e) {}
             }
-        } catch(e) {
-            console.warn('getUserData ze Sheets selhal, používám localStorage:', e.message);
-        }
+        } catch(e) { console.warn('getUserData selhal:', e.message); }
 
-        // Načti návštěvy ze Sheets
+        // Návštěvy
         try {
-            const vRes = await fetch(SCRIPT_URL + '?action=getVisits');
-            const vResult = await vRes.json();
-            if (vResult.visits) {
-                VISITS = vResult.visits; // { park_id: [{date, note}, ...] }
-            }
-        } catch(e) {
-            console.warn('getVisits selhal:', e.message);
-        }
+            const vr = await fetch(SCRIPT_URL + '?action=getVisits');
+            const vd = await vr.json();
+            if (vd.visits) VISITS = vd.visits;
+        } catch(e) { console.warn('getVisits selhal:', e.message); }
 
         await updateAll();
-
-        const loader = document.getElementById('loader');
-        loader.classList.add('hide');
-        setTimeout(() => loader.remove(), 600);
-
+        const ldr = document.getElementById('loader');
+        ldr.classList.add('hide');
+        setTimeout(() => ldr.remove(), 600);
     } catch(e) {
-        status.textContent = 'Chyba: ' + e.message;
+        if (st) st.textContent = 'Chyba: ' + e.message;
         console.error(e);
     }
 }
 
-// ═══════════════════════════════════════════════
-// VÝPOČET VZDÁLENOSTÍ
-// Primárně OSRM (reálná silniční vzdálenost),
-// fallback na Haversine (vzdušná čára × 1.35)
-// ═══════════════════════════════════════════════
-
-// Haversine – vzdušná vzdálenost v km
-function haversine(lat1, lng1, lat2, lng2) {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+// ═══════════════════════
+// VZDÁLENOSTI (OSRM + Haversine fallback)
+// ═══════════════════════
+function haversine(a, b, c, d) {
+    const R=6371, dL=(c-a)*Math.PI/180, dN=(d-b)*Math.PI/180;
+    const x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2;
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
 async function updateAll() {
     const btn = document.querySelector('.btn-update');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Počítám…'; }
-
-    // OSRM – dávky po 5, aby server nebyl přetížen
-    const BATCH = 5;
-    for (let i = 0; i < PARKS.length; i += BATCH) {
-        const batch = PARKS.slice(i, i + BATCH);
-        await Promise.all(batch.map(async p => {
+    if (btn) { btn.disabled=true; btn.textContent='⏳ Počítám…'; }
+    const B = 5;
+    for (let i=0; i<PARKS.length; i+=B) {
+        await Promise.all(PARKS.slice(i, i+B).map(async p => {
             try {
-                const url = `https://router.project-osrm.org/route/v1/driving/${START_LNG},${START_LAT};${p.lng},${p.lat}?overview=false&hints=;`;
-                const res  = await fetch(url, { signal: AbortSignal.timeout(6000) });
-                const data = await res.json();
-                if (data.code === 'Ok' && data.routes?.[0]) {
-                    p.distKm  = data.routes[0].distance / 1000;
-                    p.duration = Math.round(data.routes[0].duration / 60);
-                    p._distSource = 'osrm';
-                } else {
-                    throw new Error('no route');
-                }
+                const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${START_LNG},${START_LAT};${p.lng},${p.lat}?overview=false`, { signal:AbortSignal.timeout(6000) });
+                const d = await r.json();
+                if (d.code==='Ok' && d.routes?.[0]) {
+                    p.distKm = d.routes[0].distance/1000;
+                    p.duration = Math.round(d.routes[0].duration/60);
+                    p._ds = 'osrm';
+                } else throw new Error();
             } catch(e) {
-                // Fallback: vzdušná vzdálenost × korekční faktor 1.35 (průměr CZ silnice)
                 const air = haversine(START_LAT, START_LNG, p.lat, p.lng);
-                p.distKm   = air * 1.35;
-                p.duration = Math.round((p.distKm / 70) * 60); // ~70 km/h průměr
-                p._distSource = 'fallback';
+                p.distKm = air*1.35;
+                p.duration = Math.round((p.distKm/70)*60);
+                p._ds = 'fallback';
             }
         }));
-        // Průběžně překresli po každé dávce
         renderUI();
     }
-
-    if (btn) { btn.disabled = false; btn.textContent = 'Přepočítat trasy'; }
+    if (btn) { btn.disabled=false; btn.textContent='↺ Přepočítat'; }
     toast('Vzdálenosti aktualizovány', 'ok');
 }
 
-// ═══════════════════════════════════════════════
-// RENDER
-// ═══════════════════════════════════════════════
-function isVisible(p) {
-    if (flt !== 'all' && !(p.type && p.type.includes(flt))) return false;
-    if (qfDist50 && (p.distKm || 9999) > 50) return false;
-    if (qfFree && p.skipas && p.skipas.toLowerCase() !== 'zdarma') return false;
-    if (qry) {
-        const q = qry.toLowerCase();
-        return p.name.toLowerCase().includes(q) || (p.region||'').toLowerCase().includes(q);
-    }
-    return true;
-}
-
-function getSorted() {
-    let list = PARKS.filter(isVisible);
-    list.sort((a, b) => {
-        if (srt === 'dist') return (a.distKm||9999) - (b.distKm||9999);
-        if (srt === 'name') return a.name.localeCompare(b.name, 'cs');
-        if (srt === 'rating') return parseFloat(gu(b.id).rating||0) - parseFloat(gu(a.id).rating||0);
-        return 0;
-    });
-    return list;
-}
-
-function renderUI() {
-    const list = getSorted();
-    document.getElementById('cnt').textContent = list.length;
-
-    // Markery
-    Object.values(MARKERS).forEach(m => MAP.removeLayer(m));
-    MARKERS = {};
-    PARKS.filter(isVisible).forEach((p, i) => addMarker(p, i));
-
-    const side = document.getElementById('sidebar');
-    // Zachovat sb-top
-    const sbTop = side.querySelector('.sb-top');
-    side.innerHTML = '';
-    if (sbTop) side.appendChild(sbTop);
-
-    if (!list.length) {
-        side.insertAdjacentHTML('beforeend', '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px">Žádná lokalita neodpovídá filtru.</div>');
-        return;
-    }
-
-    list.forEach(p => {
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = buildCard(p);
-        const card = wrapper.firstElementChild;
-        side.appendChild(card);
-        wireCard(card, p);
-    });
-
-    // Načti inline počasí pro všechny viditelné parky (v pozadí)
-    loadInlineWeather(list);
-}
-
-// Inline počasí – malá ikona + teplota v kartičce
+// ═══════════════════════
+// POČASÍ – inline
+// ═══════════════════════
+const WXC = {0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌦',61:'🌧',63:'🌧',65:'🌧',71:'🌨',80:'🌦',81:'🌧',95:'⛈'};
 const WX_CACHE = {};
-const WXC = {
-    0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌦',61:'🌧',63:'🌧',
-    65:'🌧',71:'🌨',80:'🌦',81:'🌧',95:'⛈'
-};
-function wxIcon(code) {
-    const k = Object.keys(WXC).map(Number).sort((a,b)=>a-b);
-    for (let i=k.length-1;i>=0;i--) if(k[i]<=code) return WXC[k[i]];
-    return '🌡';
-}
+function wxIcon(c) { const k=Object.keys(WXC).map(Number).sort((a,b)=>a-b); for(let i=k.length-1;i>=0;i--) if(k[i]<=c) return WXC[k[i]]; return '🌡'; }
+
 async function loadInlineWeather(list) {
-    const today = new Date().getDay();
-    const dSat = ((6-today+7)%7)||7;
+    const dSat = ((6-new Date().getDay()+7)%7)||7;
     await Promise.all(list.map(async p => {
-        const el = document.getElementById('wx-inline-'+p.id);
+        const el = document.getElementById('wx-' + p.id);
         if (!el) return;
-        // Použij cache
         if (WX_CACHE[p.id]) { el.innerHTML = WX_CACHE[p.id]; return; }
         try {
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lng}&daily=weathercode,temperature_2m_max&timezone=Europe%2FPrague&forecast_days=14`);
-            const data = await res.json();
-            const icon = wxIcon(data.daily.weathercode[dSat]);
-            const temp = Math.round(data.daily.temperature_2m_max[dSat]);
-            const html = `<span title="Sobota">${icon} <b style="color:var(--text)">${temp}°</b></span>`;
-            WX_CACHE[p.id] = html;
-            if (el) el.innerHTML = html;
-        } catch(e) { if(el) el.textContent = ''; }
+            const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lng}&daily=weathercode,temperature_2m_max&timezone=Europe%2FPrague&forecast_days=14`);
+            const d = await r.json();
+            const ic = wxIcon(d.daily.weathercode[dSat]);
+            const tp = Math.round(d.daily.temperature_2m_max[dSat]);
+            const h = `<span title="Počasí na sobotu">${ic} <b style="color:var(--t1)">${tp}°</b></span>`;
+            WX_CACHE[p.id] = h;
+            if (el) el.innerHTML = h;
+        } catch(e) { if (el) el.textContent = ''; }
     }));
 }
 
-// ═══════════════════════════════════════════════
-// STAVBA KARTY
-// ═══════════════════════════════════════════════
-function buildCard(p) {
-    const isBP = p.type && p.type.includes('bikepark');
-    const u = gu(p.id);
-    const rating = parseFloat(u.rating || 0);
-    const isActive = selId === p.id;
-    const isPlan = u.status === 'planned';
-    const isVis = u.status === 'visited';
-    const hasNote = !!(u.note||'').trim();
-
-    // Trasy
-    const tr = Array.isArray(p.trails) ? p.trails : [];
-    let cg=0, cb=0, cr=0, ck=0;
-    tr.forEach(t => { const d=String(t.d||''); if(d==='g')cg++; else if(d==='b')cb++; else if(d==='r')cr++; else ck++; });
-    const tot = tr.length || 1;
-    const dif = ck/tot>.25 ? 'Velmi těžké' : cr/tot>.4 ? 'Těžké' : cb/tot>.5 ? 'Střední' : 'Snadné';
-
-    const pillColors = { g:'#22c55e', b:'#3b82f6', r:'#ef4444', k:'#ffffff' };
-    const pillIcons  = { g:'🟢', b:'🔵', r:'🔴', k:'⚫' };
-
-    const trailPills = tr.slice(0,6).map(t =>
-        `<span class="tp"><span style="font-size:9px">${pillIcons[t.d]||'⚪'}</span>${t.n||''}${t.km?`<span class="tp-km"> ${t.km}km</span>`:''}</span>`
-    ).join('') + (tr.length > 6 ? `<span class="tp" style="opacity:.5">+${tr.length-6}</span>` : '');
-
-    const stars = [1,2,3,4,5].map(s =>
-        `<span class="star${rating>=s?' on':''}" data-s="${s}">★</span>`
-    ).join('');
-
-    const stag = isPlan ? '<span class="tag tag-plan">📌 V plánu</span>' : isVis ? '<span class="tag tag-vis">✅ Navštíveno</span>' : '';
-    const cls = `card${isActive ? (isBP ? ' active' : ' active tc') : ''}`;
-    const mcu = `https://mapy.com/fnc/v1/route?mapset=outdoor&start=${START_LNG},${START_LAT}&end=${p.lng},${p.lat}&routeType=car_fast&navigate=true`;
-    const hrs = Math.floor((p.duration||0)/60), mins = (p.duration||0)%60;
-
-    return `<article class="${cls}" data-id="${p.id}">
-        <div class="card-bar ${isBP?'bp':'tc'}"></div>
-        <div class="card-summary">
-            <div class="card-head">
-                <div class="card-ico ${isBP?'bp':'tc'}">${isBP?'🚠':'🥾'}</div>
-                <div style="flex:1;min-width:0">
-                    <div class="card-title">${p.name}</div>
-                    <div class="card-sub">
-                        <span class="tag ${isBP?'tag-bp':'tag-tc'}">${isBP?'Bikepark':'Trail centrum'}</span>
-                        <span class="tag tag-reg">${p.region||''}</span>
-                        ${stag}
-                    </div>
-                </div>
-                <div class="card-btns">
-                    <button class="ab${isPlan?' on-p':''}" data-a="pl" title="Mám v plánu">📌</button>
-                    <button class="ab${isVis?' on-v':''}" data-a="vi" title="Navštíveno">✅</button>
-                    <button class="ab" data-a="x" title="Detail">▼${hasNote?'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--primary);vertical-align:top;margin-top:2px;margin-left:1px"></span>':''}</button>
-                </div>
-            </div>
-            <div class="card-stats">
-                <span class="cst"><b>${Math.round(p.distKm||0)} km</b>${p._distSource==='fallback'?' <span title="Vzdušná vzdálenost – silniční se načítá" style="opacity:.5;font-size:10px">✈</span>':''} · ${hrs}h ${mins}min</span>
-                <span class="cst${p.skipas==='Zdarma'?' fr':''}">Skipas: <b>${p.skipas||'—'}</b></span>
-                <span class="cst${p.parking==='Zdarma'?' fr':''}">P: <b>${p.parking||'—'}</b></span>
-                <span class="cst">Tras: <b>${tr.length||'—'}</b></span>
-                <span class="cst wx-inline" id="wx-inline-${p.id}" style="margin-left:auto;font-weight:700;color:var(--muted)">☁…</span>
-            </div>
-            ${(u.note||'').trim() ? `
-            <div class="card-note-preview" data-a="x" title="Klikni pro editaci poznámky">
-                <span style="opacity:.5;font-size:10px;margin-right:4px">📝</span>${(u.note).trim().slice(0,120)}${(u.note).trim().length>120?'…':''}
-            </div>` : ''}
-        </div>
-
-        <button class="x-btn" data-a="x"><span class="x-arr">▼</span>&nbsp; Rozbalit detail</button>
-
-        <div class="card-detail">
-            ${p.desc?`<div class="ds"><div class="ds-t">O lokalitě</div><div class="ds-d">${p.desc}</div></div>`:''}
-
-            ${tr.length ? `<div class="ds"><div class="ds-t">Trasy</div>
-                <div class="diff-bar">
-                    <div class="diff-segs">
-                        <div class="dseg${cg?' g':''}"></div>
-                        <div class="dseg${cb?' b':''}"></div>
-                        <div class="dseg${cr?' r':''}"></div>
-                        <div class="dseg${ck?' k':''}"></div>
-                    </div>
-                    <span class="diff-lbl">${dif} · ${tr.length} tras</span>
-                </div>
-                <div class="tpills">${trailPills}</div>
-            </div>` : ''}
-
-            <div class="ds"><div class="ds-t">Logistika</div>
-                <div class="mgrid">
-                    <div class="mc"><div class="mc-l">Skipas</div><div class="mc-v${p.skipas==='Zdarma'?' fr':''}">${p.skipas||'—'}</div></div>
-                    <div class="mc"><div class="mc-l">Parkování</div><div class="mc-v${p.parking==='Zdarma'?' fr':''}">${p.parking||'—'}</div></div>
-                    ${p.lifts?`<div class="mc"><div class="mc-l">Lanovky</div><div class="mc-v">${p.lifts}</div></div>`:''}
-                    ${p.overall_difficulty?`<div class="mc"><div class="mc-l">Obtížnost</div><div class="mc-v">${p.overall_difficulty}</div></div>`:''}
-                </div>
-            </div>
-
-            <div class="ds"><div class="ds-t">Počasí – nejbližší víkend</div>
-                <button data-a="wx" style="width:100%;padding:7px;border-radius:8px;border:1px solid var(--primary);background:none;color:#fff;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">
-                    ☁ Načíst předpověď počasí
-                </button>
-                <div data-wx-box style="display:none" class="wx-grid"></div>
-            </div>
-
-            <div class="ds"><div class="ds-t">Moje hodnocení</div>
-                <div class="rrow"><div class="stars">${stars}</div>
-                <span class="rlbl">${rating ? rating+'/5 ★' : 'Neohodnoceno'}</span></div>
-            </div>
-
-            <div class="ds"><div class="ds-t">Moje poznámka
-                <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;opacity:.5;margin-left:4px">(ukládá se do Google Sheets)</span>
-            </div>
-                <div class="ntxt">
-                    <textarea placeholder="Napiš poznámku…">${u.note||''}</textarea>
-                    <div class="nrow">
-                        <button class="btn-save" data-a="sn">Uložit poznámku</button>
-                        <span class="nst" data-ns></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="ds">
-                <div class="ds-t">Historie návštěv
-                    <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;opacity:.5;margin-left:4px">(list Navstevnost)</span>
-                </div>
-                <div class="visits-list" id="vlist-${p.id}">
-                ${(VISITS[p.id]||[]).length === 0
-                    ? `<div style="font-size:12px;color:var(--muted);padding:4px 0">Zatím žádná návštěva</div>`
-                    : (VISITS[p.id]||[]).slice().reverse().map(v => `
-                        <div class="visit-row" data-vid="${v.id}">
-                            <div class="visit-date">📅 ${v.date}</div>
-                            <div class="visit-note">${v.note||'—'}</div>
-                            <button class="visit-del" data-a="dv" data-vid="${v.id}" title="Smazat návštěvu">✕</button>
-                        </div>`).join('')
-                }
-                </div>
-                <div class="visit-add">
-                    <input type="date" class="visit-date-input" id="vdate-${p.id}" value="${new Date().toISOString().slice(0,10)}">
-                    <input type="text" class="visit-note-input" id="vnote-${p.id}" placeholder="Poznámka k návštěvě (volitelné)">
-                    <button class="btn-save" data-a="av">+ Přidat návštěvu</button>
-                    <span class="nst" data-vns></span>
-                </div>
-            </div>
-
-            <div class="lrow">
-                ${p.web?`<a href="${p.web}" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">🌐 Oficiální web</a>`:''}
-                <a href="${mcu}" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">🗺 Navigovat</a>
-            </div>
-        </div>
-    </article>`;
+async function loadAllWeather() {
+    const btn = document.querySelector('.btn-hdr[onclick*="loadAllWeather"]');
+    if (btn) { btn.disabled=true; btn.textContent='⏳'; }
+    const dSat = ((6-new Date().getDay()+7)%7)||7, dSun=dSat+1;
+    const WXCF = {0:['☀️','Jasno'],1:['🌤','Převážně jasno'],2:['⛅','Polojasno'],3:['☁️','Zataženo'],45:['🌫','Mlha'],51:['🌦','Mrholení'],61:['🌧','Slabý déšť'],63:['🌧','Déšť'],65:['🌧','Vydatný déšť'],71:['🌨','Sněžení'],80:['🌦','Přeháňky'],81:['🌧','Silné přeháňky'],95:['⛈','Bouřka']};
+    function wxi(c){const k=Object.keys(WXCF).map(Number).sort((a,b)=>a-b);for(let i=k.length-1;i>=0;i--)if(k[i]<=c)return WXCF[k[i]];return['🌡','—'];}
+    const vis = PARKS.filter(isVisible);
+    await Promise.all(vis.map(async p => {
+        try {
+            const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lng}&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=14`);
+            const d = await r.json(); const days = d.daily;
+            const card = document.querySelector(`.card[data-id="${p.id}"]`);
+            if (!card) return;
+            const box = card.querySelector('[data-wx-box]');
+            if (!box) return;
+            const det = card.querySelector('.card-detail'), xb = card.querySelector('.x-btn');
+            if (det && !det.classList.contains('open')) { det.classList.add('open'); if(xb){xb.classList.add('xo');xb.querySelector('.x-arr').textContent='▲';xb.lastChild.textContent=' Sbalit detail';} }
+            const hw = dd => { const w=wxi(days.weathercode[dd]); return `<div class="wx-box"><div class="wx-day">${dd===dSat?'Sobota':'Neděle'}</div><div class="wx-ic">${w[0]}</div><div class="wx-temp">${Math.round(days.temperature_2m_max[dd])}°C <span style="font-size:11px;opacity:.6">/ ${Math.round(days.temperature_2m_min[dd])}°C</span></div><div style="margin-top:3px;opacity:.7">${w[1]}</div><div style="opacity:.7">💨 ${Math.round(days.windspeed_10m_max[dd])} km/h</div>${days.precipitation_probability_max[dd]>0?`<div style="opacity:.7">🌂 ${days.precipitation_probability_max[dd]}%</div>`:''}</div>`; };
+            box.innerHTML = hw(dSat) + hw(dSun); box.style.display = 'grid';
+            const wxBtn = card.querySelector('[data-a="wx"]'); if (wxBtn) wxBtn.style.display='none';
+        } catch(e) {}
+    }));
+    if (btn) { btn.disabled=false; btn.textContent='☁ Počasí'; }
+    toast(`Počasí načteno pro ${vis.length} lokalit`, 'ok');
 }
 
-// ═══════════════════════════════════════════════
-// OBSLUHA KARTY
-// ═══════════════════════════════════════════════
+// ═══════════════════════
+// RENDER
+// ═══════════════════════
+function isVisible(p) {
+    if (flt!=='all' && !(p.type?.includes(flt))) return false;
+    if (qfDist50 && (p.distKm||9999) > 50) return false;
+    if (qfFree && p.skipas?.toLowerCase() !== 'zdarma') return false;
+    if (qry) { const q=qry.toLowerCase(); return p.name.toLowerCase().includes(q)||(p.region||'').toLowerCase().includes(q); }
+    return true;
+}
+function getSorted() {
+    return PARKS.filter(isVisible).sort((a,b) => {
+        if (srt==='dist') return (a.distKm||9999)-(b.distKm||9999);
+        if (srt==='name') return a.name.localeCompare(b.name,'cs');
+        if (srt==='rating') return parseFloat(gu(b.id).rating||0)-parseFloat(gu(a.id).rating||0);
+        return 0;
+    });
+}
+function renderUI() {
+    const list = getSorted();
+    document.getElementById('cnt').textContent = list.length;
+    Object.values(MARKERS).forEach(m => MAP.removeLayer(m)); MARKERS = {};
+    PARKS.filter(isVisible).forEach(p => addMarker(p));
+    const side = document.getElementById('sidebar');
+    const sbTop = side.querySelector('.sb-top');
+    side.innerHTML = '';
+    if (sbTop) side.appendChild(sbTop);
+    if (!list.length) { side.insertAdjacentHTML('beforeend','<div style="padding:40px;text-align:center;color:var(--mu);font-size:13px">Žádná lokalita neodpovídá filtru.</div>'); return; }
+    list.forEach(p => { const w=document.createElement('div'); w.innerHTML=buildCard(p); const c=w.firstElementChild; side.appendChild(c); wireCard(c, p); });
+    loadInlineWeather(list);
+}
+
+function buildCard(p) {
+    const isBP = p.type?.includes('bikepark');
+    const u = gu(p.id);
+    const rating = parseFloat(u.rating||0);
+    const isPlan = u.status==='planned', isVis=u.status==='visited';
+    const hasNote = !!(u.note||'').trim();
+    const tr = Array.isArray(p.trails) ? p.trails : [];
+    let cg=0,cb=0,cr=0,ck=0;
+    tr.forEach(t=>{const d=String(t.d||'');if(d==='g')cg++;else if(d==='b')cb++;else if(d==='r')cr++;else ck++;});
+    const tot=tr.length||1;
+    const dif=ck/tot>.25?'Velmi těžké':cr/tot>.4?'Těžké':cb/tot>.5?'Střední':'Snadné';
+    const pi={g:'🟢',b:'🔵',r:'🔴',k:'⚫'};
+    const trPills=tr.slice(0,6).map(t=>`<span class="tp"><span style="font-size:9px">${pi[t.d]||'⚪'}</span>${t.n||''}${t.km?`<span class="tp-km"> ${t.km}km</span>`:''}</span>`).join('')+(tr.length>6?`<span class="tp" style="opacity:.5">+${tr.length-6}</span>`:'');
+    const stars=[1,2,3,4,5].map(s=>`<span class="star${rating>=s?' on':''}" data-s="${s}">★</span>`).join('');
+    const stag=isPlan?'<span class="tag tag-plan">📌 V plánu</span>':isVis?'<span class="tag tag-vis">✅ Navštíveno</span>':'';
+    const cls=`card${selId===p.id?(isBP?' active':' active tc'):''}`;
+    const mcu=`https://mapy.com/fnc/v1/route?mapset=outdoor&start=${START_LNG},${START_LAT}&end=${p.lng},${p.lat}&routeType=car_fast&navigate=true`;
+    const hrs=Math.floor((p.duration||0)/60), mins=(p.duration||0)%60;
+    const visRows=(VISITS[p.id]||[]).length===0
+        ?`<div style="font-size:12px;color:var(--mu);padding:4px 0">Zatím žádná návštěva</div>`
+        :(VISITS[p.id]||[]).slice().reverse().map(v=>`<div class="visit-row" data-vid="${v.id}"><div class="visit-date">📅 ${v.date}</div><div class="visit-note">${v.note||'—'}</div><button class="visit-del" data-a="dv" data-vid="${v.id}" title="Smazat">✕</button></div>`).join('');
+
+    return `<article class="${cls}" data-id="${p.id}">
+<div class="card-summary">
+    <div class="card-head">
+        <div class="card-ico ${isBP?'bp':'tc'}">${isBP ? svgBP(46) : svgTC(46)}</div>
+        <div style="flex:1;min-width:0">
+            <div class="card-title">${p.name}</div>
+            <div class="card-sub">
+                <span class="tag ${isBP?'tag-bp':'tag-tc'}">${isBP ? svgBP(14) : svgTC(14)} ${isBP?'Bikepark':'Trail centrum'}</span>
+                <span class="tag tag-reg">${p.region||''}</span>
+                ${stag}
+            </div>
+        </div>
+        <div class="card-btns">
+            <button class="ab${isPlan?' on-p':''}" data-a="pl" title="Mám v plánu">📌</button>
+            <button class="ab${isVis?' on-v':''}" data-a="vi" title="Navštíveno">✅</button>
+            <button class="ab" data-a="x" title="Detail">▼${hasNote?'<span style="position:absolute;width:5px;height:5px;border-radius:50%;background:var(--p);top:4px;right:4px"></span>':''}</button>
+        </div>
+    </div>
+    <div class="card-stats">
+        <span class="cst">📏 <b>${Math.round(p.distKm||0)} km</b>${p._ds==='fallback'?' <span style="opacity:.4;font-size:10px" title="Vzdušná vzdálenost">✈</span>':''}</span>
+        <span class="cst">⏱ <b>${hrs}h ${mins}min</b></span>
+        <span class="cst${p.skipas?.toLowerCase()==='zdarma'?' fr':''}">🎫 <b>${p.skipas||'—'}</b></span>
+        <span class="cst${p.parking?.toLowerCase()==='zdarma'?' fr':''}">🅿 <b>${p.parking||'—'}</b></span>
+        ${tr.length?`<span class="cst">🚵 <b>${tr.length}</b></span>`:''}
+        <span class="cst wx-inline" id="wx-${p.id}" style="color:var(--mu)">☁…</span>
+    </div>
+    ${hasNote?`<div class="card-note-preview" data-a="x">📝 ${(u.note).trim().slice(0,120)}${(u.note).trim().length>120?'…':''}</div>`:''}
+</div>
+<button class="x-btn" data-a="x"><span class="x-arr">▼</span>&nbsp; Rozbalit detail</button>
+<div class="card-detail">
+    ${p.desc?`<div class="ds"><div class="ds-t">O lokalitě</div><div class="ds-d">${p.desc}</div></div>`:''}
+    ${tr.length?`<div class="ds"><div class="ds-t">Trasy</div>
+        <div class="diff-bar"><div class="diff-segs"><div class="dseg${cg?' g':''}"></div><div class="dseg${cb?' b':''}"></div><div class="dseg${cr?' r':''}"></div><div class="dseg${ck?' k':''}"></div></div>
+        <span class="diff-lbl">${dif} · ${tr.length} tras</span></div>
+        <div class="tpills">${trPills}</div></div>`:''}
+    <div class="ds"><div class="ds-t">Logistika</div>
+        <div class="mgrid">
+            <div class="mc"><div class="mc-l">Skipas</div><div class="mc-v${p.skipas?.toLowerCase()==='zdarma'?' fr':''}">${p.skipas||'—'}</div></div>
+            <div class="mc"><div class="mc-l">Parkování</div><div class="mc-v${p.parking?.toLowerCase()==='zdarma'?' fr':''}">${p.parking||'—'}</div></div>
+            ${p.lifts?`<div class="mc"><div class="mc-l">Lanovky</div><div class="mc-v">${p.lifts}</div></div>`:''}
+            ${p.overall_difficulty?`<div class="mc"><div class="mc-l">Obtížnost</div><div class="mc-v">${p.overall_difficulty}</div></div>`:''}
+            ${p.season?`<div class="mc"><div class="mc-l">Sezóna</div><div class="mc-v">${p.season}</div></div>`:''}
+            ${p.elevation?`<div class="mc"><div class="mc-l">m n.m.</div><div class="mc-v">${p.elevation}</div></div>`:''}
+        </div></div>
+    <div class="ds"><div class="ds-t">Počasí – nejbližší víkend</div>
+        <button data-a="wx" style="width:100%;padding:7px;border-radius:8px;border:1px solid var(--p);background:none;color:var(--t1);cursor:pointer;font-size:11px;font-weight:700;font-family:inherit">☁ Načíst předpověď počasí</button>
+        <div data-wx-box style="display:none" class="wx-grid"></div></div>
+    <div class="ds"><div class="ds-t">Moje hodnocení</div>
+        <div class="rrow"><div class="stars">${stars}</div><span class="rlbl">${rating?rating+'/5 ★':'Neohodnoceno'}</span></div></div>
+    <div class="ds"><div class="ds-t">Moje poznámka <span style="font-size:9px;font-weight:400;text-transform:none;opacity:.45;margin-left:4px">(ukládá se do Sheets)</span></div>
+        <div class="ntxt"><textarea placeholder="Napiš poznámku…">${u.note||''}</textarea>
+        <div class="nrow"><button class="btn-save" data-a="sn">Uložit poznámku</button><span class="nst" data-ns></span></div></div></div>
+    <div class="ds"><div class="ds-t">Historie návštěv <span style="font-size:9px;font-weight:400;text-transform:none;opacity:.45;margin-left:4px">(list Navstevnost)</span></div>
+        <div class="visits-list" id="vlist-${p.id}">${visRows}</div>
+        <div class="visit-add">
+            <input type="date" class="visit-date-input" id="vdate-${p.id}" value="${new Date().toISOString().slice(0,10)}">
+            <input type="text" class="visit-note-input" id="vnote-${p.id}" placeholder="Poznámka k návštěvě">
+            <button class="btn-save" data-a="av">+ Přidat</button>
+            <span class="nst" data-vns></span>
+        </div></div>
+    <div class="lrow">
+        ${p.web?`<a href="${p.web}" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">🌐 Web</a>`:''}
+        <a href="${mcu}" target="_blank" rel="noopener" class="lbtn" onclick="event.stopPropagation()">🗺 Navigovat</a>
+    </div>
+</div>
+</article>`;
+}
+
+// ═══════════════════════
+// WIRE CARD
+// ═══════════════════════
+function updateStatusTag(card, status) {
+    card.querySelectorAll('.tag-plan,.tag-vis').forEach(t => t.remove());
+    const sub = card.querySelector('.card-sub');
+    if (!sub) return;
+    if (status==='planned') { const t=document.createElement('span'); t.className='tag tag-plan'; t.textContent='📌 V plánu'; sub.appendChild(t); }
+    else if (status==='visited') { const t=document.createElement('span'); t.className='tag tag-vis'; t.textContent='✅ Navštíveno'; sub.appendChild(t); }
+}
+
+async function deleteVisit(e, parkId, card) {
+    e.stopPropagation();
+    const btn = e.target.closest('[data-a="dv"]'); if (!btn) return;
+    const vid = btn.dataset.vid;
+    if (!confirm('Smazat tuto návštěvu?')) return;
+    btn.textContent = '…';
+    try {
+        const r = await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'deleteVisit', visit_id:vid, park_id:parkId }) });
+        const d = await r.json();
+        if (d.ok) {
+            btn.closest('.visit-row').remove();
+            if (VISITS[parkId]) VISITS[parkId] = VISITS[parkId].filter(v => v.id != vid);
+            const vl = document.getElementById('vlist-' + parkId);
+            if (vl && vl.children.length===0) vl.innerHTML='<div style="font-size:12px;color:var(--mu);padding:4px 0">Zatím žádná návštěva</div>';
+            toast('Návštěva smazána', 'ok');
+        } else { btn.textContent='✕'; toast('Chyba: '+(d.error||''), 'err'); }
+    } catch(err) { btn.textContent='✕'; toast('Nelze smazat', 'err'); }
+}
+
 function wireCard(card, p) {
     const id = p.id;
-
     card.addEventListener('click', e => {
-        if (e.target.closest('.ab') || e.target.closest('.card-detail') || e.target.closest('.lbtn') || e.target.closest('.x-btn')) return;
+        if (e.target.closest('.ab,.card-detail,.lbtn,.x-btn')) return;
         selectPark(id);
     });
 
     // Plánuji
     card.querySelector('[data-a="pl"]')?.addEventListener('click', e => {
         e.stopPropagation();
-        const cur    = gu(id).status;
-        const newSt  = cur === 'planned' ? '' : 'planned';
-        su(id, 'status', newSt);
-        // Aktualizuj tlačítko a tag inline
-        const btn = e.currentTarget;
-        btn.classList.toggle('on-p', newSt === 'planned');
-        const vBtn = card.querySelector('[data-a="vi"]');
-        if (vBtn) vBtn.classList.remove('on-v');
-        updateStatusTag(card, newSt);
-        toast(newSt === 'planned' ? '📌 Přidáno do plánu' : 'Odebráno z plánu', 'ok');
+        const n = gu(id).status==='planned' ? '' : 'planned';
+        su(id, 'status', n);
+        e.currentTarget.classList.toggle('on-p', n==='planned');
+        card.querySelector('[data-a="vi"]')?.classList.remove('on-v');
+        updateStatusTag(card, n);
+        toast(n==='planned'?'📌 Přidáno do plánu':'Odebráno z plánu', 'ok');
     });
 
     // Navštíveno
     card.querySelector('[data-a="vi"]')?.addEventListener('click', e => {
         e.stopPropagation();
-        const cur   = gu(id).status;
-        const newSt = cur === 'visited' ? '' : 'visited';
-        su(id, 'status', newSt);
-        // Aktualizuj tlačítko a tag inline
-        const btn = e.currentTarget;
-        btn.classList.toggle('on-v', newSt === 'visited');
-        const pBtn = card.querySelector('[data-a="pl"]');
-        if (pBtn) pBtn.classList.remove('on-p');
-        updateStatusTag(card, newSt);
-        toast(newSt === 'visited' ? '✅ Označeno jako navštíveno' : 'Odznačeno', 'ok');
+        const n = gu(id).status==='visited' ? '' : 'visited';
+        su(id, 'status', n);
+        e.currentTarget.classList.toggle('on-v', n==='visited');
+        card.querySelector('[data-a="pl"]')?.classList.remove('on-p');
+        updateStatusTag(card, n);
+        toast(n==='visited'?'✅ Označeno jako navštíveno':'Odznačeno', 'ok');
     });
 
     // Expand
@@ -1263,212 +1078,127 @@ function wireCard(card, p) {
             const xb = card.querySelector('.x-btn');
             const open = det.classList.contains('open');
             det.classList.toggle('open');
-            if (xb) {
-                xb.classList.toggle('xo', !open);
-                xb.querySelector('.x-arr').textContent = open ? '▼' : '▲';
-                xb.lastChild.textContent = ' ' + (open ? 'Rozbalit detail' : 'Sbalit detail');
-            }
+            if (xb) { xb.classList.toggle('xo',!open); xb.querySelector('.x-arr').textContent=open?'▼':'▲'; xb.lastChild.textContent=' '+(open?'Rozbalit detail':'Sbalit detail'); }
         });
     });
 
-    // Počasí
+    // Počasí v detailu
     card.querySelector('[data-a="wx"]')?.addEventListener('click', async e => {
         e.stopPropagation();
-        const btn = e.currentTarget;
-        const box = card.querySelector('[data-wx-box]');
-        btn.textContent = 'Načítám...';
-        btn.disabled = true;
-
-        const today = new Date().getDay();
-        const dSat = ((6 - today + 7) % 7) || 7;
-        const dSun = dSat + 1;
-
-        const WXC = {
-            0:['☀️','Jasno'], 1:['🌤','Převážně jasno'], 2:['⛅','Polojasno'], 3:['☁️','Zataženo'],
-            45:['🌫','Mlha'], 51:['🌦','Mrholení'], 61:['🌧','Slabý déšť'], 63:['🌧','Déšť'],
-            65:['🌧','Vydatný déšť'], 71:['🌨','Sněžení'], 80:['🌦','Přeháňky'],
-            81:['🌧','Silné přeháňky'], 95:['⛈','Bouřka']
-        };
-        function wxInfo(code) {
-            const k = Object.keys(WXC).map(Number).sort((a,b)=>a-b);
-            for (let i = k.length-1; i >= 0; i--) if (k[i] <= code) return WXC[k[i]];
-            return ['🌡','—'];
-        }
-
+        const btn=e.currentTarget, box=card.querySelector('[data-wx-box]');
+        btn.textContent='Načítám…'; btn.disabled=true;
+        const dSat=((6-new Date().getDay()+7)%7)||7, dSun=dSat+1;
+        const WXCF={0:['☀️','Jasno'],1:['🌤','Převážně jasno'],2:['⛅','Polojasno'],3:['☁️','Zataženo'],45:['🌫','Mlha'],51:['🌦','Mrholení'],61:['🌧','Slabý déšť'],63:['🌧','Déšť'],65:['🌧','Vydatný déšť'],71:['🌨','Sněžení'],80:['🌦','Přeháňky'],81:['🌧','Silné přeháňky'],95:['⛈','Bouřka']};
+        function wxi(c){const k=Object.keys(WXCF).map(Number).sort((a,b)=>a-b);for(let i=k.length-1;i>=0;i--)if(k[i]<=c)return WXCF[k[i]];return['🌡','—'];}
         try {
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lng}&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=14`);
-            const data = await res.json();
-            const days = data.daily;
-
-            const html = (d) => {
-                const w = wxInfo(days.weathercode[d]);
-                return `<div class="wx-box">
-                    <div class="wx-day">${d===dSat?'Sobota':'Neděle'}</div>
-                    <div class="wx-ic">${w[0]}</div>
-                    <div class="wx-temp">${Math.round(days.temperature_2m_max[d])}°C <span style="font-size:11px;opacity:.6">/ ${Math.round(days.temperature_2m_min[d])}°C</span></div>
-                    <div style="margin-top:3px;opacity:.7">${w[1]}</div>
-                    <div style="margin-top:4px;opacity:.7">💨 ${Math.round(days.windspeed_10m_max[d])} km/h</div>
-                    ${days.precipitation_probability_max[d]>0?`<div style="opacity:.7">🌂 ${days.precipitation_probability_max[d]}%</div>`:''}
-                </div>`;
-            };
-
-            box.innerHTML = html(dSat) + html(dSun);
-            box.style.display = 'grid';
-            btn.style.display = 'none';
-        } catch(e) {
-            btn.textContent = '⚠ Nepodařilo se načíst počasí';
-            btn.disabled = false;
-        }
+            const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lng}&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max,precipitation_probability_max&timezone=Europe%2FPrague&forecast_days=14`);
+            const d=await r.json(); const days=d.daily;
+            const hw=dd=>{const w=wxi(days.weathercode[dd]);return`<div class="wx-box"><div class="wx-day">${dd===dSat?'Sobota':'Neděle'}</div><div class="wx-ic">${w[0]}</div><div class="wx-temp">${Math.round(days.temperature_2m_max[dd])}°C <span style="font-size:11px;opacity:.6">/ ${Math.round(days.temperature_2m_min[dd])}°C</span></div><div style="margin-top:3px;opacity:.7">${w[1]}</div><div style="opacity:.7">💨 ${Math.round(days.windspeed_10m_max[dd])} km/h</div>${days.precipitation_probability_max[dd]>0?`<div style="opacity:.7">🌂 ${days.precipitation_probability_max[dd]}%</div>`:''}</div>`;};
+            box.innerHTML=hw(dSat)+hw(dSun); box.style.display='grid'; btn.style.display='none';
+        } catch(e) { btn.textContent='⚠ Nepodařilo se načíst'; btn.disabled=false; }
     });
 
-    // Hvězdičky
+    // Hvězdičky (bez zavření karty)
     card.querySelectorAll('.star').forEach(st => {
         st.addEventListener('click', e => {
             e.stopPropagation();
-            const r   = parseInt(st.dataset.s);
-            const cur = parseFloat(gu(id).rating || 0);
-            const newR = cur === r ? 0 : r;
+            const r=parseInt(st.dataset.s), cur=parseFloat(gu(id).rating||0), newR=cur===r?0:r;
             su(id, 'rating', String(newR));
-            // Aktualizuj hvězdičky inline bez zavření karty
-            card.querySelectorAll('.star').forEach((s, i) => {
-                s.classList.toggle('on', i < newR);
-            });
-            const rlbl = card.querySelector('.rlbl');
-            if (rlbl) rlbl.textContent = newR ? newR + '/5 ★' : 'Neohodnoceno';
-            toast('Hodnocení uloženo ' + (newR ? '★'.repeat(newR) : '–'), 'ok');
+            card.querySelectorAll('.star').forEach((s,i) => s.classList.toggle('on', i<newR));
+            const rl=card.querySelector('.rlbl'); if(rl) rl.textContent=newR?newR+'/5 ★':'Neohodnoceno';
+            toast('Hodnocení: '+(newR?'★'.repeat(newR):'–'), 'ok');
         });
     });
 
     // Přidat návštěvu
     card.querySelector('[data-a="av"]')?.addEventListener('click', async e => {
         e.stopPropagation();
-        const btn  = e.currentTarget;
-        const date = document.getElementById('vdate-' + id)?.value;
-        const note = document.getElementById('vnote-' + id)?.value.trim();
-        const vns  = card.querySelector('[data-vns]');
+        const btn=e.currentTarget, date=document.getElementById('vdate-'+id)?.value, note=document.getElementById('vnote-'+id)?.value.trim(), vns=card.querySelector('[data-vns]');
         if (!date) { toast('Vyber datum návštěvy', 'err'); return; }
-        btn.disabled = true; btn.textContent = 'Ukládám…';
+        btn.disabled=true; btn.textContent='Ukládám…';
         try {
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'addVisit', park_id: id, date, note })
-            });
-            const data = await res.json();
-            if (data.ok) {
-                // Přidej do lokálního VISITS
-                if (!VISITS[id]) VISITS[id] = [];
-                VISITS[id].push({ id: data.visit_id, date, note });
-                // Překresli seznam návštěv
-                const vlist = document.getElementById('vlist-' + id);
-                if (vlist) {
-                    const row = document.createElement('div');
-                    row.className = 'visit-row';
-                    row.dataset.vid = data.visit_id;
-                    row.innerHTML = `<div class="visit-date">📅 ${date}</div><div class="visit-note">${note||'—'}</div><button class="visit-del" data-a="dv" data-vid="${data.visit_id}" title="Smazat">✕</button>`;
-                    row.querySelector('[data-a="dv"]').addEventListener('click', ev => deleteVisit(ev, id, card));
-                    vlist.insertBefore(row, vlist.firstChild);
-                    if (vlist.querySelector('div[style]')) vlist.querySelector('div[style]').remove();
-                }
-                document.getElementById('vnote-' + id).value = '';
+            const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'addVisit',park_id:id,date,note})});
+            const d=await r.json();
+            if (d.ok) {
+                if (!VISITS[id]) VISITS[id]=[];
+                VISITS[id].push({id:d.visit_id,date,note});
+                const vl=document.getElementById('vlist-'+id);
+                if (vl) { const row=document.createElement('div'); row.className='visit-row'; row.dataset.vid=d.visit_id; row.innerHTML=`<div class="visit-date">📅 ${date}</div><div class="visit-note">${note||'—'}</div><button class="visit-del" data-a="dv" data-vid="${d.visit_id}" title="Smazat">✕</button>`; row.querySelector('[data-a="dv"]').addEventListener('click',ev=>deleteVisit(ev,id,card)); vl.insertBefore(row,vl.firstChild); if(vl.querySelector('div[style]'))vl.querySelector('div[style]').remove(); }
+                document.getElementById('vnote-'+id).value='';
                 toast('Návštěva přidána ✓', 'ok');
-                if (vns) { vns.textContent = '✓ Uloženo do Sheets'; vns.className = 'nst ok'; setTimeout(() => { vns.textContent=''; vns.className='nst'; }, 4000); }
-            } else {
-                toast('Chyba: ' + (data.error||'neznámá'), 'err');
-            }
-        } catch(err) {
-            toast('Nelze uložit – zkontroluj spojení', 'err');
-        }
-        btn.disabled = false; btn.textContent = '+ Přidat návštěvu';
+                if (vns){vns.textContent='✓ Uloženo do Sheets';vns.className='nst ok';setTimeout(()=>{vns.textContent='';vns.className='nst';},4000);}
+            } else toast('Chyba: '+(d.error||''), 'err');
+        } catch(err) { toast('Nelze uložit', 'err'); }
+        btn.disabled=false; btn.textContent='+ Přidat';
     });
 
-    // Smazat návštěvu (delegace na vlist)
-    card.querySelector('.visits-list')?.addEventListener('click', e => {
-        const btn = e.target.closest('[data-a="dv"]');
-        if (btn) deleteVisit(e, id, card);
-    });
+    // Smazat návštěvu
+    card.querySelector('.visits-list')?.addEventListener('click', e => { if(e.target.closest('[data-a="dv"]')) deleteVisit(e,id,card); });
 
-
+    // Uložit poznámku
     card.querySelector('[data-a="sn"]')?.addEventListener('click', async e => {
         e.stopPropagation();
-        const ta  = card.querySelector('textarea');
-        const btn = e.currentTarget;
-        const ns  = card.querySelector('[data-ns]');
-        btn.disabled = true; btn.textContent = 'Ukládám…';
-        ns.textContent = ''; ns.className = 'nst';
-        su(id, 'note', ta.value);
-        // Čekej na odpověď ze Sheets
+        const ta=card.querySelector('textarea'), btn=e.currentTarget, ns=card.querySelector('[data-ns]');
+        btn.disabled=true; btn.textContent='Ukládám…'; ns.textContent=''; ns.className='nst';
+        su(id,'note',ta.value);
         try {
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'saveUserData', id, field: 'note', value: ta.value })
-            });
-            const data = await res.json();
-            if (data.ok) {
-                ns.textContent = '✓ Uloženo do Google Sheets';
-                ns.className = 'nst ok';
-                toast('Poznámka uložena do Sheets', 'ok');
-            } else {
-                ns.textContent = '⚠ Uloženo lokálně (Sheets nedostupné)';
-                ns.className = 'nst';
-                toast('Uloženo lokálně', '');
-            }
-        } catch(err) {
-            ns.textContent = '⚠ Uloženo lokálně (offline)';
-            ns.className = 'nst';
-        }
-        btn.disabled = false;
-        btn.textContent = 'Uložit poznámku';
-        setTimeout(() => { ns.textContent = ''; ns.className = 'nst'; }, 5000);
+            const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'saveUserData',id,field:'note',value:ta.value})});
+            const d=await r.json();
+            if (d.ok){ns.textContent='✓ Uloženo do Sheets';ns.className='nst ok';toast('Poznámka uložena','ok');}
+            else{ns.textContent='⚠ Uloženo lokálně';toast('Uloženo lokálně','');}
+        } catch(err){ns.textContent='⚠ Offline – uloženo lokálně';}
+        btn.disabled=false; btn.textContent='Uložit poznámku';
+        setTimeout(()=>{ns.textContent='';ns.className='nst';},5000);
     });
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 // VÝBĚR PARKU
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 function selectPark(id) {
     selId = id;
     renderUI();
-
-    // Na mobilu přepni na Seznam tab aby byl detail vidět
-    if (window.innerWidth <= 850) {
-        switchTab('list');
-    }
-
+    if (window.innerWidth <= 850) switchTab('list');
     setTimeout(() => {
         const card = document.querySelector(`.card[data-id="${id}"]`);
         if (!card) return;
-        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        const det = card.querySelector('.card-detail');
-        const xb = card.querySelector('.x-btn');
-        if (det && !det.classList.contains('open')) {
-            det.classList.add('open');
-            if (xb) { xb.classList.add('xo'); xb.querySelector('.x-arr').textContent='▲'; xb.lastChild.textContent=' Sbalit detail'; }
-        }
+        card.scrollIntoView({ behavior:'smooth', block:'start' });
+        const det=card.querySelector('.card-detail'), xb=card.querySelector('.x-btn');
+        if (det && !det.classList.contains('open')) { det.classList.add('open'); if(xb){xb.classList.add('xo');xb.querySelector('.x-arr').textContent='▲';xb.lastChild.textContent=' Sbalit detail';} }
     }, 80);
-
-    const p = PARKS.find(x => x.id === id);
+    const p = PARKS.find(x => x.id===id);
     if (p) MAP.flyTo([p.lat, p.lng], 13);
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 // UDÁLOSTI
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 document.querySelectorAll('.pill').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.pill').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    flt = b.dataset.f;
-    renderUI();
+    b.classList.add('on'); flt = b.dataset.f; renderUI();
 }));
-document.getElementById('sq').addEventListener('input', e => { qry = e.target.value; renderUI(); });
-document.getElementById('ss').addEventListener('change', e => { srt = e.target.value; renderUI(); });
+document.getElementById('sq').addEventListener('input', e => { qry=e.target.value; renderUI(); });
+document.getElementById('ss').addEventListener('change', e => { srt=e.target.value; renderUI(); });
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 // SPUŠTĚNÍ
-// ═══════════════════════════════════════════════
+// ═══════════════════════
 initMap();
-initMapClick();
 initQuickFilters();
+injectStaticIcons();
 fetchData();
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    // Mapa: přepni dlaždice
+    MAP.eachLayer(l => { if (l._url) MAP.removeLayer(l); });
+    const dark2 = isDark();
+    L.tileLayer(dark2
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        { attribution:'&copy; OSM &copy; CARTO', subdomains:'abcd', maxZoom:19 }).addTo(MAP);
+    // Markery
+    PARKS.forEach(p => MARKERS[p.id]?.setIcon(makeIcon(p.type?.includes('bikepark'), false)));
+});
 </script>
 </body>
 </html>
