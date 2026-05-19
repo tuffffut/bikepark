@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bike Servis Pro</title>
+
+  <!-- PWA / Add to Home Screen -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bike Servis">
+  <meta name="theme-color" content="#0f1a28">
+  <!-- Apple touch icon – inline SVG as data URI so no extra file needed -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%231c3a5c'/%3E%3Ccircle cx='45' cy='130' r='38' fill='none' stroke='%231a4a7a' stroke-width='12'/%3E%3Ccircle cx='45' cy='130' r='10' fill='%231a4a7a'/%3E%3Ccircle cx='155' cy='130' r='38' fill='none' stroke='%231a4a7a' stroke-width='12'/%3E%3Ccircle cx='155' cy='130' r='10' fill='%231a4a7a'/%3E%3Cpolygon points='75,130 115,55 145,130' fill='none' stroke='%23e8520a' stroke-width='11' stroke-linejoin='round'/%3E%3Cline x1='45' y1='130' x2='75' y2='130' stroke='%231a4a7a' stroke-width='10'/%3E%3Cline x1='45' y1='130' x2='115' y2='55' stroke='%231a4a7a' stroke-width='9'/%3E%3Cline x1='145' y1='130' x2='155' y2='130' stroke='%231a4a7a' stroke-width='10'/%3E%3Cline x1='132' y1='60' x2='155' y2='130' stroke='%231a4a7a' stroke-width='10'/%3E%3Cline x1='115' y1='55' x2='132' y2='60' stroke='%231a4a7a' stroke-width='10'/%3E%3Cline x1='115' y1='55' x2='111' y2='35' stroke='%231a4a7a' stroke-width='8'/%3E%3Cellipse cx='107' cy='31' rx='14' ry='6' fill='%231a4a7a'/%3E%3Ccircle cx='75' cy='130' r='16' fill='none' stroke='%23e8520a' stroke-width='8'/%3E%3Ccircle cx='75' cy='130' r='6' fill='%23e8520a'/%3E%3Cline x1='75' y1='130' x2='90' y2='146' stroke='%23e8520a' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='75' y1='130' x2='60' y2='114' stroke='%23e8520a' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231c3a5c'/%3E%3Ccircle cx='22' cy='65' r='19' fill='none' stroke='%231a4a7a' stroke-width='6'/%3E%3Ccircle cx='78' cy='65' r='19' fill='none' stroke='%231a4a7a' stroke-width='6'/%3E%3Cpolygon points='38,65 57,28 72,65' fill='none' stroke='%23e8520a' stroke-width='5.5' stroke-linejoin='round'/%3E%3Cline x1='22' y1='65' x2='38' y2='65' stroke='%231a4a7a' stroke-width='5'/%3E%3Cline x1='22' y1='65' x2='57' y2='28' stroke='%231a4a7a' stroke-width='4.5'/%3E%3Cline x1='72' y1='65' x2='78' y2='65' stroke='%231a4a7a' stroke-width='5'/%3E%3Cline x1='66' y1='30' x2='78' y2='65' stroke='%231a4a7a' stroke-width='5'/%3E%3Ccircle cx='38' cy='65' r='8' fill='none' stroke='%23e8520a' stroke-width='4'/%3E%3Ccircle cx='38' cy='65' r='3' fill='%23e8520a'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --accent:      #e8520a;
+      --accent2:     #ff7a3d;
+      --bg:          transparent;
+      --card:        rgba(255, 255, 255, 0.08);
+      --text:        #ffffff;
+      --muted:       #9ca3af;
+      --border:      rgba(255, 255, 255, 0.15);
+      
+      --ok:          #4ade80;
+      --ok-bg:       rgba(74, 222, 128, 0.15);
+      --ok-fill:     #22c55e;
+      
+      --warn:        #facc15;
+      --warn-bg:     rgba(250, 204, 21, 0.15);
+      --warn-fill:   #eab308;
+      
+      --danger:      #f87171;
+      --danger-bg:   rgba(248, 113, 113, 0.15);
+      --danger-fill: #ef4444;
+      
+      --r:           16px;
+      --sh:          0 4px 20px rgba(0, 0, 0, 0.2);
+      --nav-h:       72px;
+      --header-h:    64px;
+    }
+    
+    body {
+      font-family: 'Sora', system-ui, sans-serif;
+      background-color: #121212;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+      transition: background-image 0.5s ease;
+    }
+
+    /* ══ HEADER ══ */
+    .header {
+      background: rgba(15, 15, 15, 0.6);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      color: #fff;
+      height: var(--header-h);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 56px; height: 36px; background: #1c3a5c;
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      color: white; flex-shrink: 0; box-shadow: 0 2px 10px rgba(28, 58, 92, 0.5);
+      overflow: hidden; padding: 2px 4px;
+    }
+    .logo-text { font-size: 16px; font-weight: 800; letter-spacing: -.3px; }
+    .logo-sub { font-size: 10px; color: rgba(255,255,255,.6); font-weight: 400; display: block; margin-top: 1px; letter-spacing: .3px; }
+    
+    .hdr-right { display: flex; align-items: center; gap: 8px; }
+    .hdr-add {
+      background: var(--accent); border: none; color: #fff;
+      padding: 9px 16px 9px 12px; border-radius: 22px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 700; font-family: inherit;
+      transition: background .15s, transform .1s;
+      -webkit-tap-highlight-color: transparent; white-space: nowrap;
+    }
+    .hdr-add:active { background: var(--accent2); transform: scale(.96); }
+    .hdr-add-icon { display: flex; align-items: center; }
+
+    .icon-btn {
+      background: rgba(255,255,255,.1); border: 1px solid var(--border); color: #fff;
+      width: 36px; height: 36px; border-radius: 10px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s; flex-shrink: 0;
+    }
+    .icon-btn:active { background: rgba(255,255,255,.22); }
+
+    /* ══ BIKE TABS ══ */
+    .bike-strip {
+      background: rgba(15, 15, 15, 0.6);
+      backdrop-filter: blur(16px);
+      padding: 0 12px 10px; display: flex; gap: 6px;
+      overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border);
+    }
+    .bike-strip::-webkit-scrollbar { display: none; }
+    .bike-pill {
+      flex-shrink: 0; padding: 7px 15px; border: 1.5px solid rgba(255,255,255,.2);
+      background: rgba(0,0,0,0.3); color: var(--muted); border-radius: 30px;
+      cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit;
+      transition: all .18s; position: relative; white-space: nowrap; backdrop-filter: blur(5px);
+    }
+    .bike-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .bike-pill .dot {
+      position: absolute; top: 4px; right: 4px; width: 7px; height: 7px;
+      background: var(--danger-fill); border-radius: 50%; border: 1.5px solid #1a1410;
+    }
+    .bike-pill.active .dot { border-color: var(--accent); }
+
+    /* ══ BOTTOM NAV ══ */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(15, 15, 15, 0.7); backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex; z-index: 200;
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; border: none; background: transparent; color: var(--muted);
+      cursor: pointer; font-family: inherit; transition: color .18s; position: relative;
+    }
+    .nav-btn.active { color: var(--accent); }
+    .nav-btn-icon { display: flex; align-items: center; justify-content: center; height: 24px; }
+    .nav-btn-label { font-size: 10px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
+    .nav-btn .nav-dot {
+      position: absolute; top: 10px; right: calc(50% - 14px); width: 7px; height: 7px;
+      background: var(--danger-fill); border-radius: 50%; border: 1.5px solid #1a1410;
+    }
+
+    /* ══ CONTENT ══ */
+    .content { padding: 14px 13px 10px; max-width: 600px; margin: 0 auto; }
+    @media(min-width:600px){ .content{ padding: 20px 20px 10px; } }
+
+    /* ══ SECTION LABEL ══ */
+    .sec-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px 2px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .sec-label:first-child { margin-top: 0; }
+
+    /* ══ SUMMARY BANNER ══ */
+    .summary-banner {
+      border-radius: var(--r); padding: 14px 16px; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 12px; box-shadow: var(--sh);
+      backdrop-filter: blur(12px); border: 1px solid var(--border);
+    }
+    .summary-banner.ok     { background: var(--ok-bg); border-color: rgba(74, 222, 128, 0.3); }
+    .summary-banner.danger { background: var(--danger-bg); border-color: rgba(248, 113, 113, 0.3); }
+    .summary-banner-icon { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; }
+    .summary-banner.ok .summary-banner-icon { background: rgba(74, 222, 128, 0.2); color: var(--ok); }
+    .summary-banner.danger .summary-banner-icon { background: rgba(248, 113, 113, 0.2); color: var(--danger); }
+    .summary-banner-title { font-size: 14px; font-weight: 700; }
+    .summary-banner.ok .summary-banner-title { color: var(--ok); }
+    .summary-banner.danger .summary-banner-title { color: var(--danger); }
+    .summary-banner-sub { font-size: 12px; margin-top: 2px; opacity: .9; }
+    .summary-banner.ok .summary-banner-sub { color: var(--ok); }
+    .summary-banner.danger .summary-banner-sub { color: var(--danger); }
+
+    /* ══ BIKE GROUP CARD ══ */
+    .bike-group { background: var(--card); border-radius: var(--r); box-shadow: var(--sh); margin-bottom: 12px; overflow: hidden; backdrop-filter: blur(12px); border: 1px solid var(--border); }
+    .bike-group-hdr { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .bike-group-hdr:active { background: rgba(255,255,255,0.05); }
+    .bike-group-icon { color: var(--accent); display: flex; align-items: center; }
+    .bike-group-name { font-size: 15px; font-weight: 700; flex: 1; }
+    .bike-group-summary { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+    .status-dot.ok     { background: var(--ok-fill); }
+    .status-dot.warn   { background: var(--warn-fill); }
+    .status-dot.danger { background: var(--danger-fill); }
+    .all-ok-tag { font-size: 11px; font-weight: 700; color: var(--ok); background: var(--ok-bg); padding: 3px 9px; border-radius: 20px; border: 1px solid rgba(74, 222, 128, 0.3); }
+    .bike-group-arrow { color: var(--muted); display: flex; align-items: center; margin-left: 2px; }
+
+    .dash-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.08); cursor: pointer; }
+    .dash-row:active { background: rgba(255,255,255,0.05); }
+    .dash-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dash-dot.ok     { background: var(--ok-fill); }
+    .dash-dot.warn   { background: var(--warn-fill); }
+    .dash-dot.danger { background: var(--danger-fill); }
+    .dash-comp { font-size: 13px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dash-km { font-size: 12px; color: var(--muted); flex-shrink: 0; white-space: nowrap; }
+    .dash-km.warn   { color: var(--warn); font-weight: 700; }
+    .dash-km.danger { color: var(--danger); font-weight: 700; }
+
+    /* ══ SERVICE ROW LIST ══ */
+    .svc-list { background: var(--card); border-radius: var(--r); box-shadow: var(--sh); overflow: hidden; margin-bottom: 12px; backdrop-filter: blur(12px); border: 1px solid var(--border); }
+    .svc-row { display: flex; align-items: center; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: background .12s; overflow: hidden; }
+    .svc-row:last-child { border-bottom: none; }
+    .svc-row:active { background: rgba(255,255,255,0.05); }
+
+    .svc-row-bar { width: 4px; flex-shrink: 0; align-self: stretch; }
+    .svc-row-bar.ok     { background: var(--ok-fill); }
+    .svc-row-bar.warn   { background: var(--warn-fill); }
+    .svc-row-bar.danger { background: var(--danger-fill); }
+
+    .svc-row-main { flex: 1; min-width: 0; padding: 13px 14px 11px; }
+    .svc-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .svc-row-name { font-size: 14px; font-weight: 700; }
+    .svc-row-km { font-size: 12px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .svc-row-km.warn   { color: var(--warn); font-weight: 700; }
+    .svc-row-km.danger { color: var(--danger); font-weight: 700; }
+
+    .prog-track { background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; overflow: hidden; }
+    .prog-fill  { height: 100%; border-radius: 4px; width: 0; transition: width .7s cubic-bezier(.4,0,.2,1); }
+    .prog-fill.ok     { background: var(--ok-fill); }
+    .prog-fill.warn   { background: var(--warn-fill); }
+    .prog-fill.danger { background: var(--danger-fill); }
+
+    .svc-row-chevron { color: var(--muted); padding-right: 14px; flex-shrink: 0; transition: transform .22s; display: flex; align-items: center; }
+    .svc-row.open .svc-row-chevron { transform: rotate(90deg); color: #fff; }
+
+    .svc-detail { max-height: 0; overflow: hidden; transition: max-height .32s cubic-bezier(.4,0,.2,1); background: rgba(0,0,0,0.6); border-top: 0 solid rgba(255,255,255,0.08); }
+    .svc-detail.open { max-height: 500px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .svc-detail-inner { padding: 14px 14px 12px 18px; }
+
+    .det-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 12px; }
+    .det-cell { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 10px 12px; }
+    .det-val { font-size: 15px; font-weight: 800; }
+    .det-val.warn   { color: var(--warn); }
+    .det-val.danger { color: var(--danger); }
+    .det-val.ok     { color: var(--ok); }
+    .det-lbl { font-size: 10px; color: var(--muted); margin-top: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+
+    .det-notes { font-size: 12px; color: var(--muted); margin-bottom: 11px; line-height: 1.6; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; font-style: italic; border-left: 2px solid var(--border); }
+    .det-date  { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); margin-bottom: 11px; }
+
+    .det-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+    .btn-sm { padding: 9px 14px; border: none; border-radius: 10px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .14s; display: flex; align-items: center; gap: 6px; }
+    .btn-sm:active { opacity: .65; transform: scale(.96); }
+    
+    .btn-edit   { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+    .btn-delete { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(248, 113, 113, 0.3); }
+    .btn-reset-svc { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(74, 222, 128, 0.3); font-weight: 700; margin-right: auto; }
+    
+    .btn-edit:hover { background: rgba(255,255,255,0.15); }
+    .btn-delete:hover { background: rgba(248, 113, 113, 0.25); }
+    .btn-reset-svc:hover { background: rgba(74, 222, 128, 0.25); }
+
+    .notif-wrap  { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text); }
+    .notif-count { font-size: 10px; font-weight: 700; color: var(--danger); background: var(--danger-bg); padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(248, 113, 113, 0.3); }
+
+    /* ══ SETTINGS ══ */
+    .settings-header { margin-bottom: 18px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+    .settings-header h2 { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 800; }
+    .settings-header p  { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+    .bike-setting-list { display: flex; flex-direction: column; gap: 8px; }
+    .bike-setting-item {
+      background: var(--card); border-radius: var(--r); box-shadow: var(--sh); border: 1px solid var(--border);
+      padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+      cursor: grab; transition: box-shadow .15s, opacity .15s; user-select: none; backdrop-filter: blur(12px);
+    }
+    .bike-setting-item.dragging { box-shadow: 0 8px 28px rgba(0,0,0,.5); opacity: .9; cursor: grabbing; border-color: var(--accent); }
+    .bike-setting-item.drag-over { border: 2px dashed var(--accent); }
+    
+    .drag-handle { color: var(--muted); display: flex; align-items: center; cursor: grab; touch-action: none; }
+    .bike-set-icon { color: var(--text); display: flex; align-items: center; flex-shrink: 0; }
+    .bike-set-info { flex: 1; min-width: 0; }
+    .bike-set-name { font-size: 15px; font-weight: 600; }
+    .bike-set-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .toggle-track { width: 46px; height: 26px; background: rgba(255,255,255,0.2); border-radius: 13px; position: relative; transition: background .22s; flex-shrink: 0; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
+    .toggle-track.on { background: var(--ok-fill); border-color: var(--ok); }
+    .toggle-thumb { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: left .22s cubic-bezier(.4,0,.2,1); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+    .toggle-track.on .toggle-thumb { left: 22px; }
+
+    .settings-tip { background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 12px; padding: 12px 14px; font-size: 12px; color: var(--warn); line-height: 1.6; margin-top: 12px; backdrop-filter: blur(5px); }
+    .settings-tip strong { font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+
+    /* ══ MODAL / SHEET ══ */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(8px); z-index: 300; align-items: flex-end; justify-content: center; }
+    .overlay.show { display: flex; animation: fadeIn .18s ease; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    .sheet {
+      background: rgba(20, 20, 20, 0.95);
+      border-radius: 24px 24px 0 0; width: 100%; max-width: 600px;
+      min-height: 70vh; max-height: 95vh; overflow-y: auto;
+      padding-bottom: max(env(safe-area-inset-bottom,0px),28px);
+      animation: slideUp .3s cubic-bezier(.32,.72,0,1);
+      overscroll-behavior: contain; display: flex; flex-direction: column;
+      border: 1px solid rgba(255,255,255,0.1); border-bottom: none;
+    }
+    @keyframes slideUp { from{transform:translateY(110%)} to{transform:translateY(0)} }
+
+    @media(min-width:600px) {
+      .overlay { align-items: center; padding: 20px; }
+      .sheet { border-radius: 24px; min-height: unset; max-height: 92vh; border-bottom: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+    }
+
+    .sh-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 14px auto 0; flex-shrink: 0; }
+    .sh-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+    .sh-title  { font-size: 18px; font-weight: 800; }
+    .sh-close  { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; transition: 0.2s; }
+    .sh-close:hover { background: rgba(255,255,255,0.15); }
+    .sh-body { padding: 20px 18px; flex: 1; }
+
+    /* FORM */
+    .f-field { margin-bottom: 16px; }
+    .f-label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .8px; }
+    input[type=text], input[type=number], input[type=datetime-local], select, textarea {
+      width: 100%; padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+      font-size: 15px; font-family: inherit; color: var(--text); background: rgba(0,0,0,0.3);
+      transition: all .18s; -webkit-appearance: none; appearance: none;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); background: rgba(0,0,0,0.5); box-shadow: 0 0 0 3px rgba(232, 82, 10, 0.2); }
+    textarea { resize: none; height: 80px; line-height: 1.5; }
+    .f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .f-hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+    .toggle-wrap { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; }
+    .toggle-txt  { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .notif-extra { overflow: hidden; transition: max-height .3s ease, opacity .3s ease; max-height: 0; opacity: 0; }
+    .notif-extra.open { max-height: 300px; opacity: 1; }
+    .notif-info { background: rgba(232, 82, 10, 0.1); border: 1px solid rgba(232, 82, 10, 0.2); border-radius: 10px; padding: 12px 14px; margin-top: 12px; font-size: 12px; color: #ffbba6; line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+    
+    .reset-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--danger-bg); border: 1px solid rgba(248, 113, 113, 0.3); border-radius: 12px; margin-top: 12px; }
+    .reset-row span { font-size: 13px; color: var(--danger); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .btn-rs { padding: 8px 14px; background: var(--danger); color: #fff; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .btn-rs:hover { background: #dc2626; }
+
+    .btn-primary {
+      width: 100%; padding: 16px; margin-top: 12px;
+      background: var(--accent);
+      color: #fff; border: none; border-radius: 14px;
+      font-size: 15px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: all .18s;
+    }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232, 82, 10, 0.3); }
+    .btn-primary:active { transform: translateY(0); opacity: 0.9; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-proveden {
+      width: 100%; padding: 15px; margin-top: 8px;
+      background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(74, 222, 128, 0.4);
+      border-radius: 14px; font-size: 14px; font-weight: 700; font-family: inherit;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all .15s;
+    }
+    .btn-proveden:hover { background: rgba(74, 222, 128, 0.25); }
+
+    /* CONFIRM MODAL */
+    .confirm-sheet {
+      background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px 24px 0 0; width: 100%; max-width: 480px;
+      padding: 32px 24px max(env(safe-area-inset-bottom,0px),24px);
+      animation: slideUp .28s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    @media(min-width:600px) { .confirm-sheet { border-radius: 24px; } }
+    .confirm-icon { width: 64px; height: 64px; background: var(--ok-bg); color: var(--ok); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid rgba(74, 222, 128, 0.3); }
+    .confirm-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .confirm-sub   { font-size: 14px; color: var(--muted); line-height: 1.5; margin-bottom: 24px; }
+    .confirm-btns  { display: flex; gap: 12px; width: 100%; }
+    .btn-cancel     { flex: 1; padding: 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; font-size: 15px; font-weight: 600; color: #fff; cursor: pointer; transition: 0.2s; }
+    .btn-cancel:hover { background: rgba(255,255,255,0.15); }
+    .btn-confirm-ok { flex: 2; padding: 14px; background: var(--ok-fill); border: none; border-radius: 14px; font-size: 15px; font-weight: 700; color: #fff; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-confirm-ok:hover { background: #16a34a; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+
+    /* LOADING / EMPTY */
+    .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh; gap: 16px; }
+    .spinner { width: 44px; height: 44px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    
+    .empty { text-align: center; padding: 60px 20px; color: var(--muted); background: var(--card); border-radius: 20px; border: 1px solid var(--border); backdrop-filter: blur(12px); margin-top: 20px; }
+    .empty-icon { display: flex; justify-content: center; margin-bottom: 16px; color: rgba(255,255,255,0.4); }
+    .empty h3 { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .empty p { font-size: 14px; line-height: 1.6; max-width: 280px; margin: 0 auto; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));
+      left: 50%; transform: translateX(-50%) translateY(20px);
+      background: #fff; color: #000; padding: 12px 24px; border-radius: 50px;
+      font-size: 14px; font-weight: 700; opacity: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transition: all .3s cubic-bezier(.4,0,.2,1); z-index: 9999;
+      white-space: nowrap; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* PC overrides */
+    @media(min-width:700px) {
+      body { padding-bottom: 0; }
+      .bottom-nav { display: none; }
+      .bike-strip { display: none; }
+      .header { height: auto; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+      .pc-tabs { display: flex !important; margin-top: 14px; }
+      .toast { bottom: 30px; }
+    }
+    .pc-tabs { display: none; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0; }
+    .pc-tabs::-webkit-scrollbar { display: none; }
+    .pc-tab {
+      flex-shrink: 0; padding: 10px 18px; border: 1px solid transparent;
+      background: rgba(255,255,255,0.05); color: var(--muted); border-radius: 12px;
+      cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit;
+      transition: all .2s; position: relative; display: flex; align-items: center; gap: 6px;
+    }
+    .pc-tab:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .pc-tab.active { background: var(--accent); color: #fff; font-weight: 700; border-color: var(--accent); box-shadow: 0 4px 12px rgba(232, 82, 10, 0.3); }
+    .pc-tab .dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: var(--danger-fill); border-radius: 50%; border: 2px solid #1a1a1a; }
+
+    /* ══ DYNAMIC BACKGROUNDS ══ */
+    /* Body transitions smoothly between backgrounds */
+    body { transition: background-image 0.6s ease; }
+  </style>
+
+  <!-- ══ BACKGROUND CONFIGURATION ══
+       Nastavte URL fotek z Google Drive níže.
+       Formát Google Drive: https://drive.google.com/uc?export=view&id=VAŠE_ID_SOUBORU
+       
+       DESKTOP (landscape) fotky:
+         BG_DASHBOARD  = fotka pro Přehled
+         BG_BIKE       = fotka pro detail kola
+         BG_SETTINGS   = fotka pro Nastavení
+       
+       MOBILNÍ PORTRAIT fotky (použijí se automaticky na úzkých obrazovkách):
+         BG_MOBILE_DASHBOARD
+         BG_MOBILE_BIKE
+         BG_MOBILE_SETTINGS
+  -->
+  <script>
+    const BG_CONFIG = {
+      // ── DESKTOP / LANDSCAPE ──────────────────────────────────────────
+      dashboard: 'xxx',          // ← sem vložte URL fotky pro Přehled
+      bike:      'xxx',          // ← sem vložte URL fotky pro detail Kola
+      settings:  'xxx',          // ← sem vložte URL fotky pro Nastavení
+
+      // ── MOBIL PORTRAIT (automaticky na šířce ≤ 480px) ───────────────
+      mobile_dashboard: 'xxx',   // ← sem vložte mobilní URL pro Přehled
+      mobile_bike:      'xxx',   // ← sem vložte mobilní URL pro detail Kola
+      mobile_settings:  'xxx',   // ← sem vložte mobilní URL pro Nastavení
+
+      // Průhlednost překrytí (0 = průhledné, 1 = plně tmavé)
+      overlay: 0.45
+    };
+
+    function applyBackground(viewName) {
+      const isMobilePortrait = window.innerWidth <= 480 && window.innerHeight > window.innerWidth;
+      const key = isMobilePortrait ? 'mobile_' + viewName : viewName;
+      const url = BG_CONFIG[key] || BG_CONFIG[viewName] || 'xxx';
+      const ov  = BG_CONFIG.overlay;
+      if (url && url !== 'xxx') {
+        document.body.style.backgroundImage =
+          `linear-gradient(rgba(0,0,0,${ov}),rgba(0,0,0,${ov})), url('${url}')`;
+      } else {
+        document.body.style.backgroundImage =
+          `linear-gradient(rgba(0,0,0,${ov}),rgba(0,0,0,${ov}))`;
+      }
+    }
+    // Zavolá se z render() – viz níže
+  </script>
+</head>
+<body>
+
+<!-- JS ICONS DEFINITION FIRST TO USE IN HTML -->
+<script>
+const ICONS = {
+  bike: `<svg width="22" height="22" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+    <!-- rear wheel -->
+    <circle cx="18" cy="40" r="16" fill="none" stroke="#1a4a7a" stroke-width="5"/>
+    <circle cx="18" cy="40" r="4" fill="#1a4a7a"/>
+    <!-- front wheel -->
+    <circle cx="82" cy="40" r="16" fill="none" stroke="#1a4a7a" stroke-width="5"/>
+    <circle cx="82" cy="40" r="4" fill="#1a4a7a"/>
+    <!-- frame - main triangle orange -->
+    <polygon points="35,40 55,14 68,40" fill="none" stroke="#e8520a" stroke-width="4.5" stroke-linejoin="round"/>
+    <!-- chain stay blue -->
+    <line x1="18" y1="40" x2="35" y2="40" stroke="#1a4a7a" stroke-width="4"/>
+    <!-- seat stay blue -->
+    <line x1="18" y1="40" x2="55" y2="14" stroke="#1a4a7a" stroke-width="3.5"/>
+    <!-- fork blue -->
+    <line x1="68" y1="40" x2="82" y2="40" stroke="#1a4a7a" stroke-width="4"/>
+    <line x1="62" y1="18" x2="82" y2="40" stroke="#1a4a7a" stroke-width="4"/>
+    <!-- top tube blue -->
+    <line x1="55" y1="14" x2="62" y2="18" stroke="#1a4a7a" stroke-width="4"/>
+    <!-- seat post -->
+    <line x1="55" y1="14" x2="53" y2="7" stroke="#1a4a7a" stroke-width="3"/>
+    <ellipse cx="51" cy="6" rx="6" ry="2.5" fill="#1a4a7a"/>
+    <!-- handlebar -->
+    <line x1="62" y1="18" x2="63" y2="11" stroke="#1a4a7a" stroke-width="3"/>
+    <line x1="60" y1="10" x2="66" y2="10" stroke="#1a4a7a" stroke-width="3"/>
+    <!-- crank orange -->
+    <circle cx="35" cy="40" r="7" fill="none" stroke="#e8520a" stroke-width="3.5"/>
+    <circle cx="35" cy="40" r="2.5" fill="#e8520a"/>
+    <line x1="35" y1="40" x2="42" y2="46" stroke="#e8520a" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="35" y1="40" x2="28" y2="34" stroke="#e8520a" stroke-width="3.5" stroke-linecap="round"/>
+  </svg>`,
+  check: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+  warn: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+  danger: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
+  home: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
+  settings: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
+  edit: `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+  trash: `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+  reset: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-12.28l5.57 5.57"></path></svg>`,
+  bell: `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`,
+  bellOff: `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><path d="M18.63 13A17.89 17.89 0 0 1 18 8"></path><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"></path><path d="M18 8a6 6 0 0 0-9.33-5"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`,
+  cal: `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
+  plus: `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+  refresh: `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>`,
+  hidden: `<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`,
+  chevron: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>`,
+  drag: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>`,
+  wrench: `<svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`,
+  phone: `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
+  alert: `<svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+  x: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
+};
+</script>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon"><script>document.write(ICONS.bike)</script></div>
+    <div>
+      <div class="logo-text">Bike Servis</div>
+      <small class="logo-sub" id="lastUpdated">––:––</small>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <button class="hdr-add" onclick="openAdd()">
+      <span class="hdr-add-icon"><script>document.write(ICONS.plus)</script></span> Přidat
+    </button>
+    <button class="icon-btn" onclick="loadData()" title="Obnovit"><script>document.write(ICONS.refresh)</script></button>
+  </div>
+  <!-- PC tabs (hidden on mobile) -->
+  <div class="pc-tabs" id="pcTabs"></div>
+</div>
+
+<!-- MOBILE: bike pill strip (hidden on PC) -->
+<div class="bike-strip" id="bikeStrip"></div>
+
+<!-- CONTENT -->
+<div class="content" id="content">
+  <div class="loading"><div class="spinner"></div><p style="color:var(--muted);font-size:14px">Načítám…</p></div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-btn active" id="nav-dashboard" onclick="goHome()">
+    <span class="nav-btn-icon"><script>document.write(ICONS.home)</script></span>
+    <span class="nav-btn-label">Přehled</span>
+  </button>
+  <button class="nav-btn" id="nav-bike" onclick="goBikeNav()">
+    <span class="nav-btn-icon"><script>document.write(ICONS.bike)</script></span>
+    <span class="nav-btn-label">Kolo</span>
+  </button>
+  <button class="nav-btn" id="nav-settings" onclick="goSettings()">
+    <span class="nav-btn-icon"><script>document.write(ICONS.settings)</script></span>
+    <span class="nav-btn-label">Nastavení</span>
+  </button>
+</nav>
+
+<!-- FORM MODAL -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="sheet" id="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-header">
+      <div class="sh-title" id="shTitle">Nový záznam</div>
+      <button class="sh-close" onclick="closeModal()"><script>document.write(ICONS.x)</script></button>
+    </div>
+    <div class="sh-body">
+      <input type="hidden" id="fId">
+      <div class="f-field">
+        <label class="f-label">Kolo</label>
+        <select id="fBike"></select>
+      </div>
+      <div class="f-field">
+        <label class="f-label">Součástka / Úkon</label>
+        <input type="text" id="fComp" placeholder="např. Řetěz, Brzdové destičky…" autocomplete="off">
+      </div>
+      <div class="f-row">
+        <div class="f-field">
+          <label class="f-label">Datum a čas servisu</label>
+          <input type="datetime-local" id="fDt">
+        </div>
+        <div class="f-field">
+          <label class="f-label">Interval (km)</label>
+          <input type="number" id="fInterval" placeholder="1 000" min="0" step="any">
+        </div>
+      </div>
+      <div class="f-field">
+        <label class="f-label">Poznámka</label>
+        <textarea id="fNotes" placeholder="Volitelná poznámka…"></textarea>
+      </div>
+      <div class="f-field">
+        <div class="toggle-wrap" onclick="toggleNotif()">
+          <span class="toggle-txt" style="color:white"><span style="color:var(--accent);display:flex"><script>document.write(ICONS.bell)</script></span> Notifikace e-mailem</span>
+          <div class="toggle-track" id="notifTrack"><div class="toggle-thumb"></div></div>
+        </div>
+        <div class="notif-extra" id="notifExtra">
+          <div class="f-row" style="margin-top:10px">
+            <div class="f-field">
+              <label class="f-label">2. notif za (km od první)</label>
+              <input type="number" id="fNotif2" placeholder="0 = jen jednou" min="0" step="any">
+              <div class="f-hint">0 = pošle se jen 1×</div>
+            </div>
+            <div class="f-field" id="notifCountRow" style="display:none">
+              <label class="f-label">Odesláno notifikací</label>
+              <input type="text" id="fNotifCount" readonly style="background:rgba(255,255,255,0.05);color:var(--muted);font-weight:700">
+            </div>
+          </div>
+          <div class="notif-info"><span style="flex-shrink:0"><script>document.write(ICONS.phone)</script></span> <div>Notifikace přijdou na tvůj Google e-mail – v Gmail appce se zobrazí jako push notifikace.</div></div>
+          <div class="reset-row" id="formResetRow" style="display:none">
+            <span><span style="display:flex"><script>document.write(ICONS.warn)</script></span> Resetovat počítadlo</span>
+            <button class="btn-rs" onclick="toggleFormReset()">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div id="provedServisRow" style="display:none; margin-top:6px;">
+        <button class="btn-proveden" onclick="provedServisFromEdit()">
+          <span style="display:flex"><script>document.write(ICONS.reset)</script></span> Proveden servis – resetovat datum a notifikace
+        </button>
+      </div>
+      <button class="btn-primary" id="saveBtn" onclick="handleSave()">Přidat záznam</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET CONFIRM MODAL -->
+<div class="overlay" id="confirmOverlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-sheet">
+    <div class="confirm-icon"><script>document.write(ICONS.reset)</script></div>
+    <div class="confirm-title">Proveden servis?</div>
+    <div class="confirm-sub" id="confirmSub">Nastaví se aktuální datum a čas a vynuluje se počítadlo notifikací.</div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">Zrušit</button>
+      <button class="btn-confirm-ok" id="confirmOkBtn"><span style="display:flex"><script>document.write(ICONS.check)</script></span> Servisováno</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- EXACT 1:1 JAVASCRIPT FROM servis.txt (WITH SVG INJECTIONS) -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let D = { bikes:[], activities:[], serviceRecords:[] };
+let view = 'dashboard';
+let activeBike = null;
+let notifOn = false, doReset = false;
+
+const SETTINGS_KEY = 'bikeServisSettings';
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveSettings(s) {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch(e) {}
+}
+function getBikeSettings() {
+  const s = loadSettings();
+  return { order: s.order||[], hidden: s.hidden||[] };
+}
+function getVisibleBikes() {
+  const { order, hidden } = getBikeSettings();
+  let visible = D.bikes.filter(b => !hidden.includes(b.id));
+  visible.sort((a,b) => {
+    const ai=order.indexOf(a.id), bi=order.indexOf(b.id);
+    if(ai===-1&&bi===-1) return 0;
+    if(ai===-1) return 1; if(bi===-1) return -1;
+    return ai-bi;
+  });
+  return visible;
+}
+
+// ══════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════
+window.onload = loadData;
+
+function loadData() {
+  document.getElementById('content').innerHTML =
+    '<div class="loading"><div class="spinner"></div><p style="color:var(--muted);font-size:14px">Načítám…</p></div>';
+  google.script.run
+    .withSuccessHandler(onData)
+    .withFailureHandler(onErr)
+    .getAllData();
+}
+
+function onData(json) {
+  try {
+    const r = JSON.parse(json);
+    if (!r.success) { onErr(r.error); return; }
+    D = r;
+    const visible = getVisibleBikes();
+    if (visible.length && !activeBike) activeBike = visible[0].id;
+    const now = new Date();
+    document.getElementById('lastUpdated').textContent =
+      now.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    render();
+  } catch(e) { onErr(e.message); }
+}
+
+function onErr(err) {
+  document.getElementById('content').innerHTML =
+    `<div class="empty"><div class="empty-icon">${ICONS.alert}</div><h3>Chyba načítání</h3><p>${esc(String(err))}</p></div>`;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function render() {
+  renderStrip();
+  renderPcTabs();
+  updateBottomNav();
+  dispatchView();
+  if (typeof applyBackground === 'function') applyBackground(view);
+}
+
+function dispatchView() {
+  if      (view==='dashboard') renderDashboard();
+  else if (view==='bike')      renderBike();
+  else if (view==='settings')  renderSettings();
+}
+
+/* ── MOBILE BIKE STRIP ── */
+function renderStrip() {
+  const strip = document.getElementById('bikeStrip');
+  const all = D.serviceRecords.map(enrichRecord);
+  const visible = getVisibleBikes();
+  let html = '';
+  visible.forEach(b => {
+    const hasDanger = all.some(r => String(r.bikeId)===String(b.id) && r.status==='danger');
+    const isActive = view==='bike' && activeBike===b.id;
+    html += `<button class="bike-pill ${isActive?'active':''}" onclick="goBike('${b.id}')">
+      ${esc(b.name)}${hasDanger&&!isActive?'<span class="dot"></span>':''}
+    </button>`;
+  });
+  strip.innerHTML = html;
+}
+
+/* ── PC TABS ── */
+function renderPcTabs() {
+  const c = document.getElementById('pcTabs');
+  const all = D.serviceRecords.map(enrichRecord);
+  const visible = getVisibleBikes();
+  let html = `<button class="pc-tab ${view==='dashboard'?'active':''}" onclick="goHome()">${ICONS.home} Přehled</button>`;
+  html += visible.map(b => {
+    const hasDanger = all.some(r => String(r.bikeId)===String(b.id) && r.status==='danger');
+    return `<button class="pc-tab ${view==='bike'&&activeBike===b.id?'active':''}" onclick="goBike('${b.id}')">
+      ${esc(b.name)}${hasDanger?'<span class="dot"></span>':''}
+    </button>`;
+  }).join('');
+  html += `<button class="pc-tab ${view==='settings'?'active':''}" onclick="goSettings()">${ICONS.settings}</button>`;
+  c.innerHTML = html;
+}
+
+/* ── BOTTOM NAV ACTIVE STATE ── */
+function updateBottomNav() {
+  document.getElementById('nav-dashboard').classList.toggle('active', view==='dashboard');
+  document.getElementById('nav-bike').classList.toggle('active', view==='bike');
+  document.getElementById('nav-settings').classList.toggle('active', view==='settings');
+
+  // danger dot on bike nav btn
+  const all = D.serviceRecords.map(enrichRecord);
+  const anyDanger = all.some(r => r.status==='danger');
+  const navBike = document.getElementById('nav-bike');
+  let dotEl = navBike.querySelector('.nav-dot');
+  if (anyDanger) {
+    if (!dotEl) { dotEl=document.createElement('span'); dotEl.className='nav-dot'; navBike.appendChild(dotEl); }
+  } else {
+    if (dotEl) dotEl.remove();
+  }
+}
+
+/* ── DASHBOARD ── */
+function renderDashboard() {
+  const visible = getVisibleBikes();
+  const visibleIds = new Set(visible.map(b=>b.id));
+  const all = D.serviceRecords.filter(r=>visibleIds.has(String(r.bikeId))).map(enrichRecord);
+  const totalDanger = all.filter(r=>r.status==='danger').length;
+  const totalWarn   = all.filter(r=>r.status==='warn').length;
+
+  let summaryHtml = '';
+  if (!totalDanger && !totalWarn) {
+    summaryHtml = `<div class="summary-banner ok">
+      <span class="summary-banner-icon">${ICONS.check}</span>
+      <div><div class="summary-banner-title">Vše v pořádku</div>
+      <div class="summary-banner-sub">${all.length} součástek sledováno</div></div>
+    </div>`;
+  } else {
+    summaryHtml = `<div class="summary-banner danger">
+      <span class="summary-banner-icon">${ICONS.warn}</span>
+      <div>
+        ${totalDanger?`<div class="summary-banner-title">${totalDanger} po intervalu</div>`:''}
+        ${totalWarn?`<div class="summary-banner-sub" style="color:var(--warn);opacity:1;font-weight:700">${totalWarn} se blíží k limitu</div>`:''}
+      </div>
+    </div>`;
+  }
+
+  let groupsHtml = '';
+  visible.forEach(b => {
+    const br = all.filter(r=>String(r.bikeId)===String(b.id));
+    const dn = br.filter(r=>r.status==='danger');
+    const wn = br.filter(r=>r.status==='warn');
+    const ok = br.filter(r=>r.status==='ok').length;
+    const problems = [...dn, ...wn];
+
+    const dots = [
+      ...dn.map(()=>'<span class="status-dot danger"></span>'),
+      ...wn.map(()=>'<span class="status-dot warn"></span>')
+    ].slice(0,6).join('') + (ok && !problems.length ? '<span class="all-ok-tag">✓ OK</span>' : '');
+
+    let rowsHtml = '';
+    if (problems.length) {
+      rowsHtml = problems.map(r => {
+        const kmLabel = r.intervalKm>0
+          ? `${fmtKm(r.kmSince)} / ${fmtKm(r.intervalKm)}`
+          : fmtKm(r.kmSince);
+        return `<div class="dash-row" onclick="goBike('${b.id}')">
+          <span class="dash-dot ${r.status}"></span>
+          <span class="dash-comp">${esc(r.component)}</span>
+          <span class="dash-km ${r.status}">${kmLabel}</span>
+        </div>`;
+      }).join('');
+    } else if (br.length) {
+      rowsHtml = `<div style="padding:12px 16px;font-size:12px;color:var(--ok);font-weight:700;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:6px">${ICONS.check} Všechny součástky v pořádku</div>`;
+    } else {
+      rowsHtml = `<div style="padding:12px 16px;font-size:12px;color:var(--muted);border-top:1px solid rgba(255,255,255,0.08)">Žádné záznamy</div>`;
+    }
+
+    groupsHtml += `<div class="bike-group">
+      <div class="bike-group-hdr" onclick="goBike('${b.id}')">
+        <span class="bike-group-icon">${ICONS.bike}</span>
+        <span class="bike-group-name">${esc(b.name)}</span>
+        <div class="bike-group-summary">${dots}</div>
+        <span class="bike-group-arrow">${ICONS.chevron}</span>
+      </div>
+      ${rowsHtml}
+    </div>`;
+  });
+
+  document.getElementById('content').innerHTML = summaryHtml + groupsHtml;
+}
+
+/* ── BIKE DETAIL ── */
+function renderBike() {
+  const records = D.serviceRecords.filter(r=>String(r.bikeId)===String(activeBike)).map(enrichRecord);
+  if (!records.length) {
+    document.getElementById('content').innerHTML =
+      `<div class="empty"><div class="empty-icon">${ICONS.wrench}</div><h3>Žádné záznamy</h3><p>Přidej první servisní záznam tlačítkem <strong>+ Přidat</strong> v horní liště.</p></div>`;
+    return;
+  }
+  records.sort((a,b)=>({danger:0,warn:1,ok:2}[a.status]-{danger:0,warn:1,ok:2}[b.status]));
+
+  let html = '';
+  ['danger','warn','ok'].forEach(st => {
+    const group = records.filter(r=>r.status===st);
+    if (!group.length) return;
+    const labels = {
+      danger: `<span style="color:var(--danger);display:flex;align-items:center;gap:6px">${ICONS.danger} Po intervalu</span>`, 
+      warn: `<span style="color:var(--warn);display:flex;align-items:center;gap:6px">${ICONS.warn} Blíží se</span>`, 
+      ok: `<span style="color:var(--ok);display:flex;align-items:center;gap:6px">${ICONS.check} V pořádku</span>`
+    };
+    html += `<div class="sec-label">${labels[st]}</div>`;
+    html += `<div class="svc-list">`;
+    group.forEach(r => { html += svcRow(r); });
+    html += `</div>`;
+  });
+  document.getElementById('content').innerHTML = html;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.prog-fill[data-w]').forEach(el=>{el.style.width=el.dataset.w;});
+  }));
+}
+
+function svcRow(r) {
+  const pct = Math.min(r.percent, 100);
+  const kmLabel = r.intervalKm>0
+    ? `${fmtKm(r.kmSince)} / ${fmtKm(r.intervalKm)}`
+    : fmtKm(r.kmSince);
+  const kmCls = r.status!=='ok' ? r.status : '';
+  const dtDisp = r.serviceDateTime ? fmtDt(r.serviceDateTime) : '–';
+  const notifBadge = r.notifCount>0 ? `<span class="notif-count">${r.notifCount}×</span>` : '';
+
+  return `
+    <div class="svc-row" id="row-${r.id}" onclick="toggleRow('${r.id}')">
+      <div class="svc-row-bar ${r.status}"></div>
+      <div class="svc-row-main">
+        <div class="svc-row-top">
+          <span class="svc-row-name">${esc(r.component)}</span>
+          <span class="svc-row-km ${kmCls}">${kmLabel}</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill ${r.status}" data-w="${pct.toFixed(1)}%" style="width:0"></div></div>
+      </div>
+      <span class="svc-row-chevron">${ICONS.chevron}</span>
+    </div>
+    <div class="svc-detail" id="det-${r.id}">
+      <div class="svc-detail-inner">
+        <div class="det-date">${ICONS.cal} ${dtDisp}${r.notifications?` &nbsp;·&nbsp; <span class="notif-wrap">${r.notifications?ICONS.bell:ICONS.bellOff}${notifBadge}</span>`:''}</div>
+        <div class="det-grid">
+          <div class="det-cell"><div class="det-val">${fmtKm(r.kmSince)}</div><div class="det-lbl">Najeto od servisu</div></div>
+          <div class="det-cell"><div class="det-val">${fmtH(r.hoursSince)}</div><div class="det-lbl">Hodin od servisu</div></div>
+          <div class="det-cell"><div class="det-val">${r.intervalKm>0?fmtKm(r.intervalKm):'–'}</div><div class="det-lbl">Servisní interval</div></div>
+          <div class="det-cell"><div class="det-val ${r.status}">${r.intervalKm>0?(r.remaining>=0?'':'−')+fmtKm(Math.abs(r.remaining)):'–'}</div><div class="det-lbl">Zbývá / přes interval</div></div>
+        </div>
+        ${r.notes?`<div class="det-notes">${esc(r.notes)}</div>`:''}
+        <div class="det-actions">
+          <button class="btn-sm btn-reset-svc" onclick="event.stopPropagation();confirmReset('${r.id}','${esc(r.component)}')">${ICONS.reset} Servisováno</button>
+          <button class="btn-sm btn-edit" onclick="event.stopPropagation();openEdit('${r.id}')">${ICONS.edit} Upravit</button>
+          <button class="btn-sm btn-delete" onclick="event.stopPropagation();confirmDelete('${r.id}','${esc(r.component)}')">${ICONS.trash}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── SETTINGS ── */
+function renderSettings() {
+  const { order, hidden } = getBikeSettings();
+  const sorted = [...D.bikes].sort((a,b)=>{
+    const ai=order.indexOf(a.id), bi=order.indexOf(b.id);
+    if(ai===-1&&bi===-1) return 0;
+    if(ai===-1) return 1; if(bi===-1) return -1;
+    return ai-bi;
+  });
+  let html = `
+    <div class="settings-header">
+      <h2>${ICONS.settings} Nastavení kol</h2>
+      <p>Přetáhni kolo pro změnu pořadí. Vypni přepínačem pro skrytí z přehledu.</p>
+    </div>
+    <div class="bike-setting-list" id="bikeSettingList">`;
+  sorted.forEach(b => {
+    const isHidden = hidden.includes(b.id);
+    const recCount = D.serviceRecords.filter(r=>String(r.bikeId)===String(b.id)).length;
+    html += `<div class="bike-setting-item" draggable="true" data-id="${b.id}"
+        ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
+        ondrop="onDrop(event)" ondragend="onDragEnd(event)"
+        ontouchstart="onTouchStart(event)" ontouchmove="onTouchMove(event)" ontouchend="onTouchEnd(event)">
+      <span class="drag-handle">${ICONS.drag}</span>
+      <span class="bike-set-icon" style="color:${isHidden?'var(--danger)':'#fff'}">${isHidden?ICONS.hidden:ICONS.bike}</span>
+      <div class="bike-set-info">
+        <div class="bike-set-name">${esc(b.name)}</div>
+        <div class="bike-set-sub">${recCount} servisních záznamů${isHidden?' · skryto':''}</div>
+      </div>
+      <div class="toggle-track ${isHidden?'':'on'}" onclick="toggleBikeVisibility('${b.id}')">
+        <div class="toggle-thumb"></div>
+      </div>
+    </div>`;
+  });
+  html += `</div>
+    <div class="settings-tip">
+      <strong>${ICONS.warn} Tip:</strong> Skrytá kola se nezobrazují v přehledu a záložkách, ale jejich data zůstávají v Sheetu. Kdykoli je můžeš znovu zapnout.
+    </div>`;
+
+  document.getElementById('content').innerHTML = html;
+  initDragDrop();
+}
+
+function toggleBikeVisibility(bikeId) {
+  const s = loadSettings();
+  const hidden = s.hidden || [];
+  const idx = hidden.indexOf(bikeId);
+  if (idx===-1) hidden.push(bikeId); else hidden.splice(idx,1);
+  s.hidden = hidden;
+  saveSettings(s);
+  if (hidden.includes(activeBike)) { view='dashboard'; activeBike=null; }
+  render();
+}
+
+// ── DRAG & DROP ──
+let dragSrcId=null, touchItem=null, touchClone=null, touchOffX=0, touchOffY=0;
+function initDragDrop() {}
+function getOrderFromDOM() {
+  return [...document.querySelectorAll('#bikeSettingList .bike-setting-item')].map(el=>el.dataset.id);
+}
+function persistOrder() {
+  const s=loadSettings(); s.order=getOrderFromDOM(); saveSettings(s); renderStrip(); renderPcTabs();
+}
+function onDragStart(e) { dragSrcId=e.currentTarget.dataset.id; e.currentTarget.style.opacity='0.5'; e.dataTransfer.effectAllowed='move'; }
+function onDragOver(e)  { e.preventDefault(); e.dataTransfer.dropEffect='move'; document.querySelectorAll('.bike-setting-item').forEach(el=>el.classList.remove('drag-over')); e.currentTarget.classList.add('drag-over'); }
+function onDrop(e) {
+  e.preventDefault();
+  const target=e.currentTarget; target.classList.remove('drag-over');
+  if(!dragSrcId||target.dataset.id===dragSrcId) return;
+  const list=document.getElementById('bikeSettingList');
+  const src=list.querySelector(`[data-id="${dragSrcId}"]`); const tgt=list.querySelector(`[data-id="${target.dataset.id}"]`);
+  const si=[...list.children].indexOf(src), ti=[...list.children].indexOf(tgt);
+  if(si<ti) list.insertBefore(src,tgt.nextSibling); else list.insertBefore(src,tgt);
+  persistOrder();
+}
+function onDragEnd(e) { e.currentTarget.style.opacity='1'; document.querySelectorAll('.bike-setting-item').forEach(el=>el.classList.remove('drag-over')); dragSrcId=null; }
+
+function onTouchStart(e) {
+  if(e.touches.length>1) return;
+  touchItem=e.currentTarget; const touch=e.touches[0]; const rect=touchItem.getBoundingClientRect();
+  touchOffX=touch.clientX-rect.left; touchOffY=touch.clientY-rect.top;
+  touchClone=touchItem.cloneNode(true);
+  Object.assign(touchClone.style,{position:'fixed',zIndex:'9999',width:rect.width+'px',left:touch.clientX-touchOffX+'px',top:touch.clientY-touchOffY+'px',opacity:'0.85',pointerEvents:'none',boxShadow:'0 8px 28px rgba(0,0,0,.5)',transition:'none'});
+  document.body.appendChild(touchClone); touchItem.style.opacity='0.3';
+}
+function onTouchMove(e) {
+  if(!touchClone) return; e.preventDefault(); const touch=e.touches[0];
+  touchClone.style.left=touch.clientX-touchOffX+'px'; touchClone.style.top=touch.clientY-touchOffY+'px';
+  document.querySelectorAll('.bike-setting-item').forEach(el=>el.classList.remove('drag-over'));
+  const el=document.elementFromPoint(touch.clientX,touch.clientY);
+  const target=el?el.closest('.bike-setting-item'):null;
+  if(target&&target!==touchItem) target.classList.add('drag-over');
+}
+function onTouchEnd(e) {
+  if(!touchClone) return; const touch=e.changedTouches[0];
+  const el=document.elementFromPoint(touch.clientX,touch.clientY); const target=el?el.closest('.bike-setting-item'):null;
+  if(target&&target!==touchItem) {
+    const list=document.getElementById('bikeSettingList');
+    const si=[...list.children].indexOf(touchItem), ti=[...list.children].indexOf(target);
+    if(si<ti) list.insertBefore(touchItem,target.nextSibling); else list.insertBefore(touchItem,target);
+    persistOrder();
+  }
+  touchItem.style.opacity='1'; touchClone.remove(); touchClone=null;
+  touchItem=null;
+  document.querySelectorAll('.bike-setting-item').forEach(el=>el.classList.remove('drag-over'));
+}
+
+// ── ENRICH ──
+function enrichRecord(rec) {
+  const from=rec.serviceDateTime?new Date(rec.serviceDateTime):new Date(0);
+  const acts=D.activities.filter(a=>String(a.bikeId)===String(rec.bikeId)&&new Date(a.date)>=from);
+  const kmSince=acts.reduce((s,a)=>s+(a.km||0),0);
+  const hoursSince=acts.reduce((s,a)=>s+(a.hours||0),0);
+  const percent=rec.intervalKm>0?(kmSince/rec.intervalKm)*100:0;
+  const remaining=rec.intervalKm-kmSince;
+  let status='ok';
+  if(rec.intervalKm>0){ if(percent>=100) status='danger'; else if(percent>=95) status='warn'; }
+  return {...rec,kmSince,hoursSince,percent,remaining,status};
+}
+
+// ── TOGGLE ROW ──
+function toggleRow(id) {
+  const row=document.getElementById('row-'+id); const det=document.getElementById('det-'+id);
+  if(!row||!det) return;
+  const opening=!row.classList.contains('open');
+  row.classList.toggle('open',opening); det.classList.toggle('open',opening);
+  if(opening) requestAnimationFrame(()=>requestAnimationFrame(()=>{ det.querySelectorAll('.prog-fill[data-w]').forEach(el=>{el.style.width=el.dataset.w;}); }));
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function goHome()     { view='dashboard'; render(); }
+function goBike(id)   { view='bike'; activeBike=id; render(); }
+function goBikeNav()  {
+  const visible = getVisibleBikes();
+  if (!visible.length) return;
+  if (view==='bike') {
+    const idx = visible.findIndex(b=>b.id===activeBike);
+    const next = visible[(idx+1) % visible.length];
+    goBike(next.id);
+  } else {
+    goBike(activeBike || visible[0].id);
+  }
+}
+function goSettings() { view='settings'; render(); }
+
+// ══════════════════════════════════════════════
+//  RESET CONFIRM
+// ══════════════════════════════════════════════
+function provedServisFromEdit() {
+  const id=document.getElementById('provedServisRow').dataset.recordId;
+  const comp=document.getElementById('fComp').value||'?';
+  closeModal(); confirmReset(id,comp);
+}
+function confirmReset(id,name) {
+  document.getElementById('confirmSub').textContent=`"${name}" – nastaví se aktuální datum a čas a vynulují se notifikace.`;
+  document.getElementById('confirmOkBtn').onclick=()=>doResetRecord(id);
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('show'); }
+function doResetRecord(id) {
+  closeConfirm(); showToast('⏳ Ukládám…');
+  google.script.run
+    .withSuccessHandler(res=>{ const r=JSON.parse(res); r.success?(showToast('✅ Servisováno!'),loadData()):showToast('❌ '+r.error); })
+    .withFailureHandler(err=>showToast('❌ '+err))
+    .resetRecord(id);
+}
+
+// ══════════════════════════════════════════════
+//  FORM MODAL
+// ══════════════════════════════════════════════
+function openAdd() {
+  document.getElementById('shTitle').textContent='Nový záznam';
+  document.getElementById('fId').value='new';
+  document.getElementById('fComp').value='';
+  document.getElementById('fDt').value=nowDtLocal();
+  document.getElementById('fInterval').value='';
+  document.getElementById('fNotes').value='';
+  document.getElementById('fNotif2').value='';
+  document.getElementById('saveBtn').textContent='Přidat záznam';
+  document.getElementById('saveBtn').disabled=false;
+  document.getElementById('notifCountRow').style.display='none';
+  document.getElementById('formResetRow').style.display='none';
+  document.getElementById('provedServisRow').style.display='none';
+  doReset=false; notifOn=false; updToggle();
+  fillBikes(activeBike&&D.bikes.find(b=>b.id===activeBike)?activeBike:(D.bikes[0]||{}).id);
+  showModal();
+}
+function openEdit(id) {
+  const r=D.serviceRecords.find(r=>r.id===id); if(!r) return;
+  document.getElementById('shTitle').textContent='Upravit záznam';
+  document.getElementById('fId').value=id;
+  document.getElementById('fComp').value=r.component;
+  document.getElementById('fDt').value=r.serviceDateTime||nowDtLocal();
+  document.getElementById('fInterval').value=r.intervalKm||'';
+  document.getElementById('fNotes').value=r.notes;
+  document.getElementById('fNotif2').value=r.notif2Km||'';
+  document.getElementById('saveBtn').textContent='Uložit změny';
+  document.getElementById('saveBtn').disabled=false;
+  document.getElementById('notifCountRow').style.display=r.notifications?'block':'none';
+  document.getElementById('fNotifCount').value=r.notifCount+'× odesláno';
+  document.getElementById('formResetRow').style.display=(r.notifications&&r.notifCount>0)?'flex':'none';
+  document.getElementById('provedServisRow').style.display='block';
+  document.getElementById('provedServisRow').dataset.recordId=id;
+  doReset=false; notifOn=r.notifications; updToggle();
+  fillBikes(r.bikeId); showModal();
+}
+function fillBikes(sel) {
+  document.getElementById('fBike').innerHTML=D.bikes.map(b=>`<option value="${b.id}" ${String(b.id)===String(sel)?'selected':''}>${esc(b.name)}</option>`).join('');
+}
+function showModal()  { document.getElementById('overlay').classList.add('show'); }
+function closeModal() { document.getElementById('overlay').classList.remove('show'); }
+function overlayClick(e) { if(e.target===document.getElementById('overlay')) closeModal(); }
+
+function toggleNotif() {
+  notifOn=!notifOn; updToggle();
+  const cr=document.getElementById('notifCountRow');
+  if(document.getElementById('fId').value!=='new'&&notifOn) cr.style.display='block'; else cr.style.display='none';
+}
+function updToggle() {
+  document.getElementById('notifTrack').classList.toggle('on',notifOn);
+  document.getElementById('notifExtra').classList.toggle('open',notifOn);
+}
+function toggleFormReset() {
+  doReset=!doReset;
+  document.getElementById('formResetRow').querySelector('.btn-rs').innerHTML=doReset?`${ICONS.check} Resetovat`:`Reset`;
+}
+
+// ══════════════════════════════════════════════
+//  SAVE
+// ══════════════════════════════════════════════
+function handleSave() {
+  const comp=document.getElementById('fComp').value.trim();
+  const dt  =document.getElementById('fDt').value;
+  if(!comp){ showToast('⚠️ Zadej název součástky!'); return; }
+  if(!dt)  { showToast('⚠️ Zadej datum a čas!');    return; }
+  
+  const rec={
+    id             :document.getElementById('fId').value,
+    bikeId         :document.getElementById('fBike').value,
+    component      :comp,
+    serviceDateTime:dt,
+    intervalKm     :parseFloat(document.getElementById('fInterval').value)||0,
+    notes          :document.getElementById('fNotes').value.trim(),
+    notifications  :notifOn,
+    notif2Km       :parseFloat(document.getElementById('fNotif2').value)||0,
+    resetNotifs    :doReset
+  };
+  const btn=document.getElementById('saveBtn');
+  btn.disabled=true; btn.textContent='Ukládám…';
+  
+  google.script.run
+    .withSuccessHandler(res=>{ const r=JSON.parse(res); btn.disabled=false; if(r.success){ closeModal(); showToast('✅ Uloženo!'); loadData(); } else{ btn.textContent='Uložit'; showToast('❌ '+r.error); } })
+    .withFailureHandler(err=>{ btn.disabled=false; btn.textContent='Uložit'; showToast('❌ '+err); })
+    .saveRecord(JSON.stringify(rec));
+}
+
+// ══════════════════════════════════════════════
+//  DELETE
+// ══════════════════════════════════════════════
+function confirmDelete(id,name) {
+  if(!confirm('Smazat "'+name+'"?\n\nTato akce je nevratná.')) return;
+  google.script.run
+    .withSuccessHandler(res=>{ const r=JSON.parse(res); r.success?(showToast('🗑 Smazáno'),loadData()):showToast('❌ '+r.error); })
+    .withFailureHandler(err=>showToast('❌ '+err))
+    .deleteRecord(id);
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function fmtKm(km)  { return Math.round(km).toLocaleString('cs-CZ')+' km'; }
+function fmtH(h)    { if(!h) return '0 h'; return Math.round(h)+' h'; }
+function fmtDt(dtStr) {
+  if(!dtStr) return '–';
+  try { return new Date(dtStr).toLocaleString('cs-CZ',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+  catch(e) { return dtStr; }
+}
+function nowDtLocal() {
+  const n=new Date(), pad=x=>String(x).padStart(2,'0');
+  return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}T${pad(n.getHours())}:${pad(n.getMinutes())}`;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>
