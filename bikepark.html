@@ -49,6 +49,7 @@
         --popup-bg: #1C1E26;
         --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
         --scroll: rgba(255,255,255,.22); --scroll-h: rgba(255,255,255,.38);
+        --sbtop-h: 41px;
     }
     @media (prefers-color-scheme: light) {
         :root {
@@ -127,7 +128,7 @@
     .map-origin{position:absolute;bottom:28px;left:10px;z-index:500;background:var(--s1);border:1px solid var(--b2);border-radius:9px;padding:6px 10px;font-size:11px;color:var(--t2);pointer-events:none;box-shadow:var(--sh1);display:flex;align-items:center;gap:5px}
 
     /* ── KARTY ── */
-    .card{background:var(--s1);border-radius:14px;margin:6px 10px;border:1px solid var(--b1);transition:all .18s;cursor:pointer;overflow:hidden;box-shadow:var(--sh1)}
+    .card{background:var(--s1);border-radius:14px;margin:6px 10px;border:1px solid var(--b1);transition:all .18s;cursor:pointer;overflow:hidden;box-shadow:var(--sh1);scroll-margin-top:calc(var(--sbtop-h, 41px) + 8px)}
     .card:hover{border-color:rgba(217,87,46,.4);transform:translateY(-1px);box-shadow:var(--sh2);background:var(--s2)}
     .card.active{border-color:rgba(217,87,46,.6);box-shadow:var(--sh2),0 0 0 2px rgba(217,87,46,.15);background:var(--s2)}
     .card.active.tc{border-color:rgba(47,160,107,.6);box-shadow:var(--sh2),0 0 0 2px rgba(47,160,107,.15)}
@@ -980,6 +981,7 @@ function renderUI() {
     PARKS.filter(isVisible).forEach(p => addMarker(p));
     const side = document.getElementById('sidebar');
     const sbTop = side.querySelector('.sb-top');
+    if (sbTop) document.documentElement.style.setProperty('--sbtop-h', sbTop.offsetHeight + 'px');
     side.innerHTML = '';
     if (sbTop) side.appendChild(sbTop);
     if (!list.length) { side.insertAdjacentHTML('beforeend','<div style="padding:40px;text-align:center;color:var(--mu);font-size:13px">Žádná lokalita neodpovídá filtru.</div>'); return; }
@@ -1145,7 +1147,7 @@ function wireCard(card, p) {
             const open = det.classList.contains('open');
             det.classList.toggle('open');
             if (xb) { xb.classList.toggle('xo',!open); xb.lastChild.textContent=' '+(open?'Rozbalit detail':'Sbalit detail'); }
-            if (!open) setTimeout(() => card.scrollIntoView({ behavior:'smooth', block:'nearest' }), 60);
+            if (!open) setTimeout(() => card.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
         });
     });
 
